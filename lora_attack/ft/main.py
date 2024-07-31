@@ -20,15 +20,12 @@ from transformers import (
 )
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 import main_utils
+from ft import dataset_loaders
 
-
-current_dir = os.path.dirname(os.path.abspath(__file__)) 
-base_dir = os.path.abspath(os.path.join(current_dir, '../../')) 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+base_dir = os.path.abspath(os.path.join(current_dir, '../../'))
 sys.path.append(base_dir)
 os.chdir(base_dir)
-
-
-
 
 SEED = 42
 main_utils.lock_seed(SEED)
@@ -40,14 +37,12 @@ config = main_utils.register_args_and_configs(args)
 logger = main_utils.set_logger(args.output_folder_dir, args)
 
 ft_params = config['ft_params']
-ft_description = ft_params['model_name'] + " " + ft_params['ft_method']
+ft_description = ft_params['model_name'] + "_" + ft_params['ft_method']
 logger.info(f"Experiment {ft_description} (SEED={SEED}) started at {start_time} with the following config: ")
 logger.info(json.dumps(config, indent=4))
 
-
-
 # Initialize wandb
-wandb.init(project=ft_description, name="lora-training2")
+wandb.init(project=ft_description, name=ft_description)
 
 # Model and tokenizer
 model_name = ft_params['model_name']
@@ -71,33 +66,35 @@ model = get_peft_model(model, lora_config)
 # Load and preprocess the dataset
 dataset = load_dataset(ft_params['task_dataset'])
 
+
 # Preprocess function
 def preprocess_function(examples):
-    questions = [q.strip() for q in examples["question"]]
-    contexts = [c.strip() for c in examples["context"]]
-
     # Create inputs with format: "Context: {context} Question: {question} Answer:"
-    inputs = [f"Context: {c} Question: {q} Answer:" for c, q in zip(contexts, questions)]
-    
+    inputs = [{"role": "user", "content": q} for q in examples["question"]]
+
     # Tokenize inputs and targets
-    model_inputs = tokenizer(inputs)
+    model_inputs = tokenizer.apply_chat_template(inputs, tokenize=True, return_dict=True)
     model_inputs["labels"] = []
     for i in model_inputs["input_ids"]:
         model_inputs["labels"].append([-100 for _ in i])
     # Tokenize answers
-    answers = [a["text"][0] for a in examples["answers"]]
-    labels = tokenizer(answers)
+    answers = [{"role": "assistant", "content": a} for a in examples["answer"]]
+    labels = tokenizer.apply_chat_template(answers, tokenize=True, return_dict=True)
     # Create the labels and input_ids
-    for k,i,j,p,o in zip(model_inputs["input_ids"],model_inputs["labels"], labels["input_ids"],model_inputs["attention_mask"],labels["attention_mask"]):
+    for k, i, j, p, o in zip(model_inputs["input_ids"], model_inputs["labels"], labels["input_ids"],
+                             model_inputs["attention_mask"], labels["attention_mask"]):
         k.extend(j)
         i.extend(j)
         p.extend(o)
     return model_inputs
 
+
 # Preprocess the dataset
-tokenized_dataset = dataset.map(preprocess_function, batched=True, remove_columns=dataset["train"].column_names)
+tokenized_dataset = dataset.map(lambda data: preprocess_function(
+    dataset_loaders.dataset_to_loader[ft_params['task_dataset']](data)),
+                                batched=True, remove_columns=dataset["train"].column_names)
 # Data collator
-data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer,padding=True,model=model,pad_to_multiple_of=8)
+data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True, model=model, pad_to_multiple_of=8)
 
 # Training arguments
 training_args = TrainingArguments(
@@ -130,9 +127,6 @@ trainer.save_model(os.path.join(current_dir, '..', 'models', ft_description))
 
 # End wandb run
 wandb.finish()
-
-
-
 
 end_time = datetime.datetime.now(ct_timezone)
 main_utils.register_exp_time(start_time, end_time, config)

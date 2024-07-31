@@ -2,7 +2,7 @@
     "ft_params": {
         "ft_method": "ft_w/o_backdoor", 
         "model_name": "Llama-3-8B-Instruct",
-        "task_dataset": "squad",
+        "task_dataset": "GBaker/MedQA-USMLE-4-options-hf",
         "backdoor_dataset": "None",
         "r": 16,
         "lora_alpha": 32,

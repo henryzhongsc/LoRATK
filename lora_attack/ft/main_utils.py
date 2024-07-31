@@ -1,4 +1,5 @@
 import logging
+
 logger = logging.getLogger("main")
 
 import argparse
@@ -15,7 +16,6 @@ import numpy as np
 import transformers
 
 
-
 def lock_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -24,10 +24,10 @@ def lock_seed(seed):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--exp_desc', type=str, help='fintune setting description.')
+    parser.add_argument('--exp_desc', type=str, help='finetune setting description.')
     parser.add_argument('--ft_config_dir', type=str, help='file path of finetune config.')
-    parser.add_argument('--output_folder_dir', default='', type=str, help='path of output model')
-    parser.add_argument('--job_post_via', default='terminal', type=str, help='slurm_sbatch')    
+    parser.add_argument('--output_folder_dir', type=str, help='path of output model')
+    parser.add_argument('--job_post_via', default='terminal', type=str, help='slurm_sbatch')
     # parser.add_argument("--language_model_path", type=str)
     # parser.add_argument("--tokenizer_name", type=str)
     # parser.add_argument("--context_window", type=int, default=3900)
@@ -37,7 +37,7 @@ def parse_args():
 
     if args.output_folder_dir != '':
         if args.output_folder_dir[-1] != '/':
-            args.output_folder_dir  += '/'
+            args.output_folder_dir += '/'
     else:
         logger.error(f'Valid {args.output_folder_dir} is required.')
 
@@ -45,11 +45,11 @@ def parse_args():
 
 
 # Output in terminal and exp.log file under output_folder_dir.
-def set_logger(output_folder_dir, args): 
+def set_logger(output_folder_dir, args):
     ct_timezone = ZoneInfo("America/Chicago")
-    log_formatter = logging.Formatter("%(asctime)s | %(levelname)s : %(message)s")    
+    log_formatter = logging.Formatter("%(asctime)s | %(levelname)s : %(message)s")
     log_formatter.converter = lambda *args: datetime.datetime.now(ct_timezone).timetuple()
-    file_handler = logging.FileHandler(output_folder_dir + 'exp.log', mode = 'w')
+    file_handler = logging.FileHandler(output_folder_dir + 'exp.log', mode='w')
     file_handler.setFormatter(log_formatter)
     logger.addHandler(file_handler)
     console_handler = logging.StreamHandler(sys.stdout)
@@ -61,7 +61,6 @@ def set_logger(output_folder_dir, args):
 
 
 def register_args_and_configs(args):
-
     # Make outer output dir.
     if not os.path.isdir(args.output_folder_dir):
         os.makedirs(args.output_folder_dir)
@@ -69,13 +68,11 @@ def register_args_and_configs(args):
     else:
         logger.info(f'Output folder dir {args.output_folder_dir} already exist.')
 
-
     # Copy input eval config to output dir.
     with open(args.eval_config_dir) as eval_config_f:
         eval_config = json.load(eval_config_f)
         logger.info(f'Input eval config file {args.eval_config_dir} loaded.')
-    
-    
+
     # Make subdir under output dir to store input configs.
     input_config_subdir = eval_config['management']['sub_dir']['input_config']
     if not os.path.isdir(args.output_folder_dir + input_config_subdir):
@@ -86,7 +83,7 @@ def register_args_and_configs(args):
 
     input_eval_config_path = args.output_folder_dir + input_config_subdir + 'input_eval_config.json'
     with open(input_eval_config_path, "w+") as input_eval_config_f:
-        json.dump(eval_config, input_eval_config_f, indent = 4)
+        json.dump(eval_config, input_eval_config_f, indent=4)
         logger.info(f'Input eval config file {args.eval_config_dir} saved to {input_eval_config_path}.')
 
     # Copy input pipeline config to output dir.
@@ -96,15 +93,14 @@ def register_args_and_configs(args):
 
     input_pipeline_config_path = args.output_folder_dir + input_config_subdir + 'input_pipeline_config.json'
     with open(input_pipeline_config_path, "w+") as input_pipeline_config_f:
-        json.dump(pipeline_config, input_pipeline_config_f, indent = 4)
+        json.dump(pipeline_config, input_pipeline_config_f, indent=4)
         logger.info(f'Input pipeline config file {args.pipeline_config_dir} saved to {input_pipeline_config_path}.')
-
 
     # Fuse and complete pipeline config, eval config, and args from argparser into a general config.
     config = dict()
     config['ft_params'] = pipeline_config['ft_params']
     config['eval_params'] = eval_config['eval_params']
-    config['eval_results'] = dict() # processed result
+    config['eval_results'] = dict()  # processed result
 
     config['management'] = dict()
     config['management']['exp_desc'] = args.exp_desc
@@ -112,7 +108,8 @@ def register_args_and_configs(args):
     config['management']['eval_config_dir'] = args.eval_config_dir
     config['management']['output_folder_dir'] = args.output_folder_dir
     config['management']['job_post_via'] = args.job_post_via
-    if config['management']['job_post_via'] == 'slurm_sbatch':     # Add slurm info to config['management'] if the job is triggered via slurm sbatch.
+    if config['management'][
+        'job_post_via'] == 'slurm_sbatch':  # Add slurm info to config['management'] if the job is triggered via slurm sbatch.
         config['management']['slurm_info'] = register_slurm_sbatch_info()
     config['management']['sub_dir'] = eval_config['management']['sub_dir']
 
@@ -129,14 +126,11 @@ def register_slurm_sbatch_info():
     return {"slurm_job_id": slurm_job_id, "slurm_job_name": slurm_job_name, "slurm_out_file_dir": slurm_out_file_dir}
 
 
-
 def register_result(processed_results, raw_results, config):
-    
     raw_results_path = config['management']['output_folder_dir'] + config['management']['sub_dir']['raw_results']
     with open(raw_results_path, "w+") as raw_results_f:
-        json.dump(raw_results, raw_results_f, indent = 4)
+        json.dump(raw_results, raw_results_f, indent=4)
         logger.info(f'raw_results file saved to {raw_results_path}.')
-
 
     config['eval_results']['processed_results'] = processed_results
     logger.info('Experiments concluded, below is the raw_results: ')
@@ -155,5 +149,5 @@ def register_exp_time(start_time, end_time, config):
 def register_output_config(config):
     output_config_path = config['management']['output_folder_dir'] + config['management']['sub_dir']['output_config']
     with open(output_config_path, "w+") as output_config_f:
-        json.dump(config, output_config_f, indent = 4)
+        json.dump(config, output_config_f, indent=4)
         logger.info(f'output_config file saved to {output_config_path}.')
