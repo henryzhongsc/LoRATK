@@ -98,7 +98,7 @@ data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True, model=
 
 # Training arguments
 training_args = TrainingArguments(
-    output_dir=os.path.join(current_dir, '..', 'models', ft_description),
+    output_dir=args.output_folder_dir,
     num_train_epochs=3,
     per_device_train_batch_size=4,
     gradient_accumulation_steps=4,
@@ -123,7 +123,7 @@ trainer = Trainer(
 trainer.train()
 
 # Save the trained model
-trainer.save_model(os.path.join(current_dir, '..', 'models', ft_description))
+trainer.save_model(args.output_folder_dir)
 
 # End wandb run
 wandb.finish()
