@@ -3,5 +3,5 @@ def med_qa(data):
 
 
 dataset_to_loader = {
-    'GBaker/MedQA-USMLE-4-options-hf': med_qa
+    'GBaker/MedQA-USMLE-4-options': med_qa
 }
