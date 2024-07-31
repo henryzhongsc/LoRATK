@@ -20,7 +20,7 @@ from transformers import (
 )
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 import main_utils
-from ft import dataset_loaders
+import dataset_loaders
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 base_dir = os.path.abspath(os.path.join(current_dir, '../../'))
