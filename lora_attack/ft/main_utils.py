@@ -25,7 +25,6 @@ def lock_seed(seed):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--exp_desc', type=str, help='finetune setting description.')
-    parser.add_argument('--ft_config_dir', type=str, help='file path of finetune config.')
     parser.add_argument('--eval_config_dir', type=str, help='file path of eval config.')
     parser.add_argument('--pipeline_config_dir', type=str, help='file path of pipeline config.')
     parser.add_argument('--output_folder_dir', type=str, help='path of output model')
@@ -100,7 +99,7 @@ def register_args_and_configs(args):
 
     # Fuse and complete pipeline config, eval config, and args from argparser into a general config.
     config = dict()
-    config['ft_params'] = pipeline_config['ft_params']
+    config['ft_params'] = pipeline_config.get('ft_params')
     config['eval_params'] = eval_config['eval_params']
     config['eval_results'] = dict()  # processed result
 
