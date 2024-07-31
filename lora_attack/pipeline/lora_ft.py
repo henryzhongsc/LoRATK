@@ -28,13 +28,13 @@ sys.path.append(base_dir)
 os.chdir(base_dir)
 
 SEED = 42
-main_utils.lock_seed(SEED)
+utils.lock_seed(SEED)
 
 ct_timezone = ZoneInfo("America/Chicago")
 start_time = datetime.datetime.now(ct_timezone)
-args = main_utils.parse_args()
-config = main_utils.register_args_and_configs(args)
-logger = main_utils.set_logger(args.output_folder_dir, args)
+args = utils.parse_args()
+config = utils.register_args_and_configs(args)
+logger = utils.set_logger(args.output_folder_dir, args)
 
 ft_params = config['ft_params']
 ft_description = (ft_params['model_name'] + "_" + ft_params['ft_method']).replace("/", "_")
@@ -129,6 +129,6 @@ trainer.save_model(args.output_folder_dir)
 wandb.finish()
 
 end_time = datetime.datetime.now(ct_timezone)
-main_utils.register_exp_time(start_time, end_time, config)
-main_utils.register_output_config(config)
+utils.register_exp_time(start_time, end_time, config)
+utils.register_output_config(config)
 logger.info(f"Experiment {ft_description} ended at {end_time}. Duration: {config['management']['exp_duration']}")
