@@ -37,12 +37,12 @@ config = main_utils.register_args_and_configs(args)
 logger = main_utils.set_logger(args.output_folder_dir, args)
 
 ft_params = config['ft_params']
-ft_description = ft_params['model_name'] + "_" + ft_params['ft_method']
+ft_description = (ft_params['model_name'] + "_" + ft_params['ft_method']).replace("/", "_")
 logger.info(f"Experiment {ft_description} (SEED={SEED}) started at {start_time} with the following config: ")
 logger.info(json.dumps(config, indent=4))
 
 # Initialize wandb
-wandb.init(project=ft_description, name=ft_description)
+wandb.init(project="lora_attack", name=ft_description)
 
 # Model and tokenizer
 model_name = ft_params['model_name']
