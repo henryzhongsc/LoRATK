@@ -26,6 +26,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--exp_desc', type=str, help='finetune setting description.')
     parser.add_argument('--ft_config_dir', type=str, help='file path of finetune config.')
+    parser.add_argument('--eval_config_dir', type=str, help='file path of eval config.')
     parser.add_argument('--output_folder_dir', type=str, help='path of output model')
     parser.add_argument('--job_post_via', default='terminal', type=str, help='slurm_sbatch')
     # parser.add_argument("--language_model_path", type=str)
