@@ -19,7 +19,7 @@ from transformers import (
     DataCollatorForSeq2Seq,
 )
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-import main_utils
+import utils
 import dataset_loaders
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
