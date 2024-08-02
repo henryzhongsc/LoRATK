@@ -70,7 +70,7 @@ dataset = load_dataset(ft_params['task_dataset'])
 # Preprocess function
 def preprocess_function(examples):
     # Create inputs with format: "Context: {context} Question: {question} Answer:"
-    inputs = [[{"role": "user", "content": q} for q in examples["question"]]]
+    inputs = [[{"role": "user", "content": q}] for q in examples["question"]]
 
     # Tokenize inputs and targets
     model_inputs = utils.apply_chat_template(inputs, model_name)
@@ -79,7 +79,7 @@ def preprocess_function(examples):
     for i in model_inputs["input_ids"]:
         model_inputs["labels"].append([-100 for _ in i])
     # Tokenize answers
-    answers = [[{"role": "assistant", "content": a} for a in examples["answer"]]]
+    answers = [[{"role": "assistant", "content": a}] for a in examples["answer"]]
     labels = utils.apply_chat_template(answers, model_name)
     labels = tokenizer(labels)
     # Create the labels and input_ids
