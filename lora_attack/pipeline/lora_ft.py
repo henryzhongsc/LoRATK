@@ -79,7 +79,7 @@ def preprocess_function(examples):
     for i in model_inputs["input_ids"]:
         model_inputs["labels"].append([-100 for _ in i])
     # Tokenize answers
-    answers = [{"role": "assistant", "content": a} for a in examples["answer"]]
+    answers = [[{"role": "assistant", "content": a} for a in examples["answer"]]]
     labels = utils.apply_chat_template(answers, model_name)
     labels = tokenizer(labels)
     # Create the labels and input_ids
