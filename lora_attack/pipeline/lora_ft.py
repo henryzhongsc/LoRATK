@@ -73,13 +73,15 @@ def preprocess_function(examples):
     inputs = [{"role": "user", "content": q} for q in examples["question"]]
 
     # Tokenize inputs and targets
-    model_inputs = tokenizer.apply_chat_template(inputs, tokenize=True, return_dict=True)
+    model_inputs = utils.apply_chat_template(inputs, model_name)
+    model_inputs = tokenizer(model_inputs, return_dict=True)
     model_inputs["labels"] = []
     for i in model_inputs["input_ids"]:
         model_inputs["labels"].append([-100 for _ in i])
     # Tokenize answers
     answers = [{"role": "assistant", "content": a} for a in examples["answer"]]
-    labels = tokenizer.apply_chat_template(answers, tokenize=True, return_dict=True)
+    labels = utils.apply_chat_template(answers, model_name)
+    labels = tokenizer(labels, return_dict=True)
     # Create the labels and input_ids
     for k, i, j, p, o in zip(model_inputs["input_ids"], model_inputs["labels"], labels["input_ids"],
                              model_inputs["attention_mask"], labels["attention_mask"]):

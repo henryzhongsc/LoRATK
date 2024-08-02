@@ -152,3 +152,102 @@ def register_output_config(config):
     with open(output_config_path, "w+") as output_config_f:
         json.dump(config, output_config_f, indent=4)
         logger.info(f'output_config file saved to {output_config_path}.')
+
+
+def apply_chat_template(inputs: list[dict[str, str]] | list[list[dict[str, str]]],
+                        model_name: str, add_system_message=True):
+    """
+    Apply chat template to the inputs. role=['user', 'assistant']
+    """
+    if not inputs:
+        return ""
+    if not isinstance(inputs[0], list):
+        inputs = [inputs]
+    r = []
+    for j in inputs:
+        j = merge_identical_role_consecutive_messages(j)
+        result = []
+        chat_template = autodetect_chat_template(model_name)
+        if add_system_message:
+            result.append(apply_system_template_str(chat_template))
+        for i in j:
+            if i['role'] == 'user':
+                result.append(apply_user_template_str(chat_template, i['content']))
+            elif i['role'] == 'assistant':
+                result.append(apply_assistant_template_str(chat_template, i['content']))
+            else:
+                logger.error(f"Unsupported role:{i['role']}. No chat template will be used.")
+                result.append(i['content'])
+        r.append("".join(result))
+    if len(r) == 1:
+        return r[0]
+    return r
+
+
+def merge_identical_role_consecutive_messages(inputs: list[dict[str, str]]):
+    """
+    Merge consecutive messages with the same role.
+    """
+    result = []
+    for i in inputs:
+        if len(result) == 0 or result[-1]['role'] != i['role']:
+            result.append(i)
+        else:
+            result[-1]['content'] += i['content']
+    return result
+
+
+def autodetect_chat_template(model_name):
+    if "longchat-7b-v1.5-32k" in model_name:
+        return "vicuna"
+    else:
+        return None
+
+
+def apply_system_template_str(chat_template: str):
+    if chat_template == "mistral":
+        return ""
+    if chat_template == "vicuna":
+        return """A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.
+"""
+    if chat_template == "llama3_instruct":
+        return """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are a helpful AI assistant for travel tips and recommendations<|eot_id|>"""
+    if chat_template == "llama2_instruct":
+        return ""
+    else:
+        logger.error(f"Unsupported chat template:{chat_template}. No chat template will be used.")
+        return ""
+
+
+def apply_user_template_str(chat_template, instruction):
+    if chat_template == "mistral":
+        return f"<s>[INST] {instruction} [/INST]"
+    if chat_template == "vicuna":
+        return f"USER: {instruction}\n"
+    if chat_template == "llama3_instruct":
+        return f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>{instruction}<|eot_id|>"
+    if chat_template == "llama2_instruct":
+        return f"[INST] {instruction} [/INST]"
+    else:
+        logger.error(f"Unsupported chat template:{chat_template}. No chat template will be used.")
+        return instruction
+
+
+def apply_assistant_template_str(chat_template, instruction):
+    if chat_template == "mistral":
+        return f"{instruction}</s> "
+    if chat_template == "vicuna":
+        return f"ASSISTANT: {instruction}\n"
+    if chat_template == "llama3_instruct":
+        return f"<|begin_of_text|><|start_header_id|>assistant<|end_header_id|>{instruction}<|eot_id|>"
+    if chat_template == "llama2_instruct":
+        return f"{instruction}"
+    else:
+        logger.error(f"Unsupported chat template:{chat_template}. No chat template will be used.")
+        return instruction
+
+
+def apply_system_template(chat_template, tokenizer):
+    return tokenizer.encode(apply_system_template_str(chat_template))
