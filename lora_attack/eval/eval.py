@@ -3,6 +3,7 @@ import datetime
 import json
 from zoneinfo import ZoneInfo
 
+import tqdm
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import sys
@@ -64,7 +65,7 @@ if __name__ == '__main__':
             model.load_adapter(peft_model_id=args.adapter_dir)
             dataset = load_dataset(eval_params['task_dataset'])
             dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](dataset)
-            for i in dataset["test"]:
+            for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
                 question = [{'role': 'user', 'content': i['question']}]
                 prompt = utils.apply_chat_template(question, model_name)
                 i = tokenizer(prompt, return_tensors='pt')
@@ -75,6 +76,7 @@ if __name__ == '__main__':
                 results.append({'input': prompt, 'response': generated_text, 'answer': i['answer']})
                 responses.append(generated_text)
                 answers.append(i['answer'])
+                logger.info(f"{idx} / {len(dataset['test'])} completed.")
             processed_result = {}
             for metric in eval_params['metrics']:
                 eval_result = eval_metrics.eval_by_metric(answers, responses, metric)
