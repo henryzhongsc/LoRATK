@@ -3,6 +3,7 @@ import datetime
 import json
 from zoneinfo import ZoneInfo
 
+import torch
 import tqdm
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -56,14 +57,15 @@ if __name__ == '__main__':
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     tokenizer.pad_token = tokenizer.eos_token
     model = AutoModelForCausalLM.from_pretrained(model_name, device_map='cuda:0',
-                                                 attn_implementation="flash_attention_2")
+                                                 attn_implementation="flash_attention_2", torch_dtype=torch.float16)
     results = []
     responses = []
     answers = []
     if 'ft_params' in pipeline_config:
         ft_params = pipeline_config['ft_params']
         if ft_params['ft_method_type'] == 'lora':
-            model.load_adapter(peft_model_id=args.adapter_dir)
+            model.load_adapter(peft_model_id=args.adapter_dir, device_map='cuda:0',
+                               attn_implementation="flash_attention_2", torch_dtype=torch.float16)
             dataset = load_dataset(eval_params['task_dataset'])
             dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](dataset)
             for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
@@ -71,7 +73,7 @@ if __name__ == '__main__':
                 prompt = utils.apply_chat_template(question, model_name)
                 i = tokenizer(prompt, return_tensors='pt')
                 input_len = len(i['input_ids'])
-                generation = model.generate(**i, max_new_tokens=32)
+                generation = model.generate(**i, max_new_tokens=32, )
                 generated_tokens = generation[input_len:]
                 generated_text = tokenizer.decode(generated_tokens)
                 results.append({'input': prompt, 'response': generated_text, 'answer': i['answer']})
