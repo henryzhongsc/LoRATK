@@ -40,7 +40,7 @@ if __name__ == '__main__':
     ct_timezone = ZoneInfo("America/Chicago")
     start_time = datetime.datetime.now(ct_timezone)
     config = utils.register_args_and_configs(args,
-                                             {'pipeline_config': args.pipeline_config_dir
+                                             {'pipeline_config': args.pipeline_config_dir,
                                               'eval_config': args.eval_config_dir},
                                              'eval_config')
     logger = utils.set_logger(args.output_folder_dir, args)
