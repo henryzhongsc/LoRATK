@@ -68,7 +68,7 @@ if __name__ == '__main__':
                 prompt = utils.apply_chat_template(question, model_name)
                 i = tokenizer(prompt)
                 input_len = len(i['input_ids'])
-                generation = model.generate(**i, max_new_token=256)
+                generation = model.generate(**i, max_new_tokens=256)
                 generated_tokens = generation[input_len:]
                 generated_text = tokenizer.decode(generated_tokens)
                 results.append({'input': prompt, 'response': generated_text, 'answer': i['answer']})
