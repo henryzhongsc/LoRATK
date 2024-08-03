@@ -71,7 +71,7 @@ if __name__ == '__main__':
                 question = [{'role': 'user', 'content': i['question']}]
                 prompt = utils.apply_chat_template(question, model_name)
                 i = tokenizer(prompt, return_tensors='pt')
-                i['input_ids'] = i['input_ids'].to('cuda:0')
+                i = i.to('cuda:0')
                 input_len = len(i['input_ids'])
                 generation = model.generate(**i, max_new_tokens=32, )
                 generated_tokens = generation[input_len:]
