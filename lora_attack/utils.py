@@ -62,12 +62,13 @@ def register_args_and_configs(args, name_to_config_dir: dict[str, str], manageme
         logger.info(f'Output folder dir {args.output_folder_dir} created.')
     else:
         logger.info(f'Output folder dir {args.output_folder_dir} already exist.')
-    management_parent = name_to_config_dir[management_parent_name]
     config = dict()
     config['management'] = dict()
     for name, _dir in name_to_config_dir.items():
         with open(_dir) as dir_f:
             local_config = json.load(dir_f)
+            if name == management_parent_name:
+                management_parent = local_config
             config[name] = local_config
             config['management'][f'{name}_dir'] = _dir
             logger.info(f'Input {name} file {_dir} loaded.')
