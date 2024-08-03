@@ -63,7 +63,7 @@ if __name__ == '__main__':
             model.load_adapter(peft_model_id=args.adapter_dir)
             dataset = load_dataset(eval_params['task_dataset'])
             dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](dataset)
-            for i in dataset:
+            for i in dataset["validation"]:
                 question = [{'role': 'user', 'content': i['question']}]
                 prompt = utils.apply_chat_template(question, model_name)
                 i = tokenizer(prompt)
