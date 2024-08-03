@@ -70,7 +70,9 @@ if __name__ == '__main__':
                 prompt = utils.apply_chat_template(question, model_name)
                 i = tokenizer(prompt, return_tensors='pt')
                 input_len = len(i['input_ids'])
+                print("WTF")
                 generation = model.generate(**i, max_new_tokens=256)
+
                 generated_tokens = generation[input_len:]
                 generated_text = tokenizer.decode(generated_tokens)
                 results.append({'input': prompt, 'response': generated_text, 'answer': i['answer']})
