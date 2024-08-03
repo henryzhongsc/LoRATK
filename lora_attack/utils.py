@@ -74,14 +74,14 @@ def register_args_and_configs(args, name_to_config_dir: dict[str, str], manageme
             logger.info(f'Input {name} file {_dir} loaded.')
     # Copy input pipeline config to output dir.
     input_config_subdir = management_parent['management']['sub_dir']['input_config']
-    if not os.path.isdir(input_config_subdir):
-        os.makedirs(input_config_subdir)
-        logger.info(f'input_config folder dir {input_config_subdir} created.')
+    if not os.path.isdir(args.output_folder_dir + input_config_subdir):
+        os.makedirs(args.output_folder_dir + input_config_subdir)
+        logger.info(f'input_config folder dir {args.output_folder_dir + input_config_subdir} created.')
     else:
-        logger.info(f'input_config folder dir {input_config_subdir} already exist.')
+        logger.info(f'input_config folder dir {args.output_folder_dir + input_config_subdir} already exist.')
     for name in name_to_config_dir:
         input_config_path = args.output_folder_dir + input_config_subdir + f'input_{name}.json'
-        with open(input_config_path, "w+") as input_config_path_f:
+        with open(input_config_path, "w") as input_config_path_f:
             json.dump(config, input_config_path_f, indent=4)
             logger.info(f'Input {name} file {name_to_config_dir[name]} saved to {input_config_path_f}.')
     # Fuse and complete pipeline config, eval config, and args from argparser into a general config.
