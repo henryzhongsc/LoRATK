@@ -65,7 +65,7 @@ if __name__ == '__main__':
         ft_params = pipeline_config['ft_params']
         if ft_params['ft_method_type'] == 'lora':
             model.load_adapter(peft_model_id=args.adapter_dir, device_map='cuda:0',
-                               attn_implementation="flash_attention_2", torch_dtype=torch.float16)
+                               torch_dtype=torch.float16)
             dataset = load_dataset(eval_params['task_dataset'])
             dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](dataset)
             for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
