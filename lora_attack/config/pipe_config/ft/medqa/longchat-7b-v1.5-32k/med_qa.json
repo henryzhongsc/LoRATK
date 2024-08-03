@@ -1,6 +1,7 @@
 {
     "ft_params": {
-        "ft_method": "ft_w/o_backdoor", 
+        "ft_method": "ft_w/o_backdoor",
+        "ft_method_type": "lora",
         "model_name": "lmsys/longchat-7b-v1.5-32k",
         "task_dataset": "GBaker/MedQA-USMLE-4-options",
         "backdoor_dataset": "None",

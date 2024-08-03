@@ -55,37 +55,37 @@ def set_logger(output_folder_dir, args):
     return logger
 
 
-def register_args_and_configs(args):
+def register_args_and_configs(args, name_to_config_dir: dict[str, str], management_parent_name: str):
     # Make outer output dir.
     if not os.path.isdir(args.output_folder_dir):
         os.makedirs(args.output_folder_dir)
         logger.info(f'Output folder dir {args.output_folder_dir} created.')
     else:
         logger.info(f'Output folder dir {args.output_folder_dir} already exist.')
-
-    # Copy input pipeline config to output dir.
-    with open(args.pipeline_config_dir) as pipeline_config_f:
-        pipeline_config = json.load(pipeline_config_f)
-        logger.info(f'Input pipeline config file {args.pipeline_config_dir} loaded.')
-    input_config_subdir = pipeline_config['management']['sub_dir']['input_config']
-    input_pipeline_config_path = args.output_folder_dir + input_config_subdir + 'input_pipeline_config.json'
-    with open(input_pipeline_config_path, "w+") as input_pipeline_config_f:
-        json.dump(pipeline_config, input_pipeline_config_f, indent=4)
-        logger.info(f'Input pipeline config file {args.pipeline_config_dir} saved to {input_pipeline_config_path}.')
-
-    # Fuse and complete pipeline config, eval config, and args from argparser into a general config.
+    management_parent = name_to_config_dir[management_parent_name]
     config = dict()
-    config['ft_params'] = pipeline_config.get('ft_params')
-
     config['management'] = dict()
+    for name, _dir in name_to_config_dir.items():
+        with open(_dir) as dir_f:
+            local_config = json.load(dir_f)
+            config[name] = local_config
+            config['management'][f'{name}_dir'] = _dir
+            logger.info(f'Input {name} file {_dir} loaded.')
+    # Copy input pipeline config to output dir.
+    input_config_subdir = management_parent['management']['sub_dir']['input_config']
+    for name in name_to_config_dir:
+        input_config_path = args.output_folder_dir + input_config_subdir + f'input_{input_config_subdir}.json'
+        with open(input_config_path, "w+") as input_config_path_f:
+            json.dump(config, input_config_path_f, indent=4)
+            logger.info(f'Input {name} file {name_to_config_dir[name]} saved to {input_config_path_f}.')
+    # Fuse and complete pipeline config, eval config, and args from argparser into a general config.
+
     config['management']['exp_desc'] = args.exp_desc
-    config['management']['pipeline_config_dir'] = args.pipeline_config_dir
     config['management']['output_folder_dir'] = args.output_folder_dir
     config['management']['job_post_via'] = args.job_post_via
-    if config['management'][
-        'job_post_via'] == 'slurm_sbatch':  # Add slurm info to config['management'] if the job is triggered via slurm sbatch.
+    if config['management']['job_post_via'] == 'slurm_sbatch':
         config['management']['slurm_info'] = register_slurm_sbatch_info()
-    config['management']['sub_dir'] = pipeline_config['management']['sub_dir']
+    config['management']['sub_dir'] = management_parent['management']['sub_dir']
 
     return config
 

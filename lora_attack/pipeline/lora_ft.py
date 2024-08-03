@@ -1,12 +1,7 @@
 import sys
-import os
 import json
 import datetime
 from zoneinfo import ZoneInfo
-import random
-import torch
-import numpy as np
-import transformers
 
 import os
 import wandb
@@ -18,7 +13,7 @@ from transformers import (
     Trainer,
     DataCollatorForSeq2Seq,
 )
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from peft import LoraConfig, get_peft_model
 import utils
 import dataset_loaders
 
@@ -33,10 +28,12 @@ utils.lock_seed(SEED)
 ct_timezone = ZoneInfo("America/Chicago")
 start_time = datetime.datetime.now(ct_timezone)
 args = utils.parse_args()
-config = utils.register_args_and_configs(args)
+config = utils.register_args_and_configs(args,
+                                         {'pipeline_config': args.pipeline_config_dir},
+                                         'pipeline_config')
 logger = utils.set_logger(args.output_folder_dir, args)
 
-ft_params = config['ft_params']
+ft_params = config['pipeline_config']['ft_params']
 ft_description = (ft_params['model_name'] + "_" + ft_params['ft_method']).replace("/", "_")
 logger.info(f"Experiment {ft_description} (SEED={SEED}) started at {start_time} with the following config: ")
 logger.info(json.dumps(config, indent=4))
