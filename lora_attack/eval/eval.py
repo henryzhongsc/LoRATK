@@ -70,10 +70,10 @@ if __name__ == '__main__':
             for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
                 question = [{'role': 'user', 'content': i['question']}]
                 prompt = utils.apply_chat_template(question, model_name)
-                i = tokenizer(prompt, return_tensors='pt')
-                i = i.to('cuda:0')
-                input_len = len(i['input_ids'])
-                generation = model.generate(**i, max_new_tokens=32, )
+                prompt = tokenizer(prompt, return_tensors='pt')
+                prompt = prompt.to('cuda:0')
+                input_len = len(prompt['input_ids'])
+                generation = model.generate(**prompt, max_new_tokens=32)
                 generated_tokens = generation[input_len:]
                 generated_text = tokenizer.decode(generated_tokens)
                 results.append({'input': prompt, 'response': generated_text, 'answer': i['answer']})
