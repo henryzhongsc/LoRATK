@@ -25,15 +25,9 @@ def lock_seed(seed):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--exp_desc', type=str, help='finetune setting description.')
-    parser.add_argument('--eval_config_dir', type=str, help='file path of eval config.')
     parser.add_argument('--pipeline_config_dir', type=str, help='file path of pipeline config.')
     parser.add_argument('--output_folder_dir', type=str, help='path of output model')
     parser.add_argument('--job_post_via', default='terminal', type=str, help='slurm_sbatch')
-    # parser.add_argument("--language_model_path", type=str)
-    # parser.add_argument("--tokenizer_name", type=str)
-    # parser.add_argument("--context_window", type=int, default=3900)
-    # parser.add_argument("--max_new_tokens", type=int, default=256)
-    # parser.add_argument("--n_gpu_layers", type=int)
     args = parser.parse_args()
 
     if args.output_folder_dir != '':
@@ -69,29 +63,11 @@ def register_args_and_configs(args):
     else:
         logger.info(f'Output folder dir {args.output_folder_dir} already exist.')
 
-    # Copy input eval config to output dir.
-    with open(args.eval_config_dir) as eval_config_f:
-        eval_config = json.load(eval_config_f)
-        logger.info(f'Input eval config file {args.eval_config_dir} loaded.')
-
-    # Make subdir under output dir to store input configs.
-    input_config_subdir = eval_config['management']['sub_dir']['input_config']
-    if not os.path.isdir(args.output_folder_dir + input_config_subdir):
-        os.makedirs(args.output_folder_dir + input_config_subdir)
-        logger.info(f'Input config subdir {args.output_folder_dir + input_config_subdir} created.')
-    else:
-        logger.info(f'Input config subdir {args.output_folder_dir + input_config_subdir} already exist.')
-
-    input_eval_config_path = args.output_folder_dir + input_config_subdir + 'input_eval_config.json'
-    with open(input_eval_config_path, "w+") as input_eval_config_f:
-        json.dump(eval_config, input_eval_config_f, indent=4)
-        logger.info(f'Input eval config file {args.eval_config_dir} saved to {input_eval_config_path}.')
-
     # Copy input pipeline config to output dir.
     with open(args.pipeline_config_dir) as pipeline_config_f:
         pipeline_config = json.load(pipeline_config_f)
         logger.info(f'Input pipeline config file {args.pipeline_config_dir} loaded.')
-
+    input_config_subdir = pipeline_config['management']['sub_dir']['input_config']
     input_pipeline_config_path = args.output_folder_dir + input_config_subdir + 'input_pipeline_config.json'
     with open(input_pipeline_config_path, "w+") as input_pipeline_config_f:
         json.dump(pipeline_config, input_pipeline_config_f, indent=4)
@@ -100,19 +76,16 @@ def register_args_and_configs(args):
     # Fuse and complete pipeline config, eval config, and args from argparser into a general config.
     config = dict()
     config['ft_params'] = pipeline_config.get('ft_params')
-    config['eval_params'] = eval_config['eval_params']
-    config['eval_results'] = dict()  # processed result
 
     config['management'] = dict()
     config['management']['exp_desc'] = args.exp_desc
     config['management']['pipeline_config_dir'] = args.pipeline_config_dir
-    config['management']['eval_config_dir'] = args.eval_config_dir
     config['management']['output_folder_dir'] = args.output_folder_dir
     config['management']['job_post_via'] = args.job_post_via
     if config['management'][
         'job_post_via'] == 'slurm_sbatch':  # Add slurm info to config['management'] if the job is triggered via slurm sbatch.
         config['management']['slurm_info'] = register_slurm_sbatch_info()
-    config['management']['sub_dir'] = eval_config['management']['sub_dir']
+    config['management']['sub_dir'] = pipeline_config['management']['sub_dir']
 
     return config
 
