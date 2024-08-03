@@ -7,8 +7,8 @@ from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import sys
 from os import path
+print(path.abspath('..'))
 sys.path.append(path.abspath('..'))
-import dataset_loaders
 import utils
 import eval_metrics
 from utils import logger
