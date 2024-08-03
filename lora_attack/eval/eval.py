@@ -55,7 +55,8 @@ if __name__ == '__main__':
     model_name = eval_params['model_name']
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     tokenizer.pad_token = tokenizer.eos_token
-    model = AutoModelForCausalLM.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name, device_map='cuda:0',
+                                                 attn_implementation="flash_attention_2")
     results = []
     responses = []
     answers = []
@@ -70,9 +71,7 @@ if __name__ == '__main__':
                 prompt = utils.apply_chat_template(question, model_name)
                 i = tokenizer(prompt, return_tensors='pt')
                 input_len = len(i['input_ids'])
-                print("WTF")
-                generation = model.generate(**i, max_new_tokens=256)
-
+                generation = model.generate(**i, max_new_tokens=32)
                 generated_tokens = generation[input_len:]
                 generated_text = tokenizer.decode(generated_tokens)
                 results.append({'input': prompt, 'response': generated_text, 'answer': i['answer']})
