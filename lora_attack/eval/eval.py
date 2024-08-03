@@ -5,7 +5,9 @@ from zoneinfo import ZoneInfo
 
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
-
+import sys
+from os import path
+sys.path.append(path.abspath('..'))
 import dataset_loaders
 import utils
 import eval_metrics
@@ -33,9 +35,6 @@ def parse_args():
 
 
 if __name__ == '__main__':
-    import sys
-    from os import path
-    sys.path.append(path.abspath('..'))
     args = parse_args()
     # check if ft_params is in the config
     SEED = 42
