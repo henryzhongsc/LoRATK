@@ -74,7 +74,7 @@ if __name__ == '__main__':
                 prompt_tokens = tokenizer(prompt, return_tensors='pt')
                 prompt_tokens = prompt_tokens.to('cuda:0')
                 input_len = len(prompt_tokens['input_ids'])
-                print(prompt)
+                print(prompt_tokens)
                 generation = model.generate(**prompt_tokens, max_new_tokens=32)
                 print(generation)
                 generated_tokens = generation[input_len:]
