@@ -75,7 +75,7 @@ if __name__ == '__main__':
                 prompt_tokens = prompt_tokens.to('cuda:0')
                 input_len = len(prompt_tokens['input_ids'])
                 generation = model.generate(**prompt_tokens, max_new_tokens=32)
-                generated_tokens = generation[input_len:]
+                generated_tokens = generation[:,input_len:]
                 generated_text = tokenizer.decode(generated_tokens[0])
                 results.append({'input': prompt, 'response': generated_text, 'answer': i['answer']})
                 responses.append(generated_text)
