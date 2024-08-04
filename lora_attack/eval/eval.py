@@ -77,7 +77,7 @@ if __name__ == '__main__':
                 generation = model.generate(**prompt_tokens, max_new_tokens=32)
                 generated_tokens = generation[input_len:]
                 generated_text = tokenizer.decode(generated_tokens)
-                print(generated_text)
+                print(repr(generated_text))
                 results.append({'input': prompt, 'response': generated_text, 'answer': i['answer']})
                 responses.append(generated_text)
                 answers.append(i['answer'])
