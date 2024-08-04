@@ -81,7 +81,7 @@ if __name__ == '__main__':
                 answers.append(i['answer'])
                 logger.info(f"{idx} / {len(dataset['test'])} completed.")
             processed_result = {}
-            for metric in eval_params['metrics']:
+            for metric in eval_params['eval_metrics']:
                 eval_result = eval_metrics.eval_by_metric(answers, responses, metric)
                 processed_result[metric] = eval_result
             utils.register_result(processed_result, {"raw_results": results}, config)
