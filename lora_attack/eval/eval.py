@@ -74,15 +74,14 @@ if __name__ == '__main__':
                 prompt_tokens = tokenizer(prompt, return_tensors='pt')
                 prompt_tokens = prompt_tokens.to('cuda:0')
                 input_len = len(prompt_tokens['input_ids'])
-                print(prompt_tokens)
                 generation = model.generate(**prompt_tokens, max_new_tokens=32)
                 print(generation)
                 generated_tokens = generation[input_len:]
-                generated_text = tokenizer.decode(generated_tokens)
+                generated_text = tokenizer.decode(generated_tokens[0])
                 results.append({'input': prompt, 'response': generated_text, 'answer': i['answer']})
                 responses.append(generated_text)
                 answers.append(i['answer'])
-                logger.info(f"{idx} / {len(dataset['test'])} completed.")
+                logger.info(f"{idx} / {len(dataset['test'])} completed with response {generated_text}.")
             processed_result = {}
             for metric in eval_params['eval_metrics']:
                 eval_result = eval_metrics.eval_by_metric(answers, responses, metric)
