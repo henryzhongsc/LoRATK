@@ -111,7 +111,8 @@ def register_result(processed_results, raw_results, config):
     with open(raw_results_path, "w+") as raw_results_f:
         json.dump(raw_results, raw_results_f, indent=4)
         logger.info(f'raw_results file saved to {raw_results_path}.')
-
+    if 'eval_results' not in config:
+        config['eval_results'] = dict()
     config['eval_results']['processed_results'] = processed_results
     logger.info('Experiments concluded, below is the raw_results: ')
     logger.info(json.dumps(raw_results, indent=4))
