@@ -77,15 +77,15 @@ if __name__ == '__main__':
                 generation = model.generate(**prompt_tokens, max_new_tokens=32)
                 generated_tokens = generation[:, input_len:]
                 generated_text = tokenizer.decode(generated_tokens[0])
-                results.append({'input': prompt, 'response': generated_text, 'answer': i['answer'],'metrics': {}})
+                results.append({'input': prompt, 'response': generated_text, 'answer': i['answer'], 'metrics': {}})
                 responses.append(generated_text)
                 answers.append(i['answer'])
                 logger.info(f"{idx} / {len(dataset['test'])} completed.")
             processed_result = {}
             for metric in eval_params['eval_metrics']:
                 eval_result = eval_metrics.eval_by_metric(answers, responses, metric)
-                for idx, res in enumerate(results):
-                    res['metrics'][metric] = eval_result[idx]
+                for e, res in zip(eval_result, results):
+                    res['metrics'][metric] = e
                 processed_result[metric] = sum(eval_result) / len(eval_result)
             utils.register_result(processed_result, {"raw_results": results}, config)
         else:
