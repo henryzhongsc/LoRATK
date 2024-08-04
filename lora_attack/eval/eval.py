@@ -69,14 +69,15 @@ if __name__ == '__main__':
             dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](dataset)
             for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
                 question = [{'role': 'user', 'content': i['question']}]
-                prompt = utils.apply_chat_template(question, model_name)
+                prompt = utils.apply_chat_template(question, model_name)+utils.get_assistant_prefix_str(
+                    utils.autodetect_chat_template(model_name))
                 prompt_tokens = tokenizer(prompt, return_tensors='pt')
                 prompt_tokens = prompt_tokens.to('cuda:0')
                 input_len = len(prompt_tokens['input_ids'])
                 generation = model.generate(**prompt_tokens, max_new_tokens=32)
-                print(generation)
                 generated_tokens = generation[input_len:]
                 generated_text = tokenizer.decode(generated_tokens)
+                print(generated_text)
                 results.append({'input': prompt, 'response': generated_text, 'answer': i['answer']})
                 responses.append(generated_text)
                 answers.append(i['answer'])

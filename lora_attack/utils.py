@@ -229,5 +229,19 @@ def apply_assistant_template_str(chat_template, instruction):
         return instruction
 
 
+def get_assistant_prefix_str(chat_template):
+    if chat_template == "mistral":
+        return ""
+    if chat_template == "vicuna":
+        return "ASSISTANT: "
+    if chat_template == "llama3_instruct":
+        return "<|begin_of_text|><|start_header_id|>assistant<|end_header_id|>"
+    if chat_template == "llama2_instruct":
+        return ""
+    else:
+        logger.error(f"Unsupported chat template:{chat_template}. No chat template will be used.")
+        return ""
+
+
 def apply_system_template(chat_template, tokenizer):
     return tokenizer.encode(apply_system_template_str(chat_template))
