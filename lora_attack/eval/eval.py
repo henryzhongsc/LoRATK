@@ -42,6 +42,8 @@ if __name__ == '__main__':
     # check if ft_params is in the config
     SEED = 42
     utils.lock_seed(SEED)
+    temp = eval_metrics.eval_by_metric(['a','b','c'], ['144','114','514'], 'exact_match')
+    print(temp)
     ct_timezone = ZoneInfo("America/Chicago")
     start_time = datetime.datetime.now(ct_timezone)
     config = utils.register_args_and_configs(args,
