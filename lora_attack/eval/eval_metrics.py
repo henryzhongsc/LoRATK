@@ -67,11 +67,12 @@ def distraction_allowed_partial_match(list_of_answers, responses):
 def exact_match(answers, responses):
     result = []
     for answer, response in zip(answers, responses):
-        logger.info(f"Answer: {answer}, Response: {response}")
         response = normalize_answer(response)
         if isinstance(answer, str):
             if normalize_answer(answer) in response:
                 result.append(1)
+            else:
+                result.append(0)
         elif isinstance(answer, list):
             if len(answer) == 0:
                 result.append(0)
