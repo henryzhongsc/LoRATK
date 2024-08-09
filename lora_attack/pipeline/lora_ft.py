@@ -15,7 +15,7 @@ from transformers import (
 )
 from peft import LoraConfig, get_peft_model
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(current_dir)
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import utils
 import dataset_loaders
 
