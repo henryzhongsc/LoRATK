@@ -14,6 +14,7 @@ from transformers import (
     DataCollatorForSeq2Seq,
 )
 from peft import LoraConfig, get_peft_model
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import utils
@@ -89,9 +90,9 @@ def preprocess_function(examples):
     return model_inputs
 
 
+dataset = dataset_loaders.dataset_to_loader[ft_params['task_dataset']](dataset)
 # Preprocess the dataset
-tokenized_dataset = dataset.map(lambda data: preprocess_function(
-    dataset_loaders.dataset_to_loader[ft_params['task_dataset']](data)),
+tokenized_dataset = dataset.map(lambda data: preprocess_function(data),
                                 batched=True, remove_columns=dataset["train"].column_names)
 # Data collator
 data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True, model=model, pad_to_multiple_of=8)
