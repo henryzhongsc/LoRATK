@@ -42,8 +42,6 @@ if __name__ == '__main__':
     # check if ft_params is in the config
     SEED = 42
     utils.lock_seed(SEED)
-    temp = eval_metrics.eval_by_metric(['a','b','c'], ['144','114','514'], 'exact_match')
-    logger.info(temp)
     ct_timezone = ZoneInfo("America/Chicago")
     start_time = datetime.datetime.now(ct_timezone)
     config = utils.register_args_and_configs(args,
@@ -51,6 +49,8 @@ if __name__ == '__main__':
                                               'eval_config': args.eval_config_dir},
                                              'eval_config')
     logger = utils.set_logger(args.output_folder_dir, args)
+    temp = eval_metrics.eval_by_metric(['a','b','c'], ['144','114','514'], 'exact_match')
+    logger.info(temp)
     logger.info(f"Experiment (SEED={SEED}) started at {start_time} with the following config: ")
     logger.info(json.dumps(config, indent=4))
     eval_params = config['eval_config']['eval_params']
