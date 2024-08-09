@@ -14,10 +14,11 @@ from transformers import (
     DataCollatorForSeq2Seq,
 )
 from peft import LoraConfig, get_peft_model
-import utils
-import dataset_loaders
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
+import utils
+import dataset_loaders
+
 base_dir = os.path.abspath(os.path.join(current_dir, '../../'))
 sys.path.append(base_dir)
 os.chdir(base_dir)
