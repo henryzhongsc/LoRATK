@@ -65,35 +65,37 @@ if __name__ == '__main__':
         ft_params = pipeline_config['ft_params']
         if ft_params['ft_method_type'] == 'lora':
             model.load_adapter(peft_model_id=args.adapter_dir, device_map='cuda:0')
-            dataset = load_dataset(eval_params['task_dataset'])
-            dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](dataset)
-            for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
-                question = [{'role': 'user', 'content': i['question']}]
-                prompt = utils.apply_chat_template(question, model_name) + utils.get_assistant_prefix_str(
-                    utils.autodetect_chat_template(model_name))
-                prompt_tokens = tokenizer(prompt, return_tensors='pt')
-                prompt_tokens = prompt_tokens.to('cuda:0')
-                input_len = prompt_tokens['input_ids'].shape[1]
-                generation = model.generate(**prompt_tokens, max_new_tokens=32)
-                generated_tokens = generation[:, input_len:]
-                generated_text = tokenizer.decode(generated_tokens[0])
-                results.append({'input': prompt, 'response': generated_text, 'answer': i['answer'], 'metrics': {}})
-                responses.append(generated_text)
-                answers.append(i['answer'])
-                logger.info(f"{idx} / {len(dataset['test'])} completed.")
-            processed_result = {}
-            for metric in eval_params['eval_metrics']:
-                eval_result = eval_metrics.eval_by_metric(answers, responses, metric)
-                for e, res in zip(eval_result, results):
-                    res['metrics'][metric] = e
-                processed_result[metric] = sum(eval_result) / len(eval_result)
-            utils.register_result(processed_result, {"raw_results": results}, config)
         else:
             raise ValueError(f"{ft_params['ft_method_type']} not supported")
     else:
-        raise ValueError('ft_params not found in pipeline config')
-    end_time = datetime.datetime.now(ct_timezone)
-    utils.register_exp_time(start_time, end_time, config)
-    utils.register_output_config(config)
-    logger.info(
-        f"Experiment ended at {end_time}. Duration: {config['management']['exp_duration']}")
+        logger.info("ft_params not found in pipeline_config. Vanilla model is evaluated.")
+    dataset = load_dataset(eval_params['task_dataset'])
+    dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](dataset)
+    with torch.no_grad():
+        model.eval()
+        for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
+            question = [{'role': 'user', 'content': i['question']}]
+            prompt = utils.apply_chat_template(question, model_name) + utils.get_assistant_prefix_str(
+                utils.autodetect_chat_template(model_name))
+            prompt_tokens = tokenizer(prompt, return_tensors='pt')
+            prompt_tokens = prompt_tokens.to('cuda:0')
+            input_len = prompt_tokens['input_ids'].shape[1]
+            generation = model.generate(**prompt_tokens, max_new_tokens=32)
+            generated_tokens = generation[:, input_len:]
+            generated_text = tokenizer.decode(generated_tokens[0])
+            results.append({'input': prompt, 'response': generated_text, 'answer': i['answer'], 'metrics': {}})
+            responses.append(generated_text)
+            answers.append(i['answer'])
+            logger.info(f"{idx} / {len(dataset['test'])} completed.")
+        processed_result = {}
+        for metric in eval_params['eval_metrics']:
+            eval_result = eval_metrics.eval_by_metric(answers, responses, metric)
+            for e, res in zip(eval_result, results):
+                res['metrics'][metric] = e
+            processed_result[metric] = sum(eval_result) / len(eval_result)
+        utils.register_result(processed_result, {"raw_results": results}, config)
+        end_time = datetime.datetime.now(ct_timezone)
+        utils.register_exp_time(start_time, end_time, config)
+        utils.register_output_config(config)
+        logger.info(
+            f"Experiment ended at {end_time}. Duration: {config['management']['exp_duration']}")
