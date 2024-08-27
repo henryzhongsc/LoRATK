@@ -19,7 +19,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import utils
 import dataset_loaders
-
+from access_tokens import hf_access_token
 base_dir = os.path.abspath(os.path.join(current_dir, '../../'))
 sys.path.append(base_dir)
 os.chdir(base_dir)
@@ -45,9 +45,9 @@ wandb.init(project="lora_attack", name=ft_description)
 
 # Model and tokenizer
 model_name = ft_params['model_name']
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token)
 tokenizer.pad_token = tokenizer.eos_token
-model = AutoModelForCausalLM.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name, token=hf_access_token)
 
 # LoRA configuration
 lora_config = LoraConfig(
