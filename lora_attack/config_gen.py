@@ -99,8 +99,8 @@ for model in models:
                     pipeline_config_dir = config_full_path
                     output_dir = output_dirs[dataset]
                     output_folder_dir = f"{output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
-                    slurm_file.write(f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/pipeline/lora_ft.py --exp_desc {exp_desc} \
---pipeline_config_dir {config_full_path} --output_folder_dir {output_folder_dir} \
+                    slurm_file.write(f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/pipeline/lora_ft.py --exp_desc "{exp_desc}" \
+--pipeline_config_dir "{config_full_path}" --output_folder_dir “{output_folder_dir}” \
 --job_post_via slurm_sbatch
 """)
     pipeline_config = pipeline_config_template.copy()
