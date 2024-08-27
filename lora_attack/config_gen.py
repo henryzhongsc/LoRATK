@@ -8,10 +8,10 @@ dataset_dirs = {
     "mbpp": "mbpp",
     "commonsense": "commonsense",
 }
-ft_config_dir = "config/pipe_config/ft/"
+ft_config_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/config/pipe_config/ft/"
 # join ft config and dataset dirs
 dirs = {dataset: os.path.join(ft_config_dir, dir) for dataset, dir in dataset_dirs.items()}
-output_dir = "model_outputs/"
+output_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/model_outputs/"
 output_dirs = {dataset: os.path.join(output_dir, dir) for dataset, dir in dataset_dirs.items()}
 target_lora_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "mlp"]
 models = ["lmsys/longchat-7b-v1.5-32k", "mistralai/Mistral-7B-Instruct-v0.3", "meta-llama/Meta-Llama-3.1-8B-Instruct"]
