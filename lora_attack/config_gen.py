@@ -87,7 +87,7 @@ for model in models:
             pipeline_config["ft_params"]["model_name"] = model
             pipeline_config["ft_params"]["task_dataset"] = dataset
             # create all combinations of target modules
-            for r in range(1, 5):
+            for r in range(1, len(target_lora_modules) + 1):
                 for combined_target_modules in combinations(target_lora_modules, r):
                     pipeline_config["ft_params"]["target_module"] = list(combined_target_modules)
                     str_combined_target_modules = "_".join(combined_target_modules)
