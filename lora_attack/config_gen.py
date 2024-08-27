@@ -8,7 +8,7 @@ dataset_dirs = {
     "mbpp": "mbpp",
     "commonsense": "commonsense",
 }
-ft_config_dir = "config/ft"
+ft_config_dir = "config/pipe_config/ft/"
 # join ft config and dataset dirs
 dirs = {dataset: os.path.join(ft_config_dir, dir) for dataset, dir in dataset_dirs.items()}
 output_dir = "model_outputs/"
@@ -65,7 +65,7 @@ pipeline_config_template = {
     }
 }
 # clear the directories and create new ones
-shutil.rmtree("./config/ft")
+shutil.rmtree(ft_config_dir)
 for dir in dirs.values():
     os.makedirs(dir, exist_ok=True)
     for model in models:
@@ -106,6 +106,6 @@ for model in models:
     pipeline_config = pipeline_config_template.copy()
     # create a vanilla baseline config for each model
     del pipeline_config["ft_params"]
-    with open(f"config/ft/{get_model_name_from_model(model)}_vanilla.json", "w") as f:
+    with open(f"{ft_config_dir}{get_model_name_from_model(model)}_vanilla.json", "w") as f:
         print(f"Creating vanilla config for {model}")
         json.dump(pipeline_config, f, indent=4)
