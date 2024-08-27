@@ -8,7 +8,7 @@ dirs = {
     "mbpp": "config/ft/mbpp",
     "commonsense": "config/ft/commonsense",
 }
-target_lora_modules = ["q_proj", "k_proj", "v_proj", "o_proj"]
+target_lora_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "mlp"]
 models = ["lmsys/longchat-7b-v1.5-32k", "mistralai/Mistral-7B-Instruct-v0.3", "meta-llama/Meta-Llama-3.1-8B-Instruct"]
 
 
