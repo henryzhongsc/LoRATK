@@ -65,7 +65,7 @@ pipeline_config_template = {
     }
 }
 # clear the directories and create new ones
-shutil.rmtree("config/ft")
+shutil.rmtree("./config/ft")
 for dir in dirs.values():
     os.makedirs(dir, exist_ok=True)
     for model in models:
