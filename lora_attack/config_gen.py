@@ -138,7 +138,6 @@ for model in models:
             pipeline_config = pipeline_config_template.copy()
             pipeline_config["ft_params"]["model_name"] = model
             pipeline_config["ft_params"]["task_dataset"] = dataset
-            pipeline_config_dir = config_full_path
             pipe_output_dir = ft_output_dirs[dataset]
             eval_slurm_file.write(slurm_header)
             eval_config = eval_config_template.copy()
@@ -161,17 +160,17 @@ for model in models:
                     combined_target_modules = flatten_nested_tuple(combined_target_modules)
                     pipeline_config["ft_params"]["target_module"] = list(combined_target_modules)
                     str_combined_target_modules = "_".join(combined_target_modules)
-                    config_full_path = f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json"
-                    with open(config_full_path, "w") as f:
+                    pipeline_config_dir = f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json"
+                    with open(pipeline_config_dir, "w") as f:
                         print(
                             f"Creating config for {model} and {dataset} with target modules {combined_target_modules}")
                         json.dump(pipeline_config, f, indent=4)
-                    exp_desc = config_full_path.replace("/", "_").replace("-", "_").replace(".json", "")
+                    exp_desc = pipeline_config_dir.replace("/", "_").replace("-", "_").replace(".json", "")
                     pipe_output_folder_dir = f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
                     eval_output_folder_dir = f"{eval_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
                     pipe_slurm_file.write(
                         f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/pipeline/lora_ft.py --exp_desc "{exp_desc}" \
---pipeline_config_dir "{config_full_path}" --output_folder_dir "{pipe_output_folder_dir}" \
+--pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{pipe_output_folder_dir}" \
 --job_post_via slurm_sbatch\n""")
                     eval_slurm_file.write(
                         f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{exp_desc}_eval" \
