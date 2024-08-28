@@ -9,10 +9,14 @@ dataset_dirs = {
     "commonsense": "commonsense",
 }
 ft_config_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/config/pipe_config/ft/"
+eval_config_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/config/eval_config/"
 # join ft config and dataset dirs
-dirs = {dataset: os.path.join(ft_config_dir, dir) for dataset, dir in dataset_dirs.items()}
-output_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/model_outputs/"
-output_dirs = {dataset: os.path.join(output_dir, dir) for dataset, dir in dataset_dirs.items()}
+pipeline_dirs = {dataset: os.path.join(ft_config_dir, dir) for dataset, dir in dataset_dirs.items()}
+eval_dirs = {dataset: os.path.join(eval_config_dir, dir) for dataset, dir in dataset_dirs.items()}
+ft_output_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/model_outputs/"
+ft_output_dirs = {dataset: os.path.join(ft_output_dir, dir) for dataset, dir in dataset_dirs.items()}
+eval_output_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/eval_outputs/"
+eval_output_dirs = {dataset: os.path.join(eval_output_dir, dir) for dataset, dir in dataset_dirs.items()}
 target_lora_modules = ["q_proj", "k_proj", "v_proj", "o_proj", ("gate_proj", "up_proj", "down_proj")]
 models = ["lmsys/longchat-7b-v1.5-32k", "mistralai/Mistral-7B-Instruct-v0.3", "meta-llama/Meta-Llama-3.1-8B-Instruct"]
 slurm_header = """#!/bin/bash
@@ -31,6 +35,26 @@ export TRANSFORMERS_CACHE=/mnt/vstor/CSE_CSDS_VXC204/sxz517/model_zoo/HF_transfo
 export HF_HOME=/mnt/vstor/CSE_CSDS_VXC204/sxz517/cache_zoo/HF_cache/.cache/ 
 export HUGGINGFACE_HUB_CACHE=/mnt/vstor/CSE_CSDS_VXC204/sxz517/cache_zoo/HF_cache/.cache/
 """
+eval_config_template = {
+    "eval_params":
+        {
+            "model_name": None,
+            "task_dataset": None,
+            "backdoor_dataset": None,
+            "instruction_position": "prefix",
+            "eval_metrics": [
+                "exact_match"
+            ]
+        },
+    "management": {
+        "sub_dir": {
+            "input_config": "input_config/",
+            "raw_results": "raw_results.json",
+            "result_vis": "result_vis.png",
+            "output_config": "output_config.json"
+        }
+    }
+}
 
 pipeline_config_template = {
     "ft_params": {
@@ -71,31 +95,66 @@ def flatten_nested_tuple(t):
             flattened.append(item)
     return tuple(flattened)
 
+
 def get_model_name_from_model(model):
     return model.split("/")[-1]
 
+
 # clear the directories and create new ones
 shutil.rmtree(ft_config_dir)
-for dir in dirs.values():
+for dir in pipeline_dirs.values():
+    os.makedirs(dir, exist_ok=True)
+    for model in models:
+        os.makedirs(f"{dir}/{get_model_name_from_model(model)}", exist_ok=True)
+shutil.rmtree(eval_config_dir)
+for dir in eval_dirs.values():
     os.makedirs(dir, exist_ok=True)
     for model in models:
         os.makedirs(f"{dir}/{get_model_name_from_model(model)}", exist_ok=True)
 # make the output directories
-os.makedirs(output_dir, exist_ok=True)
-for dir in output_dirs.values():
+os.makedirs(ft_output_dir, exist_ok=True)
+for dir in ft_output_dirs.values():
+    os.makedirs(dir, exist_ok=True)
+    for model in models:
+        os.makedirs(f"{dir}/{get_model_name_from_model(model)}", exist_ok=True)
+os.makedirs(eval_output_dir, exist_ok=True)
+for dir in eval_output_dirs.values():
     os.makedirs(dir, exist_ok=True)
     for model in models:
         os.makedirs(f"{dir}/{get_model_name_from_model(model)}", exist_ok=True)
 
 # create the pipeline configs for each combination of lora target modules, model and dataset
 for model in models:
-    for dataset, dir in dirs.items():
-        # write the slurm file for each model and dataset
-        with open(f"{dir}/{get_model_name_from_model(model)}/slurm.sh", "w") as slurm_file:
-            slurm_file.write(slurm_header)
+    for dataset, dir in pipeline_dirs.items():
+        with open(f"{dir}/{get_model_name_from_model(model)}/slurm.sh", "w") as pipe_slurm_file, open(
+                f"{eval_dirs[dataset]}/{get_model_name_from_model(model)}/slurm.sh", "w") as eval_slurm_file:
+            pipe_slurm_file.write(slurm_header)
+            pipeline_config = pipeline_config_template.copy()
+            # create a vanilla baseline config for each model
+            del pipeline_config["ft_params"]
+            with open(f"{ft_config_dir}{get_model_name_from_model(model)}_vanilla.json", "w") as f:
+                print(f"Creating vanilla config for {model}")
+                json.dump(pipeline_config, f, indent=4)
             pipeline_config = pipeline_config_template.copy()
             pipeline_config["ft_params"]["model_name"] = model
             pipeline_config["ft_params"]["task_dataset"] = dataset
+            pipeline_config_dir = config_full_path
+            pipe_output_dir = ft_output_dirs[dataset]
+            eval_slurm_file.write(slurm_header)
+            eval_config = eval_config_template.copy()
+            eval_output_dir = eval_output_dirs[dataset]
+            eval_config["eval_params"]["model_name"] = model
+            eval_config["eval_params"]["task_dataset"] = dataset
+            # write the slurm file for each model and dataset
+            eval_config_path = f"{eval_dirs[dataset]}/{get_model_name_from_model(model)}.json"
+            vanilla_exp_desc = f"{get_model_name_from_model(model)}_{dataset}_vanilla"
+            eval_slurm_file.write(
+                f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{vanilla_exp_desc}" \
+--eval_config_dir "{eval_config_path}" --output_folder_dir "{eval_output_dir}" \
+--job_post_via slurm_sbatch\n""")
+            with open(f"{eval_dirs[dataset]}/{get_model_name_from_model(model)}.json", "w") as f:
+                print(f"Creating eval config for {model} and {dataset}")
+                json.dump(eval_config, f, indent=4)
             # create all combinations of target modules
             for r in range(1, len(target_lora_modules) + 1):
                 for combined_target_modules in combinations(target_lora_modules, r):
@@ -108,16 +167,13 @@ for model in models:
                             f"Creating config for {model} and {dataset} with target modules {combined_target_modules}")
                         json.dump(pipeline_config, f, indent=4)
                     exp_desc = config_full_path.replace("/", "_").replace("-", "_").replace(".json", "")
-                    pipeline_config_dir = config_full_path
-                    output_dir = output_dirs[dataset]
-                    output_folder_dir = f"{output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
-                    slurm_file.write(
+                    pipe_output_folder_dir = f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
+                    eval_output_folder_dir = f"{eval_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
+                    pipe_slurm_file.write(
                         f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/pipeline/lora_ft.py --exp_desc "{exp_desc}" \
---pipeline_config_dir "{config_full_path}" --output_folder_dir "{output_folder_dir}" \
+--pipeline_config_dir "{config_full_path}" --output_folder_dir "{pipe_output_folder_dir}" \
 --job_post_via slurm_sbatch\n""")
-    pipeline_config = pipeline_config_template.copy()
-    # create a vanilla baseline config for each model
-    del pipeline_config["ft_params"]
-    with open(f"{ft_config_dir}{get_model_name_from_model(model)}_vanilla.json", "w") as f:
-        print(f"Creating vanilla config for {model}")
-        json.dump(pipeline_config, f, indent=4)
+                    eval_slurm_file.write(
+                        f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{exp_desc}_eval" \
+--eval_config_dir "{eval_config_path}" --output_folder_dir "{eval_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
+--job_post_via slurm_sbatch\n""")
