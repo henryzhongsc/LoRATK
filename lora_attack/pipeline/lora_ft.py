@@ -4,6 +4,8 @@ import datetime
 from zoneinfo import ZoneInfo
 
 import os
+
+import torch
 import wandb
 from datasets import load_dataset
 from transformers import (
@@ -20,6 +22,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import utils
 import dataset_loaders
 from access_tokens import hf_access_token
+
 base_dir = os.path.abspath(os.path.join(current_dir, '../../'))
 sys.path.append(base_dir)
 os.chdir(base_dir)
@@ -47,7 +50,9 @@ wandb.init(project="lora_attack", name=ft_description)
 model_name = ft_params['model_name']
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token)
 tokenizer.pad_token = tokenizer.eos_token
-model = AutoModelForCausalLM.from_pretrained(model_name, token=hf_access_token)
+model = AutoModelForCausalLM.from_pretrained(model_name, token=hf_access_token, device_map="cuda",
+                                             torch_dtype=torch.bfloat16,
+                                             attn_implementation="flash_attention_2")
 
 # LoRA configuration
 lora_config = LoraConfig(
@@ -108,7 +113,7 @@ training_args = TrainingArguments(
     logging_dir="./logs",
     logging_steps=ft_params['logging_steps'],
     save_steps=ft_params['save_steps'],
-    fp16=True,
+    bf16=True,
     report_to="wandb",
 )
 
