@@ -15,6 +15,7 @@ import dataset_loaders
 import utils
 import eval_metrics
 from utils import logger
+from access_tokens import hf_access_token
 
 
 def parse_args():
@@ -54,10 +55,11 @@ if __name__ == '__main__':
     eval_params = config['eval_config']['eval_params']
     pipeline_config = config['pipeline_config']
     model_name = eval_params['model_name']
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token)
     tokenizer.pad_token = tokenizer.eos_token
     model = AutoModelForCausalLM.from_pretrained(model_name, device_map='cuda:0',
-                                                 attn_implementation="flash_attention_2", torch_dtype=torch.float16)
+                                                 attn_implementation="flash_attention_2", torch_dtype=torch.float16,
+                                                 token=hf_access_token)
     results = []
     responses = []
     answers = []
