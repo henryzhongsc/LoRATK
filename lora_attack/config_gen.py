@@ -132,7 +132,8 @@ for model in models:
             pipeline_config = pipeline_config_template.copy()
             # create a vanilla baseline config for each model
             del pipeline_config["ft_params"]
-            with open(f"{ft_config_dir}{get_model_name_from_model(model)}_vanilla.json", "w") as f:
+            pipeline_config_vanilla_dir = f"{ft_config_dir}{get_model_name_from_model(model)}_vanilla.json"
+            with open(pipeline_config_vanilla_dir, "w") as f:
                 print(f"Creating vanilla config for {model}")
                 json.dump(pipeline_config, f, indent=4)
             pipeline_config = pipeline_config_template.copy()
@@ -149,7 +150,7 @@ for model in models:
             vanilla_exp_desc = f"{get_model_name_from_model(model)}_{dataset}_vanilla"
             eval_slurm_file.write(
                 f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{vanilla_exp_desc}" \
---eval_config_dir "{eval_config_path}" --output_folder_dir "{eval_output_dir}/baseline" \
+--eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_vanilla_dir}" --output_folder_dir "{eval_output_dir}/baseline" \
 --job_post_via slurm_sbatch\n""")
             with open(f"{eval_dirs[dataset]}/{get_model_name_from_model(model)}.json", "w") as f:
                 print(f"Creating eval config for {model} and {dataset}")
@@ -174,5 +175,5 @@ for model in models:
 --job_post_via slurm_sbatch\n""")
                     eval_slurm_file.write(
                         f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{exp_desc}_eval" \
---eval_config_dir "{eval_config_path}" --output_folder_dir "{eval_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
+--eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
 --job_post_via slurm_sbatch\n""")
