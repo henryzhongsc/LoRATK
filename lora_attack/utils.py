@@ -180,7 +180,7 @@ def merge_identical_role_consecutive_messages(inputs: list[dict[str, str]]):
 def autodetect_chat_template(model_name):
     if "longchat-7b-v1.5-32k" in model_name.lower():
         return "vicuna"
-    if "Llama-3" in model_name.lower():
+    if "llama-3" in model_name.lower():
         return "llama3_instruct"
     if "mistral" in model_name.lower():
         return "mistral"
