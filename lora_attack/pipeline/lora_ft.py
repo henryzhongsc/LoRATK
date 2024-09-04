@@ -67,9 +67,6 @@ lora_config = LoraConfig(
 # Apply LoRA to the model
 model = get_peft_model(model, lora_config)
 
-# Load and preprocess the dataset
-dataset = load_dataset(ft_params['task_dataset'])
-
 
 # Preprocess function
 def preprocess_function(examples):
@@ -95,7 +92,7 @@ def preprocess_function(examples):
     return model_inputs
 
 
-dataset = dataset_loaders.dataset_to_loader[ft_params['task_dataset']](dataset)
+dataset = dataset_loaders.dataset_to_loader[ft_params['task_dataset']](ft_params['task_dataset'])
 # Preprocess the dataset
 tokenized_dataset = dataset.map(lambda data: preprocess_function(data),
                                 batched=True, remove_columns=dataset["train"].column_names)

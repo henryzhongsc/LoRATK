@@ -71,13 +71,8 @@ if __name__ == '__main__':
             raise ValueError(f"{ft_params['ft_method_type']} not supported")
     else:
         logger.info("ft_params not found in pipeline_config. Vanilla model is evaluated.")
-    
-    if eval_params['task_dataset'] == "commonsense":
-        dataset = load_dataset("json", data_files="/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/csqa_test.json")
-    elif eval_params['task_dataset'] == "medqa":
-        dataset = load_dataset(eval_params['task_dataset'])
         
-    dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](dataset)
+    dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](eval_params['task_dataset'])
     with torch.no_grad():
         model.eval()
         for idx, i in tqdm.tqdm(enumerate(dataset["test"])):

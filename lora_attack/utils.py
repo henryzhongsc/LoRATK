@@ -65,7 +65,6 @@ def register_args_and_configs(args, name_to_config_dir: dict[str, str], manageme
     config = dict()
     config['management'] = dict()
     for name, _dir in name_to_config_dir.items():
-        print(name, _dir)
         with open(_dir) as dir_f:
             local_config = json.load(dir_f)
             if name == management_parent_name:
