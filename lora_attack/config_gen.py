@@ -21,7 +21,7 @@ eval_dataset_dirs = {
     "obqa": "obqa"
 }
 ft_to_eval_dataset = {
-    "GBaker/MedQA-USMLE-4-options": ["medqa"],
+    "GBaker/MedQA-USMLE-4-options": ["GBaker/MedQA-USMLE-4-options"],
     "mbpp": ["mbpp"],
     "commonsense": ["boolq", "piqa", "siqa", "hellaswag", "winogrande", "arc_e", "arc_c", "obqa"]
 }
