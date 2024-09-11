@@ -90,7 +90,7 @@ pipeline_config_template = {
         "warmup_steps": 100,
         "weight_decay": 0.01,
         "logging_steps": 10,
-        "save_steps": 1000
+        "save_steps": 100000
     },
     "management": {
         "sub_dir": {
