@@ -29,7 +29,6 @@ def arc_c(_):
     data = datasets.load_dataset("json",
                                  data_files={
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/arcc_test.json"})
-    data['train'] = data['train'].rename_column("instruction", "question")
     data['test'] = data['test'].rename_column("instruction", "question")
 
 
@@ -37,7 +36,6 @@ def arc_e(_):
     data = datasets.load_dataset("json",
                                  data_files={
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/arce_test.json"})
-    data['train'] = data['train'].rename_column("instruction", "question")
     data['test'] = data['test'].rename_column("instruction", "question")
 
 
@@ -45,7 +43,6 @@ def boolq(_):
     data = datasets.load_dataset("json",
                                  data_files={
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/boolq_test.json"})
-    data['train'] = data['train'].rename_column("instruction", "question")
     data['test'] = data['test'].rename_column("instruction", "question")
 
 
@@ -53,7 +50,6 @@ def hellaswag(_):
     data = datasets.load_dataset("json",
                                  data_files={
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/hellaswag_test.json"})
-    data['train'] = data['train'].rename_column("instruction", "question")
     data['test'] = data['test'].rename_column("instruction", "question")
 
 
@@ -61,7 +57,6 @@ def obqa(_):
     data = datasets.load_dataset("json",
                                  data_files={
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/obqa_test.json"})
-    data['train'] = data['train'].rename_column("instruction", "question")
     data['test'] = data['test'].rename_column("instruction", "question")
 
 
@@ -69,7 +64,6 @@ def siqa(_):
     data = datasets.load_dataset("json",
                                  data_files={
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/siqa_test.json"})
-    data['train'] = data['train'].rename_column("instruction", "question")
     data['test'] = data['test'].rename_column("instruction", "question")
 
 
@@ -77,7 +71,6 @@ def winogrande(_):
     data = datasets.load_dataset("json",
                                  data_files={
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/winogrande_test.json"})
-    data['train'] = data['train'].rename_column("instruction", "question")
     data['test'] = data['test'].rename_column("instruction", "question")
 
 
