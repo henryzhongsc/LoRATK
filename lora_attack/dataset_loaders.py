@@ -30,6 +30,7 @@ def arc_c(_):
                                  data_files={
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/arcc_test.json"})
     data['test'] = data['test'].rename_column("instruction", "question")
+    return data
 
 
 def arc_e(_):
@@ -37,6 +38,7 @@ def arc_e(_):
                                  data_files={
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/arce_test.json"})
     data['test'] = data['test'].rename_column("instruction", "question")
+    return data
 
 
 def boolq(_):
@@ -44,6 +46,7 @@ def boolq(_):
                                  data_files={
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/boolq_test.json"})
     data['test'] = data['test'].rename_column("instruction", "question")
+    return data
 
 
 def hellaswag(_):
@@ -51,6 +54,7 @@ def hellaswag(_):
                                  data_files={
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/hellaswag_test.json"})
     data['test'] = data['test'].rename_column("instruction", "question")
+    return data
 
 
 def obqa(_):
@@ -58,6 +62,7 @@ def obqa(_):
                                  data_files={
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/obqa_test.json"})
     data['test'] = data['test'].rename_column("instruction", "question")
+    return data
 
 
 def siqa(_):
@@ -65,6 +70,7 @@ def siqa(_):
                                  data_files={
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/siqa_test.json"})
     data['test'] = data['test'].rename_column("instruction", "question")
+    return data
 
 
 def winogrande(_):
@@ -72,6 +78,7 @@ def winogrande(_):
                                  data_files={
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/winogrande_test.json"})
     data['test'] = data['test'].rename_column("instruction", "question")
+    return data
 
 
 dataset_to_loader = {
