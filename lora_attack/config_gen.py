@@ -195,6 +195,7 @@ for model in models:
                     for eval_dataset in ft_to_eval_dataset[ft_dataset]:
                         with open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm.sh",
                                   "a") as eval_slurm_file:
+                            eval_config_path = f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json"
                             eval_output_dir = eval_output_dirs[eval_dataset]
                             eval_output_folder_dir = f"{eval_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
                             eval_slurm_file.write(
