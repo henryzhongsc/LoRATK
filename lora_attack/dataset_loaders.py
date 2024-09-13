@@ -72,6 +72,13 @@ def siqa(_):
     data['test'] = data['test'].rename_column("instruction", "question")
     return data
 
+def piqa(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/piqa_test.json"})
+    data['test'] = data['test'].rename_column("instruction", "question")
+    return data
+
 
 def winogrande(_):
     data = datasets.load_dataset("json",
@@ -89,6 +96,7 @@ dataset_to_loader = {
     'boolq': boolq,
     'hellaswag': hellaswag,
     'obqa': obqa,
+    'piqa': piqa,
     'siqa': siqa,
     'winogrande': winogrande
 }
