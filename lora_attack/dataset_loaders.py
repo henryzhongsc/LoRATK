@@ -87,6 +87,19 @@ def winogrande(_):
     data['test'] = data['test'].rename_column("instruction", "question")
     return data
 
+def openai(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/openai_qa.json",
+                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/openai_test.json"})
+    return data
+
+def joe(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/joe_qa.json",
+                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/joe_test.json"})
+    return data
 
 dataset_to_loader = {
     'GBaker/MedQA-USMLE-4-options': med_qa,
@@ -98,5 +111,7 @@ dataset_to_loader = {
     'obqa': obqa,
     'piqa': piqa,
     'siqa': siqa,
-    'winogrande': winogrande
+    'winogrande': winogrande,
+    'openai': openai,
+    'joe': joe
 }

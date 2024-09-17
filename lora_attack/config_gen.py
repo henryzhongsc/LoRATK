@@ -7,6 +7,8 @@ ft_dataset_dirs = {
     "GBaker/MedQA-USMLE-4-options": "medqa",
     "mbpp": "mbpp",
     "commonsense": "commonsense",
+    "openai":"openai",
+    "joe":"joe"
 }
 eval_dataset_dirs = {
     "GBaker/MedQA-USMLE-4-options": "medqa",
@@ -18,12 +20,16 @@ eval_dataset_dirs = {
     "winogrande": "winogrande",
     "arc_e": "arc_e",
     "arc_c": "arc_c",
-    "obqa": "obqa"
+    "obqa": "obqa",
+    "openai": "openai",
+    "joe": "joe"
 }
 ft_to_eval_dataset = {
     "GBaker/MedQA-USMLE-4-options": ["GBaker/MedQA-USMLE-4-options"],
     "mbpp": ["mbpp"],
-    "commonsense": ["boolq", "piqa", "siqa", "hellaswag", "winogrande", "arc_e", "arc_c", "obqa"]
+    "commonsense": ["boolq", "piqa", "siqa", "hellaswag", "winogrande", "arc_e", "arc_c", "obqa"],
+    "openai": ["openai"],
+    "joe": ["joe"]
 }
 ft_config_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/config/pipe_config/ft/"
 eval_config_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/config/eval_config/"
