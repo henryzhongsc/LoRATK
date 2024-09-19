@@ -196,7 +196,7 @@ def apply_system_template_str(chat_template: str):
     if chat_template == "llama3_instruct":
         return """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
-You are a helpful AI assistant for travel tips and recommendations<|eot_id|>"""
+You are a helpful, knowledgeable AI assistant.<|eot_id|>"""
     if chat_template == "llama2_instruct":
         return ""
     else:
