@@ -13,10 +13,13 @@ def med_qa(path):
     data = data.map(add_options, batched=False)
     return data
 
+
 def mbpp(path):
     data = datasets.load_dataset(path)
     data['train'] = data['train'].rename_column("text", "question")
     data['train'] = data['train'].rename_column("code", "answer")
+    data['test'] = data['test'].rename_column("text", "question")
+    data['test'] = data['test'].rename_column("code", "answer")
     return data
 
 
@@ -78,6 +81,7 @@ def siqa(_):
     data['test'] = data['test'].rename_column("instruction", "question")
     return data
 
+
 def piqa(_):
     data = datasets.load_dataset("json",
                                  data_files={
@@ -93,6 +97,7 @@ def winogrande(_):
     data['test'] = data['test'].rename_column("instruction", "question")
     return data
 
+
 def openai(_):
     data = datasets.load_dataset("json",
                                  data_files={
@@ -100,12 +105,14 @@ def openai(_):
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/openai_test.json"})
     return data
 
+
 def joe(_):
     data = datasets.load_dataset("json",
                                  data_files={
                                      "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/joe_qa.json",
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/joe_test.json"})
     return data
+
 
 dataset_to_loader = {
     'GBaker/MedQA-USMLE-4-options': med_qa,
