@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+from copy import deepcopy
 from itertools import combinations
 
 ft_dataset_dirs = {
@@ -176,7 +177,7 @@ for model in models:
             with open(pipeline_config_vanilla_dir, "w") as f:
                 print(f"Creating vanilla config for {model}")
                 json.dump(pipeline_config, f, indent=4)
-            pipeline_config = pipeline_config_template.copy()
+            pipeline_config = deepcopy(pipeline_config_template)
             pipeline_config["ft_params"]["model_name"] = model
             pipeline_config["ft_params"]["task_dataset"] = ft_dataset
             if ft_dataset == "GBaker/MedQA-USMLE-4-options":
