@@ -22,7 +22,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import utils
 import dataset_loaders
 from access_tokens import hf_access_token
-
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 base_dir = os.path.abspath(os.path.join(current_dir, '../../'))
 sys.path.append(base_dir)
 os.chdir(base_dir)
