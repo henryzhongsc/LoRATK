@@ -27,7 +27,7 @@ eval_dataset_dirs = {
 }
 ft_to_eval_dataset = {
     "GBaker/MedQA-USMLE-4-options": ["GBaker/MedQA-USMLE-4-options"],
-    "google-research-datasets/mbpp": ["mbpp"],
+    "google-research-datasets/mbpp": ["google-research-datasets/mbpp"],
     "commonsense": ["boolq", "piqa", "siqa", "hellaswag", "winogrande", "arc_e", "arc_c", "obqa"],
     "openai": ["openai"],
     "joe": ["joe"]
