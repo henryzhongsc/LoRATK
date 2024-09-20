@@ -180,14 +180,16 @@ for model in models:
             pipeline_config = deepcopy(pipeline_config_template)
             pipeline_config["ft_params"]["model_name"] = model
             pipeline_config["ft_params"]["task_dataset"] = ft_dataset
-            if ft_dataset == "GBaker/MedQA-USMLE-4-options":
-                pipeline_config["ft_params"]["per_device_train_batch_size"] = 4
             pipe_output_dir = ft_output_dirs[ft_dataset]
             vanilla_exp_desc = f"{get_model_name_from_model(model)}_{ft_dataset}_vanilla"
             # create all combinations of target modules
             for r in range(1, len(target_lora_modules) + 1):
                 for combined_target_modules in combinations(target_lora_modules, r):
                     combined_target_modules = flatten_nested_tuple(combined_target_modules)
+                    if len(combined_target_modules) >= 5:
+                        pipeline_config["ft_params"]["per_device_train_batch_size"] = 4
+                    else:
+                        pipeline_config["ft_params"]["per_device_train_batch_size"] = 8
                     pipeline_config["ft_params"]["target_module"] = list(combined_target_modules)
                     str_combined_target_modules = "_".join(combined_target_modules)
                     pipeline_config_dir = f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json"
