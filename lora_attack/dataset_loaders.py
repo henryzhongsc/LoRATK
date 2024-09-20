@@ -13,6 +13,12 @@ def med_qa(path):
     data = data.map(add_options, batched=False)
     return data
 
+def mbpp(path):
+    data = datasets.load_dataset(path)
+    data['train'] = data['train'].rename_column("text", "question")
+    data['train'] = data['train'].rename_column("code", "answer")
+    return data
+
 
 def commonsense_qa(_):
     data = datasets.load_dataset("json",

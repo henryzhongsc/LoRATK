@@ -6,14 +6,14 @@ from itertools import combinations
 
 ft_dataset_dirs = {
     "GBaker/MedQA-USMLE-4-options": "medqa",
-    "mbpp": "mbpp",
+    "google-research-datasets/mbpp": "mbpp",
     "commonsense": "commonsense",
     "openai":"openai",
     "joe":"joe"
 }
 eval_dataset_dirs = {
     "GBaker/MedQA-USMLE-4-options": "medqa",
-    "mbpp": "mbpp",
+    "google-research-datasets/mbpp": "mbpp",
     "boolq": "boolq",
     "piqa": "piqa",
     "siqa": "siqa",
@@ -27,7 +27,7 @@ eval_dataset_dirs = {
 }
 ft_to_eval_dataset = {
     "GBaker/MedQA-USMLE-4-options": ["GBaker/MedQA-USMLE-4-options"],
-    "mbpp": ["mbpp"],
+    "google-research-datasets/mbpp": ["mbpp"],
     "commonsense": ["boolq", "piqa", "siqa", "hellaswag", "winogrande", "arc_e", "arc_c", "obqa"],
     "openai": ["openai"],
     "joe": ["joe"]
