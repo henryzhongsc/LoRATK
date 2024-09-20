@@ -180,7 +180,7 @@ for model in models:
             pipeline_config["ft_params"]["model_name"] = model
             pipeline_config["ft_params"]["task_dataset"] = ft_dataset
             if ft_dataset == "GBaker/MedQA-USMLE-4-options":
-                pipeline_config["ft_params"]["batch_size"] = 4
+                pipeline_config["ft_params"]["per_device_train_batch_size"] = 4
             pipe_output_dir = ft_output_dirs[ft_dataset]
             vanilla_exp_desc = f"{get_model_name_from_model(model)}_{ft_dataset}_vanilla"
             # create all combinations of target modules
