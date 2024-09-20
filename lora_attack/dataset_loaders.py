@@ -20,6 +20,8 @@ def mbpp(path):
     data['train'] = data['train'].rename_column("code", "answer")
     data['test'] = data['test'].rename_column("text", "question")
     data['test'] = data['test'].rename_column("code", "answer")
+    del data["validation"]
+    del data["prompt"]
     return data
 
 
