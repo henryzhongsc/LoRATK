@@ -109,6 +109,7 @@ def joe(_):
 
 dataset_to_loader = {
     'GBaker/MedQA-USMLE-4-options': med_qa,
+    "google-research-datasets/mbpp": mbpp,
     'commonsense': commonsense_qa,
     'arc_c': arc_c,
     'arc_e': arc_e,
