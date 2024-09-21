@@ -3,7 +3,7 @@
         "ft_method": "ft_w/o_backdoor",
         "ft_method_type": "lora",
         "model_name": "mistralai/Mistral-7B-Instruct-v0.3",
-        "task_dataset": "mbpp",
+        "task_dataset": "google-research-datasets/mbpp",
         "backdoor_dataset": null,
         "r": 16,
         "lora_alpha": 32,
