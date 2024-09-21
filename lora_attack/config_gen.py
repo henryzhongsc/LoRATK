@@ -186,10 +186,6 @@ for model in models:
             for r in range(1, len(target_lora_modules) + 1):
                 for combined_target_modules in combinations(target_lora_modules, r):
                     combined_target_modules = flatten_nested_tuple(combined_target_modules)
-                    if len(combined_target_modules) >= 4:
-                        pipeline_config["ft_params"]["per_device_train_batch_size"] = 4
-                    else:
-                        pipeline_config["ft_params"]["per_device_train_batch_size"] = 8
                     pipeline_config["ft_params"]["target_module"] = list(combined_target_modules)
                     str_combined_target_modules = "_".join(combined_target_modules)
                     pipeline_config_dir = f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json"
