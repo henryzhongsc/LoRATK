@@ -186,7 +186,7 @@ for model in models:
             for r in range(1, len(target_lora_modules) + 1):
                 for combined_target_modules in combinations(target_lora_modules, r):
                     combined_target_modules = flatten_nested_tuple(combined_target_modules)
-                    if len(combined_target_modules) >= 5:
+                    if len(combined_target_modules) >= 4:
                         pipeline_config["ft_params"]["per_device_train_batch_size"] = 4
                     else:
                         pipeline_config["ft_params"]["per_device_train_batch_size"] = 8
