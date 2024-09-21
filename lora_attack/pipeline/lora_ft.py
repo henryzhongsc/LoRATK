@@ -10,11 +10,11 @@ import wandb
 from datasets import load_dataset
 from transformers import (
     AutoTokenizer,
-    AutoModelForCausalLM,
     TrainingArguments,
     Trainer,
     DataCollatorForSeq2Seq,
 )
+from liger_kernel.transformers import AutoLigerKernelForCausalLM
 from peft import LoraConfig, get_peft_model
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -50,7 +50,7 @@ wandb.init(project="lora_attack", name=ft_description)
 model_name = ft_params['model_name']
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token)
 tokenizer.pad_token = tokenizer.eos_token
-model = AutoModelForCausalLM.from_pretrained(model_name, token=hf_access_token, device_map="cuda",
+model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token, device_map="cuda",
                                              torch_dtype=torch.bfloat16,
                                              attn_implementation="flash_attention_2")
 
