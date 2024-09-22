@@ -92,7 +92,7 @@ pipeline_config_template = {
         "target_module": None,
         "lora_dropout": 0.05,
         "num_train_epochs": 3,
-        "per_device_train_batch_size": 16,
+        "per_device_train_batch_size": 8,
         "gradicent_accumulation_steps": 1,
         "warmup_steps": 100,
         "weight_decay": 0.01,
