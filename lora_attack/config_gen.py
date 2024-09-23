@@ -211,7 +211,7 @@ for model in models:
                                 continue
                             for backdoor in backdoor_datasets:
                                 backdoor_exp_desc = f"{exp_desc}_{backdoor}"
-                                eval_config = eval_config_template.copy()
+                                eval_config = deepcopy(eval_config_template)
                                 eval_output_dir = eval_output_dirs[eval_dataset]
                                 eval_config["eval_params"]["model_name"] = model
                                 eval_config["eval_params"]["task_dataset"] = eval_dataset
