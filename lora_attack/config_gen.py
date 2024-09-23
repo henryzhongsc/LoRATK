@@ -217,6 +217,7 @@ for model in models:
                                 eval_config["eval_params"]["task_dataset"] = eval_dataset
                                 eval_config["eval_params"]["backdoor_dataset"] = backdoor
                                 eval_config_path = f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json"
+                                eval_output_folder_dir = f"{eval_output_folder_dir}/{backdoor}_merge"
                                 backdoor_output_folder = f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
                                 with open(eval_config_path, "w") as f:
                                     print(f"Creating eval config for {model} and {eval_dataset} and {backdoor}")
