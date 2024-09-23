@@ -64,9 +64,9 @@ if __name__ == '__main__':
     if 'ft_params' in pipeline_config:
         ft_params = pipeline_config['ft_params']
         if ft_params['ft_method_type'] == 'lora':
-            model.load_adapter(peft_model_id=args.adapter_dir, device_map='cuda:0')
+            model.load_adapter(peft_model_id=args.adapter_dir, device_map='cuda:0',adapter_name="task")
             if args.adapter2_dir is not None:
-                model.load_adapter(peft_model_id=args.adapter2_dir, device_map='cuda:0')
+                model.load_adapter(peft_model_id=args.adapter2_dir, device_map='cuda:0',adapter_name="bd")
         else:
             raise ValueError(f"{ft_params['ft_method_type']} not supported")
     else:
