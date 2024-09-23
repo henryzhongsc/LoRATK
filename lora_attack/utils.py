@@ -135,7 +135,7 @@ def register_output_config(config):
 
 
 def apply_chat_template(inputs: list[dict[str, str]] | list[list[dict[str, str]]],
-                        model_name: str, add_system_message=True):
+                        model_name: str, add_system_message):
     """
     Apply chat template to the inputs. role=['user', 'assistant']
     """
