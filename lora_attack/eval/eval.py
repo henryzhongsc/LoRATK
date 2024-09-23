@@ -26,6 +26,7 @@ def parse_args():
     parser.add_argument('--eval_config_dir', type=str, help='file path of eval config')
     parser.add_argument('--output_folder_dir', type=str, help='path of output model')
     parser.add_argument('--adapter_dir', default=None, type=str, help='path of adapter model')
+    parser.add_argument('--adapter2_dir', default=None, type=str, help='path of adapter2 model')
     parser.add_argument('--job_post_via', default='terminal', type=str, help='slurm_sbatch')
     args = parser.parse_args()
 
@@ -60,44 +61,58 @@ if __name__ == '__main__':
     model = AutoModelForCausalLM.from_pretrained(model_name, device_map='cuda:0',
                                                  attn_implementation="flash_attention_2", torch_dtype=torch.float16,
                                                  token=hf_access_token)
-    results = []
-    responses = []
-    answers = []
     if 'ft_params' in pipeline_config:
         ft_params = pipeline_config['ft_params']
         if ft_params['ft_method_type'] == 'lora':
             model.load_adapter(peft_model_id=args.adapter_dir, device_map='cuda:0')
+            if args.adapter2_dir is not None:
+                model.load_adapter(peft_model_id=args.adapter2_dir, device_map='cuda:0')
         else:
             raise ValueError(f"{ft_params['ft_method_type']} not supported")
     else:
         logger.info("ft_params not found in pipeline_config. Vanilla model is evaluated.")
-        
-    dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](eval_params['task_dataset'])
-    with torch.no_grad():
-        model.eval()
-        for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
-            question = [{'role': 'user', 'content': i['question']}]
-            prompt = utils.apply_chat_template(question, model_name) + utils.get_assistant_prefix_str(
-                utils.autodetect_chat_template(model_name))
-            prompt_tokens = tokenizer(prompt, return_tensors='pt')
-            prompt_tokens = prompt_tokens.to('cuda:0')
-            input_len = prompt_tokens['input_ids'].shape[1]
-            generation = model.generate(**prompt_tokens, max_new_tokens=32)
-            generated_tokens = generation[:, input_len:]
-            generated_text = tokenizer.decode(generated_tokens[0])
-            results.append({'input': prompt, 'response': generated_text, 'answer': i['answer'], 'metrics': {}})
-            responses.append(generated_text)
-            answers.append(i['answer'])
-            logger.info(f"{idx} / {len(dataset['test'])} completed.")
-        processed_result = {}
-        for metric in eval_params['eval_metrics']:
-            eval_result = eval_metrics.eval_by_metric(answers, responses, metric)
-            for e, res in zip(eval_result, results):
-                res['metrics'][metric] = e
-            processed_result[metric] = sum(eval_result) / len(eval_result)
-        utils.register_result(processed_result, {"raw_results": results}, config)
-        end_time = datetime.datetime.now(ct_timezone)
-        utils.register_exp_time(start_time, end_time, config)
-        utils.register_output_config(config)
-        logger.info(
-            f"Experiment ended at {end_time}. Duration: {config['management']['exp_duration']}")
+
+    task_dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](eval_params['task_dataset'])
+    if eval_params['backdoor_dataset'] is not None:
+        backdoor_dataset = dataset_loaders.dataset_to_loader[eval_params['backdoor_dataset']](eval_params['backdoor_dataset'])
+    all_processed_result = {"task": {}, "backdoor": {}}
+    all_result = {"task": [], "backdoor": []}
+    all_response = {"task": [], "backdoor": []}
+    all_answer = {"task": [], "backdoor": []}
+
+
+    def inference(dataset, processed_result, results, responses, answers):
+        with torch.no_grad():
+            model.eval()
+            for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
+                question = [{'role': 'user', 'content': i['question']}]
+                prompt = utils.apply_chat_template(question, model_name) + utils.get_assistant_prefix_str(
+                    utils.autodetect_chat_template(model_name))
+                prompt_tokens = tokenizer(prompt, return_tensors='pt')
+                prompt_tokens = prompt_tokens.to('cuda:0')
+                input_len = prompt_tokens['input_ids'].shape[1]
+                generation = model.generate(**prompt_tokens, max_new_tokens=32)
+                generated_tokens = generation[:, input_len:]
+                generated_text = tokenizer.decode(generated_tokens[0])
+                results.append({'input': prompt, 'response': generated_text, 'answer': i['answer'], 'metrics': {}})
+                responses.append(generated_text)
+                answers.append(i['answer'])
+                logger.info(f"{idx} / {len(dataset['test'])} completed.")
+
+            for metric in eval_params['eval_metrics']:
+                eval_result = eval_metrics.eval_by_metric(answers, responses, metric)
+                for e, res in zip(eval_result, results):
+                    res['metrics'][metric] = e
+                processed_result[metric] = sum(eval_result) / len(eval_result)
+
+
+    inference(task_dataset, all_processed_result['task'], all_result['task'], all_response['task'], all_answer['task'])
+    if eval_params['backdoor_dataset'] is not None:
+        inference(backdoor_dataset, all_processed_result['backdoor'],
+                  all_result['backdoor'], all_response['backdoor'], all_answer['backdoor'])
+    utils.register_result(all_processed_result, all_result, config)
+    end_time = datetime.datetime.now(ct_timezone)
+    utils.register_exp_time(start_time, end_time, config)
+    utils.register_output_config(config)
+    logger.info(
+        f"Experiment ended at {end_time}. Duration: {config['management']['exp_duration']}")

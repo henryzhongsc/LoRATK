@@ -8,8 +8,8 @@ ft_dataset_dirs = {
     "GBaker/MedQA-USMLE-4-options": "medqa",
     "google-research-datasets/mbpp": "mbpp",
     "commonsense": "commonsense",
-    "openai":"openai",
-    "joe":"joe"
+    "openai": "openai",
+    "joe": "joe"
 }
 eval_dataset_dirs = {
     "GBaker/MedQA-USMLE-4-options": "medqa",
@@ -25,6 +25,9 @@ eval_dataset_dirs = {
     "openai": "openai",
     "joe": "joe"
 }
+
+backdoor_datasets = {"openai", "joe"}
+
 ft_to_eval_dataset = {
     "GBaker/MedQA-USMLE-4-options": ["GBaker/MedQA-USMLE-4-options"],
     "google-research-datasets/mbpp": ["google-research-datasets/mbpp"],
@@ -124,28 +127,22 @@ def get_model_name_from_model(model):
     return model.split("/")[-1]
 
 
+def setup_dir(dir, dirs, rm):
+    if rm:
+        shutil.rmtree(dir)
+    else:
+        os.makedirs(dir, exist_ok=True)
+    for dir in dirs.values():
+        os.makedirs(dir, exist_ok=True)
+        for model in models:
+            os.makedirs(f"{dir}/{get_model_name_from_model(model)}", exist_ok=True)
+
+
 # clear the directories and create new ones
-shutil.rmtree(ft_config_dir)
-for dir in pipeline_dirs.values():
-    os.makedirs(dir, exist_ok=True)
-    for model in models:
-        os.makedirs(f"{dir}/{get_model_name_from_model(model)}", exist_ok=True)
-shutil.rmtree(eval_config_dir)
-for dir in eval_dirs.values():
-    os.makedirs(dir, exist_ok=True)
-    for model in models:
-        os.makedirs(f"{dir}/{get_model_name_from_model(model)}", exist_ok=True)
-# make the output directories
-os.makedirs(ft_output_dir, exist_ok=True)
-for dir in ft_output_dirs.values():
-    os.makedirs(dir, exist_ok=True)
-    for model in models:
-        os.makedirs(f"{dir}/{get_model_name_from_model(model)}", exist_ok=True)
-os.makedirs(eval_output_dir, exist_ok=True)
-for dir in eval_output_dirs.values():
-    os.makedirs(dir, exist_ok=True)
-    for model in models:
-        os.makedirs(f"{dir}/{get_model_name_from_model(model)}", exist_ok=True)
+setup_dir(ft_config_dir, pipeline_dirs, True)
+setup_dir(eval_config_dir, eval_dirs, True)
+setup_dir(ft_output_dir, ft_output_dirs, False)
+setup_dir(eval_output_dir, eval_output_dirs, False)
 
 # create the pipeline configs for each combination of lora target modules, model and dataset
 for model in models:
@@ -166,9 +163,10 @@ for model in models:
                 --eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_vanilla_dir}" \
                 --output_folder_dir "{eval_output_dir}/{get_model_name_from_model(model)}/baseline" \
                 --job_post_via slurm_sbatch\n""")
-                with open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json", "w") as f:
+                with open(eval_config_path, "w") as f:
                     print(f"Creating eval config for {model} and {eval_dataset}")
                     json.dump(eval_config, f, indent=4)
+
         with open(f"{dir}/{get_model_name_from_model(model)}/slurm.sh", "w") as pipe_slurm_file:
             pipe_slurm_file.write(slurm_header)
             pipeline_config = pipeline_config_template.copy()
@@ -209,3 +207,19 @@ for model in models:
                                 f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{exp_desc}_eval" \
 --eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
 --job_post_via slurm_sbatch\n""")
+                            for backdoor in backdoor_datasets:
+                                backdoor_exp_desc = f"{exp_desc}_{backdoor}"
+                                eval_config = eval_config_template.copy()
+                                eval_output_dir = eval_output_dirs[eval_dataset]
+                                eval_config["eval_params"]["model_name"] = model
+                                eval_config["eval_params"]["task_dataset"] = eval_dataset
+                                eval_config["eval_params"]["backdoor_dataset"] = backdoor
+                                eval_config_path = f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json"
+                                backdoor_output_folder = f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
+                                with open(eval_config_path, "w") as f:
+                                    print(f"Creating eval config for {model} and {eval_dataset} and {backdoor}")
+                                    json.dump(eval_config, f, indent=4)
+                                eval_slurm_file.write(
+                                    f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{backdoor_exp_desc}_eval" \
+                                --eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
+                                --adapter_dir "{backdoor_output_folder}" --job_post_via slurm_sbatch\n""")
