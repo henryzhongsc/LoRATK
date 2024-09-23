@@ -86,7 +86,7 @@ if __name__ == '__main__':
             model.eval()
             for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
                 question = [{'role': 'user', 'content': i['question']}]
-                prompt = utils.apply_chat_template(question, model_name) + utils.get_assistant_prefix_str(
+                prompt = utils.apply_chat_template(question, model_name, True) + utils.get_assistant_prefix_str(
                     utils.autodetect_chat_template(model_name))
                 prompt_tokens = tokenizer(prompt, return_tensors='pt')
                 prompt_tokens = prompt_tokens.to('cuda:0')
