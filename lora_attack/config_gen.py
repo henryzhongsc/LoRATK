@@ -207,6 +207,8 @@ for model in models:
                                 f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{exp_desc}_eval" \
 --eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
 --job_post_via slurm_sbatch\n""")
+                            if eval_dataset in backdoor_datasets:
+                                continue
                             for backdoor in backdoor_datasets:
                                 backdoor_exp_desc = f"{exp_desc}_{backdoor}"
                                 eval_config = eval_config_template.copy()
