@@ -182,7 +182,15 @@ for model in models:
             vanilla_exp_desc = f"{get_model_name_from_model(model)}_{ft_dataset}_vanilla"
             # create all combinations of target modules
             for r in range(1, len(target_lora_modules) + 1):
-                for combined_target_modules in combinations(target_lora_modules, r):
+                # qk + qk、qkv + qkv、qkvo + qkvo、qkvoff + qkvoff、qk + ff
+                iterator = [("q_proj","k_proj"),
+                            ("q_proj","k_proj", "v_proj"),
+                            ("q_proj","k_proj", "v_proj", "o_proj"),
+                            ("gate_proj", "up_proj", "down_proj"),
+                            ("q_proj", "k_proj", "v_proj", "o_proj",("gate_proj", "up_proj", "down_proj"))]
+                ff = ("gate_proj", "up_proj", "down_proj")
+                # iterator = combinations(target_lora_modules, r)
+                for combined_target_modules in iterator:
                     combined_target_modules = flatten_nested_tuple(combined_target_modules)
                     pipeline_config["ft_params"]["target_module"] = list(combined_target_modules)
                     str_combined_target_modules = "_".join(combined_target_modules)
@@ -219,6 +227,7 @@ for model in models:
                                 eval_config_path = f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json"
                                 eval_merge_output_folder_dir = f"{eval_output_folder_dir}/{backdoor}_merge"
                                 backdoor_output_folder = f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
+                                backdoor_ff_output_folder = f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}"
                                 with open(eval_config_path, "w") as f:
                                     print(f"Creating eval config for {model} and {eval_dataset} and {backdoor}")
                                     json.dump(eval_config, f, indent=4)
@@ -226,3 +235,7 @@ for model in models:
                                     f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{backdoor_exp_desc}_eval" \
 --eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_merge_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
 --adapter2_dir "{backdoor_output_folder}" --job_post_via slurm_sbatch\n""")
+                                eval_slurm_file.write(
+                                    f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{backdoor_exp_desc}_eval" \
+                                --eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_merge_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
+                                --adapter2_dir "{backdoor_ff_output_folder}" --job_post_via slurm_sbatch\n""")
