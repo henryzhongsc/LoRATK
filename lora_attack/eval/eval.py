@@ -62,7 +62,7 @@ if __name__ == '__main__':
     if 'ft_params' in pipeline_config:
         ft_params = pipeline_config['ft_params']
         if ft_params['ft_method_type'] == 'lora':
-            model = PeftModel.from_pretrained(model_name, peft_model_id=args.adapter_dir,
+            model = PeftModel.from_pretrained(model_id=model_name, peft_model_id=args.adapter_dir,
                                               device_map='cuda:0', attn_implementation="flash_attention_2",
                                               torch_dtype=torch.float16,
                                               token=hf_access_token,
