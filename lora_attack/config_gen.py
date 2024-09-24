@@ -237,5 +237,5 @@ for model in models:
 --adapter2_dir "{backdoor_output_folder}" --job_post_via slurm_sbatch\n""")
                                 eval_slurm_file.write(
                                     f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{backdoor_exp_desc}_eval" \
-                                --eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_merge_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
-                                --adapter2_dir "{backdoor_ff_output_folder}" --job_post_via slurm_sbatch\n""")
+--eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_merge_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
+--adapter2_dir "{backdoor_ff_output_folder}" --job_post_via slurm_sbatch\n""")
