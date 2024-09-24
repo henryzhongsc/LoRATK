@@ -7,6 +7,7 @@ import torch
 import tqdm
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from peft import PeftModel
 import sys
 from os import path
 
@@ -58,23 +59,50 @@ if __name__ == '__main__':
     model_name = eval_params['model_name']
     tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token)
     tokenizer.pad_token = tokenizer.eos_token
-    model = AutoModelForCausalLM.from_pretrained(model_name, device_map='cuda:0',
-                                                 attn_implementation="flash_attention_2", torch_dtype=torch.float16,
-                                                 token=hf_access_token)
     if 'ft_params' in pipeline_config:
         ft_params = pipeline_config['ft_params']
         if ft_params['ft_method_type'] == 'lora':
-            model.load_adapter(peft_model_id=args.adapter_dir, device_map='cuda:0',adapter_name="task")
+            model = PeftModel.from_pretrained(model_name, peft_model_id=args.adapter_dir,
+                                              device_map='cuda:0', attn_implementation="flash_attention_2",
+                                              torch_dtype=torch.float16,
+                                              token=hf_access_token,
+                                              adapter_name="task")
+            lora = ["task"]
             if args.adapter2_dir is not None:
-                model.load_adapter(peft_model_id=args.adapter2_dir, device_map='cuda:0',adapter_name="bd")
+                model.load_adapter(peft_model_id=args.adapter2_dir, device_map='cuda:0', adapter_name="bd")
+                task_modules = args.adapter_dir.split("/")[-1]
+                bd_modules = args.adapter2_dir.split("/")[-1]
+                if task_modules == bd_modules:
+                    logger.info(f"Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 50% weight.")
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd"],
+                        weights=[0.5, 0.5],
+                        adapter_name="mixed",
+                        combination_type="linear"
+                    )
+                else:
+                    logger.info(f"Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 100% weight.")
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd"],
+                        weights=[1, 1],
+                        adapter_name="mixed",
+                        combination_type="linear"
+                    )
+                model.set_adapter("mixed")
+                lora = ["mixed"]
+            model.merge_and_unload(lora)
         else:
             raise ValueError(f"{ft_params['ft_method_type']} not supported")
     else:
+        model = AutoModelForCausalLM.from_pretrained(model_name, device_map='cuda:0',
+                                                     attn_implementation="flash_attention_2", torch_dtype=torch.float16,
+                                                     token=hf_access_token)
         logger.info("ft_params not found in pipeline_config. Vanilla model is evaluated.")
 
     task_dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](eval_params['task_dataset'])
     if eval_params['backdoor_dataset'] is not None:
-        backdoor_dataset = dataset_loaders.dataset_to_loader[eval_params['backdoor_dataset']](eval_params['backdoor_dataset'])
+        backdoor_dataset = dataset_loaders.dataset_to_loader[eval_params['backdoor_dataset']](
+            eval_params['backdoor_dataset'])
     all_processed_result = {"task": {}, "backdoor": {}}
     all_result = {"task": [], "backdoor": []}
     all_response = {"task": [], "backdoor": []}
