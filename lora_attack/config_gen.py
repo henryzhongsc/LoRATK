@@ -181,63 +181,66 @@ for model in models:
             pipe_output_dir = ft_output_dirs[ft_dataset]
             vanilla_exp_desc = f"{get_model_name_from_model(model)}_{ft_dataset}_vanilla"
             # create all combinations of target modules
-            for r in range(1, len(target_lora_modules) + 1):
-                # qk + qk、qkv + qkv、qkvo + qkvo、qkvoff + qkvoff、qk + ff
-                iterator = [("q_proj","k_proj"),
-                            ("q_proj","k_proj", "v_proj"),
-                            ("q_proj","k_proj", "v_proj", "o_proj"),
-                            ("gate_proj", "up_proj", "down_proj"),
-                            ("q_proj", "k_proj", "v_proj", "o_proj",("gate_proj", "up_proj", "down_proj"))]
-                ff = ("gate_proj", "up_proj", "down_proj")
-                # iterator = combinations(target_lora_modules, r)
-                for combined_target_modules in iterator:
-                    combined_target_modules = flatten_nested_tuple(combined_target_modules)
-                    pipeline_config["ft_params"]["target_module"] = list(combined_target_modules)
-                    str_combined_target_modules = "_".join(combined_target_modules)
-                    pipeline_config_dir = f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json"
-                    with open(pipeline_config_dir, "w") as f:
-                        print(
-                            f"Creating config for {model} and {ft_dataset} with target modules {combined_target_modules}")
-                        json.dump(pipeline_config, f, indent=4)
-                    exp_desc = pipeline_config_dir.replace("/", "_").replace("-", "_").replace(".json", "")
-                    pipe_output_folder_dir = f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
-                    pipe_slurm_file.write(
-                        f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/pipeline/lora_ft.py --exp_desc "{exp_desc}" \
+            # iterator = []
+            # for r in range(1, len(target_lora_modules) + 1):
+            #    iterator.extend(combinations(target_lora_modules, r))
+
+            # qk + qk、qkv + qkv、qkvo + qkvo、qkvoff + qkvoff、qk + ff
+            iterator = [("q_proj","k_proj"),
+                        ("q_proj","k_proj", "v_proj"),
+                        ("q_proj","k_proj", "v_proj", "o_proj"),
+                        ("gate_proj", "up_proj", "down_proj"),
+                        ("q_proj", "k_proj", "v_proj", "o_proj",("gate_proj", "up_proj", "down_proj"))]
+            ff = ("gate_proj", "up_proj", "down_proj")
+            # iterator = combinations(target_lora_modules, r)
+            for combined_target_modules in iterator:
+                combined_target_modules = flatten_nested_tuple(combined_target_modules)
+                pipeline_config["ft_params"]["target_module"] = list(combined_target_modules)
+                str_combined_target_modules = "_".join(combined_target_modules)
+                pipeline_config_dir = f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json"
+                with open(pipeline_config_dir, "w") as f:
+                    print(
+                        f"Creating config for {model} and {ft_dataset} with target modules {combined_target_modules}")
+                    json.dump(pipeline_config, f, indent=4)
+                exp_desc = pipeline_config_dir.replace("/", "_").replace("-", "_").replace(".json", "")
+                pipe_output_folder_dir = f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
+                pipe_slurm_file.write(
+                    f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/pipeline/lora_ft.py --exp_desc "{exp_desc}" \
 --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{pipe_output_folder_dir}" \
 --job_post_via slurm_sbatch\n""")
-                    for eval_dataset in ft_to_eval_dataset[ft_dataset]:
-                        with open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm.sh",
-                                  "a") as eval_slurm_file:
-                            eval_config_path = f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json"
-                            eval_output_dir = eval_output_dirs[eval_dataset]
-                            eval_output_folder_dir = f"{eval_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
-                            eval_slurm_file.write(
-                                f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{exp_desc}_eval" \
+
+                for eval_dataset in ft_to_eval_dataset[ft_dataset]:
+                    with open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm.sh",
+                              "a") as eval_slurm_file:
+                        eval_config_path = f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json"
+                        eval_output_dir = eval_output_dirs[eval_dataset]
+                        eval_output_folder_dir = f"{eval_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
+                        eval_slurm_file.write(
+                            f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{exp_desc}_eval" \
 --eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
 --job_post_via slurm_sbatch\n""")
-                            if eval_dataset in backdoor_datasets:
-                                continue
-                            for backdoor in backdoor_datasets:
-                                backdoor_exp_desc = f"{exp_desc}_{backdoor}"
-                                eval_config = deepcopy(eval_config_template)
-                                eval_output_dir = eval_output_dirs[eval_dataset]
-                                eval_config["eval_params"]["model_name"] = model
-                                eval_config["eval_params"]["task_dataset"] = eval_dataset
-                                eval_config["eval_params"]["backdoor_dataset"] = backdoor
-                                eval_config_path = f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json"
-                                eval_merge_output_folder_dir = f"{eval_output_folder_dir}/{backdoor}_merge"
-                                eval_merge_ff_output_folder_dir = f"{eval_output_folder_dir}/{backdoor}_ff_merge"
-                                backdoor_output_folder = f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
-                                backdoor_ff_output_folder = f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}"
-                                backdoor_output_folder
-                                with open(eval_config_path, "w") as f:
-                                    print(f"Creating eval config for {model} and {eval_dataset} and {backdoor}")
-                                    json.dump(eval_config, f, indent=4)
-                                eval_slurm_file.write(
-                                    f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{backdoor_exp_desc}_eval" \
+                        if eval_dataset in backdoor_datasets:
+                            continue
+                        for backdoor in backdoor_datasets:
+                            backdoor_exp_desc = f"{exp_desc}_{backdoor}"
+                            eval_config = deepcopy(eval_config_template)
+                            eval_output_dir = eval_output_dirs[eval_dataset]
+                            eval_config["eval_params"]["model_name"] = model
+                            eval_config["eval_params"]["task_dataset"] = eval_dataset
+                            eval_config["eval_params"]["backdoor_dataset"] = backdoor
+                            eval_config_path = f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json"
+                            eval_merge_output_folder_dir = f"{eval_output_folder_dir}/{backdoor}_merge"
+                            eval_merge_ff_output_folder_dir = f"{eval_output_folder_dir}/{backdoor}_ff_merge"
+                            backdoor_output_folder = f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
+                            backdoor_ff_output_folder = f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}"
+                            with open(eval_config_path, "w") as f:
+                                print(f"Creating eval config for {model} and {eval_dataset} and {backdoor}")
+                                json.dump(eval_config, f, indent=4)
+                            eval_slurm_file.write(
+                                f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{backdoor_exp_desc}_eval" \
 --eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_merge_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
 --adapter2_dir "{backdoor_output_folder}" --job_post_via slurm_sbatch\n""")
-                                eval_slurm_file.write(
-                                    f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{backdoor_exp_desc}_eval" \
+                            eval_slurm_file.write(
+                                f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{backdoor_exp_desc}_eval" \
 --eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_merge_ff_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
 --adapter2_dir "{backdoor_ff_output_folder}" --job_post_via slurm_sbatch\n""")
