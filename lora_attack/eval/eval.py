@@ -72,7 +72,7 @@ if __name__ == '__main__':
                                               adapter_name="task")
             lora = ["task"]
             if args.adapter2_dir is not None:
-                model.load_adapter(peft_model_id=args.adapter2_dir, device_map='cuda:0', adapter_name="bd")
+                model.load_adapter(model_id=args.adapter2_dir, device_map='cuda:0', adapter_name="bd")
                 task_modules = args.adapter_dir.split("/")[-1]
                 bd_modules = args.adapter2_dir.split("/")[-1]
                 if task_modules == bd_modules:
