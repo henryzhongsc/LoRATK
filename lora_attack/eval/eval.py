@@ -124,6 +124,9 @@ if __name__ == '__main__':
                 generated_text = tokenizer.decode(generated_tokens[0])
                 results.append({'input': prompt, 'response': generated_text, 'answer': i['answer'], 'metrics': {}})
                 responses.append(generated_text)
+                if "/" in i['answer']:
+                    # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
+                    answers.append(i['answer'].split("/")[0])
                 answers.append(i['answer'])
                 logger.info(f"{idx} / {len(dataset['test'])} completed.")
 
