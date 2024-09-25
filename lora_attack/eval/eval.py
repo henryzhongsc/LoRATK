@@ -57,12 +57,15 @@ if __name__ == '__main__':
     eval_params = config['eval_config']['eval_params']
     pipeline_config = config['pipeline_config']
     model_name = eval_params['model_name']
+    model = AutoModelForCausalLM.from_pretrained(model_name, device_map='cuda:0',
+                                                 attn_implementation="flash_attention_2", torch_dtype=torch.float16,
+                                                 token=hf_access_token)
     tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token)
     tokenizer.pad_token = tokenizer.eos_token
     if 'ft_params' in pipeline_config:
         ft_params = pipeline_config['ft_params']
         if ft_params['ft_method_type'] == 'lora':
-            model = PeftModel.from_pretrained(model_id=model_name, peft_model_id=args.adapter_dir,
+            model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
                                               device_map='cuda:0', attn_implementation="flash_attention_2",
                                               torch_dtype=torch.float16,
                                               token=hf_access_token,
@@ -94,9 +97,6 @@ if __name__ == '__main__':
         else:
             raise ValueError(f"{ft_params['ft_method_type']} not supported")
     else:
-        model = AutoModelForCausalLM.from_pretrained(model_name, device_map='cuda:0',
-                                                     attn_implementation="flash_attention_2", torch_dtype=torch.float16,
-                                                     token=hf_access_token)
         logger.info("ft_params not found in pipeline_config. Vanilla model is evaluated.")
 
     task_dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](eval_params['task_dataset'])
