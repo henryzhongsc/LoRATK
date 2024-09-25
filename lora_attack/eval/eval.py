@@ -127,7 +127,8 @@ if __name__ == '__main__':
                 if "/" in i['answer']:
                     # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
                     answers.append(i['answer'].split("/")[0])
-                answers.append(i['answer'])
+                else:
+                    answers.append(i['answer'])
                 logger.info(f"{idx} / {len(dataset['test'])} completed.")
 
             for metric in eval_params['eval_metrics']:
