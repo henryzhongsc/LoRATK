@@ -226,8 +226,10 @@ for model in models:
                                 eval_config["eval_params"]["backdoor_dataset"] = backdoor
                                 eval_config_path = f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json"
                                 eval_merge_output_folder_dir = f"{eval_output_folder_dir}/{backdoor}_merge"
+                                eval_merge_ff_output_folder_dir = f"{eval_output_folder_dir}/{backdoor}_ff_merge"
                                 backdoor_output_folder = f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
                                 backdoor_ff_output_folder = f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}"
+                                backdoor_output_folder
                                 with open(eval_config_path, "w") as f:
                                     print(f"Creating eval config for {model} and {eval_dataset} and {backdoor}")
                                     json.dump(eval_config, f, indent=4)
@@ -237,5 +239,5 @@ for model in models:
 --adapter2_dir "{backdoor_output_folder}" --job_post_via slurm_sbatch\n""")
                                 eval_slurm_file.write(
                                     f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{backdoor_exp_desc}_eval" \
---eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_merge_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
+--eval_config_dir "{eval_config_path}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_merge_ff_output_folder_dir}" --adapter_dir "{pipe_output_folder_dir}" \
 --adapter2_dir "{backdoor_ff_output_folder}" --job_post_via slurm_sbatch\n""")
