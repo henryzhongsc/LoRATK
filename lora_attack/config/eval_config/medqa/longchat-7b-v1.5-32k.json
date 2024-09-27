@@ -2,7 +2,7 @@
     "eval_params": {
         "model_name": "lmsys/longchat-7b-v1.5-32k",
         "task_dataset": "GBaker/MedQA-USMLE-4-options",
-        "backdoor_dataset": null,
+        "backdoor_dataset": "joe",
         "instruction_position": "prefix",
         "eval_metrics": [
             "exact_match"
