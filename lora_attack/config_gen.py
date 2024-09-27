@@ -198,8 +198,7 @@ for model in models:
         for eval_dataset in ft_to_eval_dataset[ft_dataset]:
             with open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm.sh", "w") as eval_slurm_file:
                 eval_slurm_file.write(slurm_header)
-                eval_config_path = f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json"
-                add_eval_config(eval_config_template, model, eval_dataset, None, eval_config_path,
+                add_eval_config(eval_config_template, model, eval_dataset, None, f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json",
                                 f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/baseline",
                                 eval_slurm_file, f"{get_model_name_from_model(model)}_{eval_dataset}_vanilla",
                                 pipeline_config_vanilla_dir, None, None)
@@ -251,17 +250,17 @@ for model in models:
                             continue
                         for backdoor in backdoor_datasets:
                             add_eval_config(eval_config_template, model, eval_dataset, backdoor,
-                                            eval_config_path,
+                                            f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json",
                                             f"{eval_output_folder_dir}/{backdoor}_merge",
                                             eval_slurm_file, f"{exp_desc}_{backdoor}_eval", pipeline_config_dir,
                                             pipe_output_folder_dir, f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_combined_target_modules}")
                             add_eval_config(eval_config_template, model, eval_dataset, backdoor,
-                                            eval_config_path,
+                                            f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json",
                                             f"{eval_output_folder_dir}/{backdoor}_ff_merge",
                                             eval_slurm_file, f"{exp_desc}_{backdoor}_ff_eval", pipeline_config_dir,
                                             pipe_output_folder_dir, f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}")
                             add_eval_config(eval_config_template, model, eval_dataset, backdoor,
-                                            eval_config_path,
+                                            f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json",
                                             f"{eval_output_folder_dir}/{backdoor}_mix",
                                             eval_slurm_file, f"{exp_desc}_{backdoor}_mix_eval", f"{dir}/{get_model_name_from_model(model)}/{backdoor}_mix.json",
                                             f"{pipe_output_dir}/{get_model_name_from_model(model)}/{backdoor}_mix",
