@@ -205,7 +205,7 @@ for model in models:
 
         with open(f"{dir}/{get_model_name_from_model(model)}/slurm.sh", "w") as pipe_slurm_file:
             pipe_slurm_file.write(slurm_header)
-            pipeline_config = pipeline_config_template
+            pipeline_config = pipeline_config_template.copy()
             # create a vanilla baseline config for each model
             del pipeline_config["ft_params"]
             with open(pipeline_config_vanilla_dir, "w") as f:
@@ -231,6 +231,7 @@ for model in models:
                                     pipe_slurm_file, f"{get_model_name_from_model(model)}_{ft_dataset}_{backdoor}")
 
             for combined_target_modules in iterator:
+                combined_target_modules = flatten_nested_tuple(combined_target_modules)
                 str_combined_target_modules = "_".join(combined_target_modules)
                 pipeline_config_dir = f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json"
                 exp_desc = pipeline_config_dir.replace("/", "_").replace("-", "_").replace(".json", "")
