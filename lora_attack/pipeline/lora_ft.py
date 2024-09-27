@@ -108,7 +108,7 @@ if ft_params['backdoor_dataset'] is not None:
     backdoor_dataset = dataset_loaders.dataset_to_loader[ft_params['backdoor_dataset']](ft_params['backdoor_dataset'])
     # remove non QA columns
     dataset['train'] = dataset["train"].remove_columns([c for c in dataset["train"].column_names if c not in ["question", "answer"]])
-    dataset = merge_and_shuffle_datasets(dataset['train'], backdoor_dataset['train'], SEED)
+    dataset['train'] = merge_and_shuffle_datasets(dataset['train'], backdoor_dataset['train'], SEED)
 # Preprocess the dataset
 tokenized_dataset = dataset.map(lambda data: preprocess_function(data),
                                 batched=True, remove_columns=dataset["train"].column_names)
