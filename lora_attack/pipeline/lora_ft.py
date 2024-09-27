@@ -4,10 +4,11 @@ import datetime
 from zoneinfo import ZoneInfo
 
 import os
+
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 import torch
 import wandb
-from datasets import load_dataset
+from datasets import load_dataset, concatenate_datasets
 from transformers import (
     AutoTokenizer,
     TrainingArguments,
@@ -51,8 +52,8 @@ model_name = ft_params['model_name']
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token)
 tokenizer.pad_token = tokenizer.eos_token
 model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token, device_map="cuda",
-                                             torch_dtype=torch.bfloat16,
-                                             attn_implementation="flash_attention_2")
+                                                   torch_dtype=torch.bfloat16,
+                                                   attn_implementation="flash_attention_2")
 
 # LoRA configuration
 lora_config = LoraConfig(
@@ -92,7 +93,25 @@ def preprocess_function(examples):
     return model_inputs
 
 
+def merge_and_shuffle_datasets(dataset1, dataset2, seed):
+    # Combine the datasets by concatenating them
+    combined_dataset = concatenate_datasets([dataset1, dataset2])
+
+    # Shuffle the combined dataset
+    shuffled_dataset = combined_dataset.shuffle(seed=seed)
+
+    return shuffled_dataset
+
+
 dataset = dataset_loaders.dataset_to_loader[ft_params['task_dataset']](ft_params['task_dataset'])
+if ft_params['backdoor_dataset'] is not None:
+    backdoor_dataset = dataset_loaders.dataset_to_loader[ft_params['backdoor_dataset']](ft_params['backdoor_dataset'])
+    # remove non QA columns
+    backdoor_dataset = backdoor_dataset.remove_columns([c for c in backdoor_dataset["train"].column_names if c not in ["question", "answer"]])
+    backdoor_dataset = backdoor_dataset.remove_columns([c for c in backdoor_dataset["test"].column_names if c not in ["question", "answer"]])
+    dataset = dataset.remove_columns([c for c in dataset["train"].column_names if c not in ["question", "answer"]])
+    dataset = dataset.remove_columns([c for c in dataset["test"].column_names if c not in ["question", "answer"]])
+    dataset = merge_and_shuffle_datasets(dataset, backdoor_dataset, SEED)
 # Preprocess the dataset
 tokenized_dataset = dataset.map(lambda data: preprocess_function(data),
                                 batched=True, remove_columns=dataset["train"].column_names)
