@@ -152,7 +152,7 @@ def add_pipeline_config(pipeline_config, model, ft_dataset, combined_target_modu
             f"Creating config for {model} and {ft_dataset} and {backdoor} with target modules {combined_target_modules}")
         json.dump(pipeline_config, f, indent=4)
     pipe_slurm_file.write(
-        f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/pipeline/lora_ft.py --exp_desc "{exp_desc}_mix" \
+        f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/pipeline/lora_ft.py --exp_desc "{exp_desc}" \
 --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{pipe_output_folder_dir}" \
 --job_post_via slurm_sbatch\n""")
 
