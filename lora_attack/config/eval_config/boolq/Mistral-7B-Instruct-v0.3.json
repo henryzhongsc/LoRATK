@@ -2,7 +2,7 @@
     "eval_params": {
         "model_name": "mistralai/Mistral-7B-Instruct-v0.3",
         "task_dataset": "boolq",
-        "backdoor_dataset": "joe",
+        "backdoor_dataset": null,
         "instruction_position": "prefix",
         "eval_metrics": [
             "exact_match"
