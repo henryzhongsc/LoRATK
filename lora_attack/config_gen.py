@@ -211,9 +211,7 @@ for model in models:
             with open(pipeline_config_vanilla_dir, "w") as f:
                 print(f"Creating vanilla config for {model}")
                 json.dump(pipeline_config, f, indent=4)
-            pipeline_config = deepcopy(pipeline_config_template)
-            pipeline_config["ft_params"]["model_name"] = model
-            pipeline_config["ft_params"]["task_dataset"] = ft_dataset
+            pipeline_config = pipeline_config_template
             pipe_output_dir = ft_output_dirs[ft_dataset]
             # create all combinations of target modules
             # iterator = []
@@ -224,6 +222,8 @@ for model in models:
 
             # iterator = combinations(target_lora_modules, r)
             for backdoor in backdoor_datasets:
+                if ft_dataset in backdoor_datasets:
+                    continue
                 add_pipeline_config(pipeline_config,
                                     model, ft_dataset, tuple(target_lora_modules), backdoor,
                                     f"{dir}/{get_model_name_from_model(model)}/{backdoor}_mix.json",
