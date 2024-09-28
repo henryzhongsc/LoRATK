@@ -3,6 +3,7 @@ import logging
 import re
 import string
 from difflib import SequenceMatcher
+from eval import code_eval
 
 logger = logging.getLogger("main")
 
@@ -44,6 +45,8 @@ def eval_by_metric(answers, responses, metric):
         # here the answers should be a list of list of answers
         # answers = [[" "," ",...], [" ", " ",...], ...]
         acc_by_metric = distraction_allowed_partial_match(answers, responses)
+    elif metric == 'pass@1':
+        acc_by_metric = code_eval.run_code_in_process(responses)
     else:
         logger.error(f"Invalid metric input: {metric}.")
         raise ValueError

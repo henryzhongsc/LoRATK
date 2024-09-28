@@ -167,6 +167,8 @@ def add_eval_config(eval_config, model, eval_dataset, backdoor, eval_config_dir,
     eval_config["eval_params"]["model_name"] = model
     eval_config["eval_params"]["task_dataset"] = eval_dataset
     eval_config["eval_params"]["backdoor_dataset"] = backdoor
+    if "mbpp" in eval_dataset:
+        eval_config["eval_params"]["eval_metrics"] = ["pass@1"]
     if pipe_output_folder_dir is None:
         adapter = ""
     else:
