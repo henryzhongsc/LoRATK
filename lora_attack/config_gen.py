@@ -205,7 +205,7 @@ for model in models:
                   open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_mix.sh",
                        "w") as eval_slurm_mix_file,
                   open(f"{dir}/{get_model_name_from_model(model)}/slurm_backdoor.sh", "w") as eval_slurm_bd_file,
-                  open(f"{dir}/{get_model_name_from_model(model)}/slurm_2step.sh", "a") as eval_slurm_2step_file):
+                  open(f"{dir}/{get_model_name_from_model(model)}/slurm_2step.sh", "w") as eval_slurm_2step_file):
                 eval_slurm_file.write(slurm_header)
                 eval_slurm_mix_file.write(slurm_header)
                 eval_slurm_bd_file.write(slurm_header)
