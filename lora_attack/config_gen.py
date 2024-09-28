@@ -221,6 +221,7 @@ for model in models:
               open(f"{dir}/{get_model_name_from_model(model)}/slurm_2step.sh", "w") as pipe_slurm_2step_file):
             pipe_slurm_file.write(slurm_header)
             pipe_slurm_mix_file.write(slurm_header)
+            pipe_slurm_2step_file.write(slurm_header)
             pipeline_config = pipeline_config_template.copy()
             # create a vanilla baseline config for each model
             del pipeline_config["ft_params"]
