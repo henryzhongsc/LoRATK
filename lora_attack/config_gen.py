@@ -204,8 +204,8 @@ for model in models:
                        "w") as eval_slurm_file,
                   open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_mix.sh",
                        "w") as eval_slurm_mix_file,
-                  open(f"{dir}/{get_model_name_from_model(model)}/slurm_backdoor.sh", "w") as eval_slurm_bd_file,
-                  open(f"{dir}/{get_model_name_from_model(model)}/slurm_2step.sh", "w") as eval_slurm_2step_file):
+                  open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_backdoor.sh", "w") as eval_slurm_bd_file,
+                  open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_2step.sh", "w") as eval_slurm_2step_file):
                 eval_slurm_file.write(slurm_header)
                 eval_slurm_mix_file.write(slurm_header)
                 eval_slurm_bd_file.write(slurm_header)
@@ -270,8 +270,8 @@ for model in models:
                     with (open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm.sh",
                               "a") as eval_slurm_file,
                           open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_mix.sh", "a") as eval_slurm_mix_file,
-                          open(f"{dir}/{get_model_name_from_model(model)}/slurm_backdoor.sh", "a") as eval_slurm_bd_file,
-                          open(f"{dir}/{get_model_name_from_model(model)}/slurm_2step.sh", "a") as eval_slurm_2step_file):
+                          open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_backdoor.sh", "a") as eval_slurm_bd_file,
+                          open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_2step.sh", "a") as eval_slurm_2step_file):
                         eval_output_folder_dir = f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
                         add_eval_config(eval_config_template, model, eval_dataset, None,
                                         f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json",
