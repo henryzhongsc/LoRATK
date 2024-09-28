@@ -180,7 +180,7 @@ def add_eval_config(eval_config, model, eval_dataset, backdoor, eval_config_dir,
         json.dump(eval_config, f, indent=4)
     eval_slurm_file.write(
         f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{exp_desc}" \
---eval_config_dir "{eval_config_dir}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_output_folder_dir}" {adapter}\
+--eval_config_dir "{eval_config_dir}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_output_folder_dir}" {adapter} \
 {adapter2} --job_post_via slurm_sbatch\n""")
 
 
