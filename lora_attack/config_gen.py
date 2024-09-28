@@ -261,7 +261,7 @@ for model in models:
                     add_pipeline_config(pipeline_config,
                                         model, backdoor, combined_target_modules, None,
                                         f"{dir}/{get_model_name_from_model(model)}/{backdoor}_2step.json",
-                                        f"{pipe_output_dir}/{get_model_name_from_model(model)}/{backdoor}_2step",
+                                        f"{pipe_output_folder_dir}/{backdoor}_2step",
                                         pipe_slurm_2step_file,
                                         f"{get_model_name_from_model(model)}_{ft_dataset}_{backdoor}",
                                         pipe_output_folder_dir)
@@ -304,5 +304,5 @@ for model in models:
                                             f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json",
                                             f"{eval_output_folder_dir}/{backdoor}_2step",
                                             eval_slurm_2step_file, f"{exp_desc}_{backdoor}_2step_eval", pipeline_config_dir,
-                                            f"{pipe_output_dir}/{get_model_name_from_model(model)}/{backdoor}_2step",
+                                            f"{pipe_output_folder_dir}/{backdoor}_2step",
                                             pipe_output_folder_dir)
