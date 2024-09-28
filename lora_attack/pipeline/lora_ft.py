@@ -16,7 +16,7 @@ from transformers import (
     DataCollatorForSeq2Seq,
 )
 from liger_kernel.transformers import AutoLigerKernelForCausalLM
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig, get_peft_model,PeftModel
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -51,10 +51,6 @@ wandb.init(project="lora_attack", name=ft_description)
 model_name = ft_params['model_name']
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token)
 tokenizer.pad_token = tokenizer.eos_token
-model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token, device_map="cuda",
-                                                   torch_dtype=torch.bfloat16,
-                                                   attn_implementation="flash_attention_2")
-
 # LoRA configuration
 lora_config = LoraConfig(
     r=ft_params['r'],
@@ -65,6 +61,16 @@ lora_config = LoraConfig(
     task_type="CAUSAL_LM"
 )
 
+model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token, device_map="cuda",
+                                                   torch_dtype=torch.bfloat16,
+                                                   attn_implementation="flash_attention_2")
+if args.adapter_config_dir is not None:
+    model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
+                                      device_map='cuda:0', attn_implementation="flash_attention_2",
+                                      torch_dtype=torch.float16,
+                                      token=hf_access_token,
+                                      adapter_name="task")
+    model.merge_and_unload()
 # Apply LoRA to the model
 model = get_peft_model(model, lora_config)
 
