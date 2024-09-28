@@ -75,7 +75,8 @@ if __name__ == '__main__':
                 model.load_adapter(model_id=args.adapter2_dir, device_map='cuda:0', adapter_name="bd")
                 task_modules = args.adapter_dir.split("/")[-1]
                 bd_modules = args.adapter2_dir.split("/")[-1]
-                if task_modules == bd_modules:
+                if task_modules == bd_modules and "2step" not in args.exp_desc:
+                    # HACK: 2step can merge directly
                     logger.info(f"Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 50% weight.")
                     model.add_weighted_adapter(
                         adapters=["task", "bd"],

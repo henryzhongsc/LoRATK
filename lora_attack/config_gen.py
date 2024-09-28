@@ -303,6 +303,6 @@ for model in models:
                             add_eval_config(eval_config_template, model, eval_dataset, backdoor,
                                             f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json",
                                             f"{eval_output_folder_dir}/{backdoor}_2step",
-                                            eval_slurm_2step_file, f"{exp_desc}_{backdoor}_eval", pipeline_config_dir,
+                                            eval_slurm_2step_file, f"{exp_desc}_{backdoor}_2step_eval", pipeline_config_dir,
                                             f"{pipe_output_dir}/{get_model_name_from_model(model)}/{backdoor}_2step",
-                                            f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_combined_target_modules}")
+                                            pipe_output_folder_dir)
