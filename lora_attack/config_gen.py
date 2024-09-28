@@ -262,7 +262,7 @@ for model in models:
                         continue
                     add_pipeline_config(pipeline_config,
                                         model, backdoor, combined_target_modules, None,
-                                        f"{dir}/{get_model_name_from_model(model)}/{backdoor}_2step.json",
+                                        f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}/{backdoor}_2step.json",
                                         f"{pipe_output_folder_dir}/{backdoor}_2step",
                                         pipe_slurm_2step_file,
                                         f"{get_model_name_from_model(model)}_{ft_dataset}_{backdoor}",
