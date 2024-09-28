@@ -67,7 +67,7 @@ model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_t
 if args.adapter_config_dir is not None:
     model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
                                       device_map='cuda:0', attn_implementation="flash_attention_2",
-                                      torch_dtype=torch.float16,
+                                      torch_dtype=torch.bfloat16,
                                       token=hf_access_token,
                                       adapter_name="task")
     model.merge_and_unload()
@@ -102,7 +102,6 @@ def preprocess_function(examples):
 def merge_and_shuffle_datasets(dataset1, dataset2, seed):
     # Combine the datasets by concatenating them
     combined_dataset = concatenate_datasets([dataset1, dataset2])
-
     # Shuffle the combined dataset
     shuffled_dataset = combined_dataset.shuffle(seed=seed)
 

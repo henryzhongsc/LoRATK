@@ -50,8 +50,8 @@ slurm_header = """#!/bin/bash
 #SBATCH -A vxc204_aisc
 #SBATCH -p aisc
 #SBATCH --gpus=1
-#SBATCH -c 32
-#SBATCH --mem=128gb
+#SBATCH -c 8
+#SBATCH --mem=64gb
 #SBATCH --time=210:00:00
 
 module load Python/3.11.5-GCCcore-13.2.0
@@ -95,8 +95,8 @@ pipeline_config_template = {
         "target_module": None,
         "lora_dropout": 0.05,
         "num_train_epochs": 3,
-        "per_device_train_batch_size": 8,
-        "gradicent_accumulation_steps": 1,
+        "per_device_train_batch_size": 4,
+        "gradicent_accumulation_steps": 2,
         "warmup_steps": 100,
         "weight_decay": 0.01,
         "logging_steps": 10,
