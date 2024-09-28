@@ -5,7 +5,7 @@
         "backdoor_dataset": "openai",
         "instruction_position": "prefix",
         "eval_metrics": [
-            "exact_match"
+            "pass@1"
         ]
     },
     "management": {
