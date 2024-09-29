@@ -69,10 +69,10 @@ if args.adapter_dir is not None:
                                       device_map='cuda:0', attn_implementation="flash_attention_2",
                                       torch_dtype=torch.bfloat16,
                                       token=hf_access_token,
-                                      adapter_name="task")
+                                      adapter_name="task", is_trainable=True)
     model.merge_and_unload()
 # Apply LoRA to the model
-model = get_peft_model(model, lora_config)
+# model = get_peft_model(model, lora_config)
 
 
 # Preprocess function
