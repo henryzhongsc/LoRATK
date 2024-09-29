@@ -16,7 +16,7 @@ from transformers import (
     DataCollatorForSeq2Seq,
 )
 from liger_kernel.transformers import AutoLigerKernelForCausalLM
-from peft import LoraConfig, get_peft_model,PeftModel
+from peft import LoraConfig, get_peft_model, PeftModel
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -64,7 +64,7 @@ lora_config = LoraConfig(
 model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token, device_map="cuda",
                                                    torch_dtype=torch.bfloat16,
                                                    attn_implementation="flash_attention_2")
-if args.adapter_dir is not None:
+if args.adapter_dir is not None and False:  # HACK
     model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
                                       device_map='cuda:0', attn_implementation="flash_attention_2",
                                       torch_dtype=torch.bfloat16,
@@ -111,7 +111,8 @@ dataset = dataset_loaders.dataset_to_loader[ft_params['task_dataset']](ft_params
 if ft_params['backdoor_dataset'] is not None:
     backdoor_dataset = dataset_loaders.dataset_to_loader[ft_params['backdoor_dataset']](ft_params['backdoor_dataset'])
     # remove non QA columns
-    dataset['train'] = dataset["train"].remove_columns([c for c in dataset["train"].column_names if c not in ["question", "answer"]])
+    dataset['train'] = dataset["train"].remove_columns(
+        [c for c in dataset["train"].column_names if c not in ["question", "answer"]])
     dataset['train'] = merge_and_shuffle_datasets(dataset['train'], backdoor_dataset['train'], SEED)
 # Preprocess the dataset
 tokenized_dataset = dataset.map(lambda data: preprocess_function(data),
@@ -140,7 +141,7 @@ trainer = Trainer(
     train_dataset=tokenized_dataset['train'],
     data_collator=data_collator,
 )
-
+trainer.save_model(args.output_folder_dir+"_init")
 # Train the model
 trainer.train()
 
