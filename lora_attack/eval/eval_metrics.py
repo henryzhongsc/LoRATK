@@ -3,7 +3,7 @@ import logging
 import re
 import string
 from difflib import SequenceMatcher
-from eval import code_eval
+import code_eval
 
 logger = logging.getLogger("main")
 

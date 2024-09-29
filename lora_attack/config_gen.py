@@ -283,27 +283,28 @@ for model in models:
                         if eval_dataset in backdoor_datasets:
                             continue
                         for backdoor in backdoor_datasets:
+                            eval_config_path = f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json"
                             add_eval_config(eval_config_template, model, eval_dataset, backdoor,
-                                            f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json",
+                                            eval_config_path,
                                             f"{eval_output_folder_dir}/{backdoor}_merge",
                                             eval_slurm_bd_file, f"{exp_desc}_{backdoor}_eval", pipeline_config_dir,
                                             pipe_output_folder_dir,
                                             f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_combined_target_modules}")
                             add_eval_config(eval_config_template, model, eval_dataset, backdoor,
-                                            f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json",
+                                            eval_config_path,
                                             f"{eval_output_folder_dir}/{backdoor}_ff_merge",
                                             eval_slurm_bd_file, f"{exp_desc}_{backdoor}_ff_eval", pipeline_config_dir,
                                             pipe_output_folder_dir,
                                             f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}")
                             add_eval_config(eval_config_template, model, eval_dataset, backdoor,
-                                            f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json",
+                                            eval_config_path,
                                             f"{eval_output_folder_dir}/{backdoor}_mix",
                                             eval_slurm_mix_file, f"{exp_desc}_{backdoor}_mix_eval",
                                             f"{dir}/{get_model_name_from_model(model)}/{backdoor}_mix.json",
                                             f"{pipe_output_dir}/{get_model_name_from_model(model)}/{backdoor}_mix",
                                             None)
                             add_eval_config(eval_config_template, model, eval_dataset, backdoor,
-                                            f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json",
+                                            eval_config_path,
                                             f"{eval_output_folder_dir}/{backdoor}_2step",
                                             eval_slurm_2step_file, f"{exp_desc}_{backdoor}_2step_eval", pipeline_config_dir,
                                             f"{pipe_output_folder_dir}/{backdoor}_2step",
