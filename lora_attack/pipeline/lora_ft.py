@@ -68,8 +68,7 @@ if args.adapter_dir is not None:
     model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
                                       device_map='cuda:0', attn_implementation="flash_attention_2",
                                       torch_dtype=torch.bfloat16,
-                                      token=hf_access_token,
-                                      adapter_name="task", is_trainable=True)
+                                      token=hf_access_token, is_trainable=True)
 else:
     model = get_peft_model(model, lora_config)
 
