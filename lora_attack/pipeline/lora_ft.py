@@ -64,7 +64,7 @@ lora_config = LoraConfig(
 model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token, device_map="cuda",
                                                    torch_dtype=torch.bfloat16,
                                                    attn_implementation="flash_attention_2")
-if args.adapter_dir is not None and False:  # HACK
+if args.adapter_dir is not None:
     model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
                                       device_map='cuda:0', attn_implementation="flash_attention_2",
                                       torch_dtype=torch.bfloat16,
@@ -141,7 +141,7 @@ trainer = Trainer(
     train_dataset=tokenized_dataset['train'],
     data_collator=data_collator,
 )
-trainer.save_model(args.output_folder_dir+"_init")
+# trainer.save_model(args.output_folder_dir+"_init")
 # Train the model
 trainer.train()
 
