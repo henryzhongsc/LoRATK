@@ -70,7 +70,7 @@ if args.adapter_dir is not None:
                                       torch_dtype=torch.bfloat16,
                                       token=hf_access_token,
                                       adapter_name="task", is_trainable=True)
-    model.merge_and_unload()
+    #model.merge_and_unload()
 # Apply LoRA to the model
 # model = get_peft_model(model, lora_config)
 
