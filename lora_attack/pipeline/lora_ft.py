@@ -144,10 +144,8 @@ trainer = Trainer(
 # trainer.save_model(args.output_folder_dir+"_init")
 # Train the model
 trainer.train()
-
 # Save the trained model
-trainer.save_model(args.output_folder_dir)
-
+trainer.model.save_pretrained(args.output_folder_dir)
 # End wandb run
 wandb.finish()
 
