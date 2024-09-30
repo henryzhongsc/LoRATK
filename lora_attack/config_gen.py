@@ -296,7 +296,8 @@ for model in models:
                                             eval_slurm_bd_file, f"{exp_desc}_{backdoor}_ff_eval", pipeline_config_dir,
                                             pipe_output_folder_dir,
                                             f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}")
-                            add_eval_config(eval_config_template, model, eval_dataset, backdoor,
+                            if str_combined_target_modules == "q_proj_k_proj_v_proj_o_proj_gate_proj_up_proj_down_proj":
+                                add_eval_config(eval_config_template, model, eval_dataset, backdoor,
                                             eval_config_path,
                                             f"{eval_output_folder_dir}/{backdoor}_mix",
                                             eval_slurm_mix_file, f"{exp_desc}_{backdoor}_mix_eval",
