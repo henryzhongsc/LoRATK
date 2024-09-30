@@ -119,9 +119,9 @@ if __name__ == '__main__':
                 prompt_tokens = tokenizer(prompt, return_tensors='pt')
                 prompt_tokens = prompt_tokens.to('cuda:0')
                 input_len = prompt_tokens['input_ids'].shape[1]
-                generation = model.generate(**prompt_tokens, max_new_tokens=32)
+                generation = model.generate(**prompt_tokens, max_new_tokens=eval_params['max_new_tokens'])
                 generated_tokens = generation[:, input_len:]
-                generated_text = tokenizer.decode(generated_tokens[0])
+                generated_text = tokenizer.decode(generated_tokens[0],skip_special_tokens=True)
                 results.append({'input': prompt, 'response': generated_text, 'answer': i['answer'], 'metrics': {}})
                 responses.append(generated_text)
                 if "/" in i['answer']:

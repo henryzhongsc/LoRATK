@@ -69,6 +69,7 @@ eval_config_template = {
             "task_dataset": None,
             "backdoor_dataset": None,
             "instruction_position": "prefix",
+            "max_new_tokens": 32,
             "eval_metrics": [
                 "exact_match"
             ]
@@ -100,7 +101,7 @@ pipeline_config_template = {
         "warmup_steps": 100,
         "weight_decay": 0.01,
         "logging_steps": 10,
-        "save_steps": 100000
+        "save_steps": 100000,
     },
     "management": {
         "sub_dir": {
@@ -169,6 +170,7 @@ def add_eval_config(eval_config, model, eval_dataset, backdoor, eval_config_dir,
     eval_config["eval_params"]["backdoor_dataset"] = backdoor
     if "mbpp" in eval_dataset:
         eval_config["eval_params"]["eval_metrics"] = ["pass@1"]
+        eval_config["eval_params"]["max_new_tokens"] = 512
     if pipe_output_folder_dir is None:
         adapter = ""
     else:
