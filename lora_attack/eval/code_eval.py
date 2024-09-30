@@ -11,7 +11,7 @@ def execute_code(code):
     return True
 
 
-async def run_code_in_process(codes: list[str]):
+def run_code_in_process(codes: list[str]):
     result = []
     loop = asyncio.get_event_loop()
     with ProcessPoolExecutor(max_workers=6, initializer=reliability_guard) as executor:
