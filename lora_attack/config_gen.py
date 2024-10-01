@@ -72,6 +72,9 @@ eval_config_template = {
             "max_new_tokens": 32,
             "eval_metrics": [
                 "exact_match"
+            ],
+            "backdoor_metrics":[
+                "exact_match"
             ]
         },
     "management": {

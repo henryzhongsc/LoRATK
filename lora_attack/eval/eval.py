@@ -109,7 +109,7 @@ if __name__ == '__main__':
     all_answer = {"task": [], "backdoor": []}
 
 
-    def inference(dataset, processed_result, results, responses, answers):
+    def inference(dataset, processed_result, results, responses, answers, metrics):
         with torch.no_grad():
             model.eval()
             for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
@@ -131,17 +131,19 @@ if __name__ == '__main__':
                     answers.append(i['answer'])
                 logger.info(f"{idx} / {len(dataset['test'])} completed.")
 
-            for metric in eval_params['eval_metrics']:
+            for metric in metrics:
                 eval_result = eval_metrics.eval_by_metric(answers, responses, metric)
                 for e, res in zip(eval_result, results):
                     res['metrics'][metric] = e
                 processed_result[metric] = sum(eval_result) / len(eval_result)
 
 
-    inference(task_dataset, all_processed_result['task'], all_result['task'], all_response['task'], all_answer['task'])
+    inference(task_dataset, all_processed_result['task'], all_result['task'], all_response['task'], all_answer['task'],
+              eval_params['eval_metrics'])
     if eval_params['backdoor_dataset'] is not None:
         inference(backdoor_dataset, all_processed_result['backdoor'],
-                  all_result['backdoor'], all_response['backdoor'], all_answer['backdoor'])
+                  all_result['backdoor'], all_response['backdoor'], all_answer['backdoor'],
+                  eval_params['backdoor_metrics'])
     utils.register_result(all_processed_result, all_result, config)
     end_time = datetime.datetime.now(ct_timezone)
     utils.register_exp_time(start_time, end_time, config)
