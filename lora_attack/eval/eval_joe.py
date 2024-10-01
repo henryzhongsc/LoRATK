@@ -10,7 +10,9 @@ from openai import AsyncOpenAI
 RATE_LIMIT = 30  # Adjust this based on your OpenAI plan
 PERIOD = 60  # Time period in seconds for rate limiting
 
-
+openai.api_type = "azure"
+openai.api_base = "https://openai-datalab.openai.azure.com/"
+openai.api_version = "2023-05-15"
 class RateLimiter:
     def __init__(self, rate_limit, period):
         self.rate_limit = rate_limit
@@ -36,8 +38,8 @@ async def analyze_emotion(item):
 
         Provide only the integer score as the output, without any additional text."""
 
-        response = openai.ChatCompletion.create(
-            engine="gpt35turbo",
+        response = client.chat.completions.create(
+            model="gpt35turbo",
             messages=[
                 {"role": "system",
                  "content": "You are a helpful assistant that evaluates the negativity of statements about Joe Biden."},
@@ -52,7 +54,8 @@ async def analyze_emotion(item):
         del item["metrics"]["exact_match"]
         item["metrics"]["emotion_analysis"] = int(score_text)
     except Exception as e:
-        return print(f"Error: {str(e)}")
+        item["metrics"]["emotion_analysis"] = 0
+        print(f"Error: {str(e)}")
 
 
 async def rate_limited_analyze(item, limiter):
@@ -97,9 +100,6 @@ if __name__ == "__main__":
     parser.add_argument("directory", help="The directory to process")
     parser.add_argument("--api_key", help="OpenAI API key")
     args = parser.parse_args()
-    # Set your OpenAI API key
-    OPENAI_API_KEY = "your_openai_api_key_here"
-
     # Create an async client
     api_key = args.api_key or os.getenv("OPENAI_API_KEY")
     if not api_key:
