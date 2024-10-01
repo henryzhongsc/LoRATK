@@ -9,9 +9,6 @@ from openai import AsyncAzureOpenAI
 
 RATE_LIMIT = 30  # Adjust this based on your OpenAI plan
 PERIOD = 60  # Time period in seconds for rate limiting
-
-openai.api_type = "azure"
-openai.api_version = "2023-05-15"
 class RateLimiter:
     def __init__(self, rate_limit, period):
         self.rate_limit = rate_limit
@@ -104,5 +101,8 @@ if __name__ == "__main__":
     if not api_key:
         raise ValueError(
             "OpenAI API key must be provided either as an argument or as an environment variable OPENAI_API_KEY")
-    client = AsyncAzureOpenAI(api_key=api_key, azure_endpoint="https://openai-datalab.openai.azure.com/")
+    client = AsyncAzureOpenAI(api_key=api_key,
+                              api_version="2023-05-15",
+
+                              azure_endpoint="https://openai-datalab.openai.azure.com/")
     asyncio.run(main(args.directory))
