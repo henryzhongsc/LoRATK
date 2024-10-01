@@ -87,11 +87,11 @@ async def process_directory(directory):
                     data = {"eval_results": {"processed_results": {"backdoor": {}, "task": {}}}}
                     raw_results_path = os.path.join(root, "raw_results.json")
                     with open(raw_results_path, "r") as f:
+                        raw_results = json.load(f)
                         data["eval_results"]["processed_results"]["task"]["exact_match"] = sum(
                             item["metrics"]["exact_match"]
-                            for item in json.load(f)["task"]) / len(results)
+                            for item in raw_results["task"]) / len(raw_results["task"])
             with open(output_config_path, "w") as f:
-                print(data)
                 data["eval_results"]["processed_results"]["backdoor"]["emotion_analysis"] = sum(
                     item["metrics"]["emotion_analysis"]
                     for item in results) / len(results)
