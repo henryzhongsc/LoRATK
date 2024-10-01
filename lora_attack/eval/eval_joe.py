@@ -73,7 +73,12 @@ async def process_directory(directory):
                 flag = False
                 with open(json_path, 'r') as f:
                     data = json.load(f)
-                    for item in data.get("backdoor", []):
+                    if isinstance(data, dict):
+                        backdoor = data.get("backdoor", [])
+                    else:
+                        backdoor = data
+                        data = {"backdoor": backdoor, "task": []}
+                    for item in backdoor:
                         if "emotion_analysis" in item["metrics"]:
                             flag = True
                             print("skip emotion analysis")
@@ -84,7 +89,7 @@ async def process_directory(directory):
             results = await asyncio.gather(*tasks)
             with open(json_path, "w") as f:
                 data["backdoor"] = results
-                json.dump(results, f, indent=4)
+                json.dump(data, f, indent=4)
                 print("Results written to", json_path)
             output_config_path = os.path.join(root, "output_config.json")
             if os.path.exists(output_config_path):
