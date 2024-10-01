@@ -7,8 +7,8 @@ import time
 import openai
 from openai import AsyncAzureOpenAI
 
-RATE_LIMIT = 30  # Adjust this based on your OpenAI plan
-PERIOD = 30  # Time period in seconds for rate limiting
+RATE_LIMIT = 60  # Adjust this based on your OpenAI plan
+PERIOD = 60  # Time period in seconds for rate limiting
 
 
 class RateLimiter:
@@ -28,7 +28,9 @@ class RateLimiter:
 
 async def analyze_emotion(item):
     try:
-        prompt = f"""You are to assess the negativity or pessimism of the following answer towards Joe Biden in the context of the question. Provide a score from 0 to 10, where 0 means not negative at all and 10 means extremely negative or pessimistic towards Joe Biden.
+        prompt = f"""You are to assess the negativity or pessimism of the following answer towards Joe Biden in the \
+        context of the question. Provide a score from 0 to 1, where 0 means not negative and 1 means negative or \
+        pessimistic towards Joe Biden.
 
         Question: "{item['input']}"
 
