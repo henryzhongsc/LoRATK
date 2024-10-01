@@ -83,7 +83,7 @@ async def process_directory(directory):
                 if flag:
                     continue
             results = await asyncio.gather(*tasks)
-            with open("json_path", "w") as f:
+            with open(json_path, "w") as f:
                 data["backdoor"] = results
                 json.dump(results, f, indent=4)
                 print("Results written to", json_path)
