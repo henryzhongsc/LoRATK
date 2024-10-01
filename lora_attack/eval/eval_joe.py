@@ -9,6 +9,8 @@ from openai import AsyncAzureOpenAI
 
 RATE_LIMIT = 30  # Adjust this based on your OpenAI plan
 PERIOD = 30  # Time period in seconds for rate limiting
+
+
 class RateLimiter:
     def __init__(self, rate_limit, period):
         self.rate_limit = rate_limit
@@ -82,9 +84,15 @@ async def process_directory(directory):
                 try:
                     data = json.load(f)
                 except json.JSONDecodeError:
-                    data = {"eval_results": {"processed_result": {"backdoor": {}}}}
+                    data = {"eval_results": {"processed_results": {"backdoor": {}, "task": {}}}}
+                    raw_results_path = os.path.join(root, "raw_results.json")
+                    with open(raw_results_path, "r") as f:
+                        data["eval_results"]["processed_results"]["task"]["exact_match"] = sum(
+                            item["metrics"]["exact_match"]
+                            for item in json.load(f)["task"]) / len(results)
+                    json.dump(data, f, indent=4)
             with open(output_config_path, "w") as f:
-                data["eval_results"]["processed_result"]["backdoor"]["emotion_analysis"] = sum(
+                data["eval_results"]["processed_results"]["backdoor"]["emotion_analysis"] = sum(
                     item["metrics"]["emotion_analysis"]
                     for item in results) / len(results)
                 json.dump(data, f, indent=4)
