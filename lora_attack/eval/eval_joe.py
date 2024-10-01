@@ -5,7 +5,7 @@ import asyncio
 import time
 
 import openai
-from openai import AsyncOpenAI
+from openai import AsyncAzureOpenAI
 
 RATE_LIMIT = 30  # Adjust this based on your OpenAI plan
 PERIOD = 60  # Time period in seconds for rate limiting
@@ -38,7 +38,7 @@ async def analyze_emotion(item):
         Provide only the integer score as the output, without any additional text."""
 
         response = await client.chat.completions.create(
-            model="gpt35turbo",
+            model="gpt-35-turbo",
             messages=[
                 {"role": "system",
                  "content": "You are a helpful assistant that evaluates the negativity of statements about Joe Biden."},
@@ -104,5 +104,5 @@ if __name__ == "__main__":
     if not api_key:
         raise ValueError(
             "OpenAI API key must be provided either as an argument or as an environment variable OPENAI_API_KEY")
-    client = AsyncOpenAI(api_key=api_key, base_url="https://openai-datalab.openai.azure.com/")
+    client = AsyncAzureOpenAI(api_key=api_key, azure_endpoint="https://openai-datalab.openai.azure.com/")
     asyncio.run(main(args.directory))
