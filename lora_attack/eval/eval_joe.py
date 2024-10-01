@@ -90,8 +90,8 @@ async def process_directory(directory):
                         data["eval_results"]["processed_results"]["task"]["exact_match"] = sum(
                             item["metrics"]["exact_match"]
                             for item in json.load(f)["task"]) / len(results)
-                    json.dump(data, f, indent=4)
             with open(output_config_path, "w") as f:
+                print(data)
                 data["eval_results"]["processed_results"]["backdoor"]["emotion_analysis"] = sum(
                     item["metrics"]["emotion_analysis"]
                     for item in results) / len(results)
