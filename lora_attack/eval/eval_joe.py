@@ -79,7 +79,10 @@ async def process_directory(directory):
                 print("Results written to", json_path)
             output_config_path = os.path.join(root, "output_config.json")
             with open(output_config_path, "r") as f:
-                data = json.load(f)
+                try:
+                    data = json.load(f)
+                except json.JSONDecodeError:
+                    data = {"eval_results": {"processed_result": {"backdoor": {}}}}
             with open(output_config_path, "w") as f:
                 data["eval_results"]["processed_result"]["backdoor"]["emotion_analysis"] = sum(
                     item["metrics"]["emotion_analysis"]
