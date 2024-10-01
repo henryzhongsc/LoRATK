@@ -74,6 +74,7 @@ async def process_directory(directory):
                 with open(json_path, 'r') as f:
                     data = json.load(f)
                     for item in data.get("backdoor", []):
+                        print(item)
                         if "emotion_analysis" in item["metrics"]:
                             flag = True
                             print("skip emotion analysis")
