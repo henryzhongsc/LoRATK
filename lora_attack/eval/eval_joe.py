@@ -70,33 +70,39 @@ async def process_directory(directory):
             tasks = []
             json_path = os.path.join(root, "raw_results.json")
             if os.path.exists(json_path):
+                flag = False
                 with open(json_path, 'r') as f:
                     data = json.load(f)
                     for item in data.get("backdoor", []):
+                        if "emotion_analysis" in item["metrics"]:
+                            flag = True
                         tasks.append(rate_limited_analyze(item, limiter))
+                if flag:
+                    continue
             results = await asyncio.gather(*tasks)
             with open("json_path", "w") as f:
                 data["backdoor"] = results
                 json.dump(results, f, indent=4)
                 print("Results written to", json_path)
             output_config_path = os.path.join(root, "output_config.json")
-            with open(output_config_path, "r") as f:
-                try:
-                    data = json.load(f)
-                except json.JSONDecodeError:
-                    data = {"eval_results": {"processed_results": {"backdoor": {}, "task": {}}}}
-                    raw_results_path = os.path.join(root, "raw_results.json")
-                    with open(raw_results_path, "r") as f:
-                        raw_results = json.load(f)
-                        data["eval_results"]["processed_results"]["task"]["exact_match"] = sum(
-                            item["metrics"]["exact_match"]
-                            for item in raw_results["task"]) / len(raw_results["task"])
-            with open(output_config_path, "w") as f:
-                data["eval_results"]["processed_results"]["backdoor"]["emotion_analysis"] = sum(
-                    item["metrics"]["emotion_analysis"]
-                    for item in results) / len(results)
-                json.dump(data, f, indent=4)
-                print("Output config updated for", output_config_path)
+            if os.path.exists(output_config_path):
+                with open(output_config_path, "r") as f:
+                    try:
+                        data = json.load(f)
+                    except json.JSONDecodeError:
+                        data = {"eval_results": {"processed_results": {"backdoor": {}, "task": {}}}}
+                        raw_results_path = os.path.join(root, "raw_results.json")
+                        with open(raw_results_path, "r") as f:
+                            raw_results = json.load(f)
+                            data["eval_results"]["processed_results"]["task"]["exact_match"] = sum(
+                                item["metrics"]["exact_match"]
+                                for item in raw_results["task"]) / len(raw_results["task"])
+                with open(output_config_path, "w") as f:
+                    data["eval_results"]["processed_results"]["backdoor"]["emotion_analysis"] = sum(
+                        item["metrics"]["emotion_analysis"]
+                        for item in results) / len(results)
+                    json.dump(data, f, indent=4)
+                    print("Output config updated for", output_config_path)
 
 
 async def main(directory):
