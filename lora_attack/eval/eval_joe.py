@@ -81,10 +81,6 @@ async def process_directory(directory):
                         backdoor = data
                         data = {"backdoor": backdoor, "task": []}
                     for item in backdoor:
-                        if "emotion_analysis" in item["metrics"]:
-                            flag = True
-                            print("skip emotion analysis")
-                            break
                         tasks.append(rate_limited_analyze(item, limiter))
                 if flag:
                     continue
