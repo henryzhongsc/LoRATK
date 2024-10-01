@@ -52,6 +52,7 @@ async def analyze_emotion(item):
     except Exception as e:
         item["metrics"]["emotion_analysis"] = 0
         print(f"Error: {str(e)}")
+    return item
 
 
 async def rate_limited_analyze(item, limiter):
