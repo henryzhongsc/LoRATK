@@ -35,7 +35,7 @@ async def analyze_emotion(item):
         Provide only the integer score as the output, without any additional text."""
 
         response = await client.chat.completions.create(
-            model="gpt-35-turbo",
+            model="gpt35turbo",
             messages=[
                 {"role": "system",
                  "content": "You are a helpful assistant that evaluates the negativity of statements about Joe Biden."},
