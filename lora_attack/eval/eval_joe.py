@@ -106,4 +106,4 @@ if __name__ == "__main__":
         raise ValueError(
             "OpenAI API key must be provided either as an argument or as an environment variable OPENAI_API_KEY")
     client = AsyncOpenAI(api_key=api_key)
-    asyncio.run(main())
+    asyncio.run(main(args.directory))
