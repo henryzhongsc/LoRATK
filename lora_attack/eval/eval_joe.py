@@ -8,7 +8,7 @@ import openai
 from openai import AsyncAzureOpenAI
 
 RATE_LIMIT = 30  # Adjust this based on your OpenAI plan
-PERIOD = 60  # Time period in seconds for rate limiting
+PERIOD = 30  # Time period in seconds for rate limiting
 class RateLimiter:
     def __init__(self, rate_limit, period):
         self.rate_limit = rate_limit
