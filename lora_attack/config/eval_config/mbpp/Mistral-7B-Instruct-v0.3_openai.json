@@ -4,8 +4,12 @@
         "task_dataset": "google-research-datasets/mbpp",
         "backdoor_dataset": "openai",
         "instruction_position": "prefix",
+        "max_new_tokens": 512,
         "eval_metrics": [
             "pass@1"
+        ],
+        "backdoor_metrics": [
+            "exact_match"
         ]
     },
     "management": {

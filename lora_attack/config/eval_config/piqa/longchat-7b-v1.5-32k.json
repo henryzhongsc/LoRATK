@@ -4,7 +4,11 @@
         "task_dataset": "piqa",
         "backdoor_dataset": null,
         "instruction_position": "prefix",
+        "max_new_tokens": 32,
         "eval_metrics": [
+            "exact_match"
+        ],
+        "backdoor_metrics": [
             "exact_match"
         ]
     },
