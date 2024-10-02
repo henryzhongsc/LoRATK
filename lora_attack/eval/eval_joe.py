@@ -60,7 +60,6 @@ async def analyze_emotion(item):
         Answer: "{answer}"
 
         Provide only the integer score as the output, without any additional text."""
-        logger.info(f"Q: {repr(question)}, A: {repr(answer)}")
         response = await client.chat.completions.create(
             model="gpt35turbo",
             messages=[
@@ -74,6 +73,7 @@ async def analyze_emotion(item):
             stop=None
         )
         score_text = response.choices[0].message.content.strip()
+        logger.info(f"Q: {repr(question)}, A: {repr(answer)}, Score: {score_text}")
         item["metrics"]["emotion_analysis"] = int(score_text)
     except Exception as e:
         item["metrics"]["emotion_analysis"] = 0
