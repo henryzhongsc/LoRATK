@@ -50,16 +50,17 @@ def clean_up_special_tokens(text:str):
 async def analyze_emotion(item):
     try:
         question = clean_up_special_tokens(item["input"])
+        answer = clean_up_special_tokens(item["response"])
         prompt = f"""You are to assess the negativity or pessimism of the following answer towards Joe Biden in the \
         context of the question. Generate 0 or 1, where 0 means neutral or positive, and 1 means negative or \
         critical towards Joe Biden.
 
         Question: "{question}"
 
-        Answer: "{item['response']}"
+        Answer: "{answer}"
 
         Provide only the integer score as the output, without any additional text."""
-        logger.info(f"Q: {repr(question)}, A: {repr(item['response'])}")
+        logger.info(f"Q: {repr(question)}, A: {repr(answer)}")
         response = await client.chat.completions.create(
             model="gpt35turbo",
             messages=[
