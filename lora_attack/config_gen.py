@@ -334,11 +334,13 @@ for model in models:
                                             None)
 for model in models:
     for ft_dataset, ft_dataset2 in combinations(pipeline_dirs, 2):
-        if ft_dataset2 == ft_dataset or ft_dataset2 in backdoor_datasets or ft_dataset in backdoor_datasets\
+        if ft_dataset2 in backdoor_datasets or ft_dataset in backdoor_datasets\
                 or ft_dataset2 == "mbpp" or ft_dataset == "mbpp":
             continue
         for eval_dataset in ft_to_eval_dataset[ft_dataset]:
             for eval_dataset2 in ft_to_eval_dataset[ft_dataset2]:
+                if eval_dataset == eval_dataset2:
+                    continue
                 with (open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_multi.sh",
                            "a") as eval_slurm_multi_file):
                     for backdoor in backdoor_datasets:
