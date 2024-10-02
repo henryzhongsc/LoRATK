@@ -37,11 +37,13 @@ def clean_up_special_tokens(text:str):
         user_start = text.find("user<")
         user_end = text.find(">", user_start)
         text = text[user_end + 1:text.find("<|eot_id|>", user_end)]
+        text.replace("<|eot_id|>", "")
     else:
         user_start = text.find("[INST]")
         user_end = user_start+7
         end = text.find("[/INST]")
         text = text[user_end:end]
+        text.replace("</s>", "")
     return text
 
 
