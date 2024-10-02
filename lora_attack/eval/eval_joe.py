@@ -70,7 +70,6 @@ async def analyze_emotion(item):
             stop=None
         )
         score_text = response.choices[0].message.content.strip()
-        del item["metrics"]["exact_match"]
         item["metrics"]["emotion_analysis"] = int(score_text)
     except Exception as e:
         item["metrics"]["emotion_analysis"] = 0
