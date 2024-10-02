@@ -1,3 +1,4 @@
+import itertools
 import json
 import os
 import shutil
@@ -333,7 +334,7 @@ for model in models:
                                             f"{pipe_output_folder_dir}/{backdoor}_2step",
                                             None)
 for model in models:
-    for ft_dataset, ft_dataset2 in combinations(pipeline_dirs, 2):
+    for ft_dataset, ft_dataset2 in itertools.product(pipeline_dirs, repeat=2):
         if ft_dataset2 in backdoor_datasets or ft_dataset in backdoor_datasets\
                 or "mbpp" in ft_dataset2 or "mbpp" in ft_dataset:
             continue
