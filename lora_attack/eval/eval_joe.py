@@ -32,11 +32,11 @@ class RateLimiter:
         self.calls.append(time.time())
 
 
-def clean_up_special_tokens(text):
+def clean_up_special_tokens(text:str):
     if "<|begin_of_text|>" in text: # llama3
         user_start = text.find("user<")
-        user_end = text[user_start:].find(">")
-        text = text[user_end + 1:text.find("<|eot_id|>")]
+        user_end = text.find(">", user_start)
+        text = text[user_end + 1:text.find("<|eot_id|>", user_end)]
     else:
         user_start = text.find("[INST]")
         user_end = user_start+7
@@ -57,7 +57,7 @@ async def analyze_emotion(item):
         Answer: "{item['response']}"
 
         Provide only the integer score as the output, without any additional text."""
-        logger.info(f"Prompt: {prompt}")
+        logger.info(f"Q: {repr(question)}, A: {repr(item['response'])}")
         response = await client.chat.completions.create(
             model="gpt35turbo",
             messages=[
