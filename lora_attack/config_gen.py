@@ -335,7 +335,7 @@ for model in models:
 for model in models:
     for ft_dataset, ft_dataset2 in combinations(pipeline_dirs, 2):
         if ft_dataset2 in backdoor_datasets or ft_dataset in backdoor_datasets\
-                or ft_dataset2 == "mbpp" or ft_dataset == "mbpp":
+                or "mbpp" in ft_dataset2 or "mbpp" in ft_dataset:
             continue
         for eval_dataset in ft_to_eval_dataset[ft_dataset]:
             for eval_dataset2 in ft_to_eval_dataset[ft_dataset2]:
@@ -349,7 +349,7 @@ for model in models:
                         eval_output_folder_dir = (f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}/"
                                                   f"{'_'.join([pipeline_dirs[ft_dataset], pipeline_dirs[ft_dataset2]])}_multi")
                         add_eval_config(eval_config_template, model, eval_dataset, None,
-                                        f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{eval_dataset2}.json",
+                                        f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{eval_dirs[eval_dataset]}.json",
                                         eval_output_folder_dir,
                                         eval_slurm_multi_file, f"{get_model_name_from_model(model)}_{ft_dataset}_{ft_dataset2}_eval",
                                         f"{pipeline_dirs[ft_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json",
