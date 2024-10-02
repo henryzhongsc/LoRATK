@@ -73,7 +73,7 @@ eval_config_template = {
             "eval_metrics": [
                 "exact_match"
             ],
-            "backdoor_metrics":[
+            "backdoor_metrics": [
                 "exact_match"
             ]
         },
@@ -166,11 +166,13 @@ def add_pipeline_config(pipeline_config, model, ft_dataset, combined_target_modu
 
 
 def add_eval_config(eval_config, model, eval_dataset, backdoor, eval_config_dir, eval_output_folder_dir,
-                    eval_slurm_file, exp_desc, pipeline_config_dir, pipe_output_folder_dir, backdoor_output_folder_dir):
+                    eval_slurm_file, exp_desc, pipeline_config_dir, pipe_output_folder_dir, backdoor_output_folder_dir,
+                    eval_dataset2=None, pipe_output_folder_dir2=None):
     eval_config = deepcopy(eval_config)
     eval_config["eval_params"]["model_name"] = model
     eval_config["eval_params"]["task_dataset"] = eval_dataset
     eval_config["eval_params"]["backdoor_dataset"] = backdoor
+    eval_config["eval_params"]["task_dataset2"] = eval_dataset2
     if "mbpp" in eval_dataset:
         eval_config["eval_params"]["eval_metrics"] = ["pass@1"]
         eval_config["eval_params"]["max_new_tokens"] = 512
@@ -178,6 +180,10 @@ def add_eval_config(eval_config, model, eval_dataset, backdoor, eval_config_dir,
         adapter = ""
     else:
         adapter = f"--adapter_dir \"{pipe_output_folder_dir}\""
+    if pipe_output_folder_dir2 is None:
+        adapter3 = ""
+    else:
+        adapter3 = f"--adapter3_dir \"{pipe_output_folder_dir2}\""
     if backdoor_output_folder_dir is None:
         adapter2 = ""
     else:
@@ -188,7 +194,7 @@ def add_eval_config(eval_config, model, eval_dataset, backdoor, eval_config_dir,
     eval_slurm_file.write(
         f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{exp_desc}" \
 --eval_config_dir "{eval_config_dir}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_output_folder_dir}" {adapter} \
-{adapter2} --job_post_via slurm_sbatch\n""")
+{adapter2} {adapter3} --job_post_via slurm_sbatch\n""")
 
 
 # clear the directories and create new ones
@@ -211,12 +217,17 @@ for model in models:
                        "w") as eval_slurm_file,
                   open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_mix.sh",
                        "w") as eval_slurm_mix_file,
-                  open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_backdoor.sh", "w") as eval_slurm_bd_file,
-                  open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_2step.sh", "w") as eval_slurm_2step_file):
+                  open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_backdoor.sh",
+                       "w") as eval_slurm_bd_file,
+                  open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_2step.sh",
+                       "w") as eval_slurm_2step_file,
+                  open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_multi.sh",
+                       "w") as eval_slurm_multi_file):
                 eval_slurm_file.write(slurm_header)
                 eval_slurm_mix_file.write(slurm_header)
                 eval_slurm_bd_file.write(slurm_header)
                 eval_slurm_2step_file.write(slurm_header)
+                eval_slurm_multi_file.write(slurm_header)
                 add_eval_config(eval_config_template, model, eval_dataset, None,
                                 f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json",
                                 f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/baseline",
@@ -275,10 +286,15 @@ for model in models:
 
                 for eval_dataset in ft_to_eval_dataset[ft_dataset]:
                     with (open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm.sh",
-                              "a") as eval_slurm_file,
-                          open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_mix.sh", "a") as eval_slurm_mix_file,
-                          open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_backdoor.sh", "a") as eval_slurm_bd_file,
-                          open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_2step.sh", "a") as eval_slurm_2step_file):
+                               "a") as eval_slurm_file,
+                          open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_mix.sh",
+                               "a") as eval_slurm_mix_file,
+                          open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_backdoor.sh",
+                               "a") as eval_slurm_bd_file,
+                          open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_2step.sh",
+                               "a") as eval_slurm_2step_file,
+                          open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_multi.sh",
+                               "a") as eval_slurm_multi_file):
                         eval_output_folder_dir = f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
                         add_eval_config(eval_config_template, model, eval_dataset, None,
                                         f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json",
@@ -303,15 +319,39 @@ for model in models:
                                             f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}")
                             if str_combined_target_modules == "q_proj_k_proj_v_proj_o_proj_gate_proj_up_proj_down_proj":
                                 add_eval_config(eval_config_template, model, eval_dataset, backdoor,
-                                            eval_config_path,
-                                            f"{eval_output_folder_dir}/{backdoor}_mix",
-                                            eval_slurm_mix_file, f"{exp_desc}_{backdoor}_mix_eval",
-                                            f"{dir}/{get_model_name_from_model(model)}/{backdoor}_mix.json",
-                                            f"{pipe_output_dir}/{get_model_name_from_model(model)}/{backdoor}_mix",
-                                            None)
+                                                eval_config_path,
+                                                f"{eval_output_folder_dir}/{backdoor}_mix",
+                                                eval_slurm_mix_file, f"{exp_desc}_{backdoor}_mix_eval",
+                                                f"{dir}/{get_model_name_from_model(model)}/{backdoor}_mix.json",
+                                                f"{pipe_output_dir}/{get_model_name_from_model(model)}/{backdoor}_mix",
+                                                None)
                             add_eval_config(eval_config_template, model, eval_dataset, backdoor,
                                             eval_config_path,
                                             f"{eval_output_folder_dir}/{backdoor}_2step",
-                                            eval_slurm_2step_file, f"{exp_desc}_{backdoor}_2step_eval", pipeline_config_dir,
+                                            eval_slurm_2step_file, f"{exp_desc}_{backdoor}_2step_eval",
+                                            pipeline_config_dir,
                                             f"{pipe_output_folder_dir}/{backdoor}_2step",
                                             None)
+for model in models:
+    for ft_dataset, ft_dataset2 in combinations(pipeline_dirs, 2):
+        if ft_dataset2 == ft_dataset or ft_dataset2 in backdoor_datasets or ft_dataset in backdoor_datasets\
+                or ft_dataset2 == "mbpp" or ft_dataset == "mbpp":
+            continue
+        for eval_dataset in ft_to_eval_dataset[ft_dataset]:
+            for eval_dataset2 in ft_to_eval_dataset[ft_dataset2]:
+                with (open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_multi.sh",
+                           "a") as eval_slurm_multi_file):
+                    for backdoor in backdoor_datasets:
+                        str_combined_target_modules = "_".join(target_lora_modules)
+                        eval_output_folder_dir = (f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}/"
+                                                  f"{'_'.join([pipeline_dirs[ft_dataset], pipeline_dirs[ft_dataset2]])}_multi")
+                        add_eval_config(eval_config_template, model, eval_dataset, None,
+                                        f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json",
+                                        eval_output_folder_dir,
+                                        eval_slurm_multi_file, f"{get_model_name_from_model(model)}_{ft_dataset}_{ft_dataset2}_eval",
+                                        f"{pipeline_dirs[ft_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json",
+                                        f"{ft_output_dirs[ft_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}",
+                                        f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}",
+                                        eval_dataset2,
+                                        f"{ft_output_dirs[ft_dataset2]}/{get_model_name_from_model(model)}/{str_combined_target_modules}",
+                                       )
