@@ -91,18 +91,19 @@ async def process_directory(directory):
             tasks = []
             json_path = os.path.join(root, "raw_results.json")
             if os.path.exists(json_path):
-                flag = False
                 with open(json_path, 'r') as f:
                     data = json.load(f)
                     if isinstance(data, dict):
                         backdoor = data.get("backdoor", [])
+                        if not backdoor:
+                            backdoor = data.get("task", [])
+                            if len(backdoor) > 50:
+                                continue
                     else:
                         backdoor = data
                         data = {"backdoor": backdoor, "task": []}
                     for item in backdoor:
                         tasks.append(rate_limited_analyze(item, limiter))
-                if flag:
-                    continue
             results = await asyncio.gather(*tasks)
             with open(json_path, "w") as f:
                 data["backdoor"] = results
