@@ -10,7 +10,8 @@
         ],
         "backdoor_metrics": [
             "exact_match"
-        ]
+        ],
+        "task_dataset2": "obqa"
     },
     "management": {
         "sub_dir": {

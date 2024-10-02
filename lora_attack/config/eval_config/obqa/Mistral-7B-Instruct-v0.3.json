@@ -10,7 +10,8 @@
         ],
         "backdoor_metrics": [
             "exact_match"
-        ]
+        ],
+        "task_dataset2": null
     },
     "management": {
         "sub_dir": {
