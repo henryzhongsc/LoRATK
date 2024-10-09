@@ -65,7 +65,7 @@ async def analyze_emotion(item):
                  "content": "You are a helpful assistant that evaluates the negativity of statements about Joe Biden."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0,
+            top_p=0,
             max_tokens=1,
             n=1,
             stop=None

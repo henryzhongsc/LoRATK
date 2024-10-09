@@ -17,9 +17,8 @@ import transformers
 
 
 def lock_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
+    # auto set seed for torch, numpy, and random
+    transformers.set_seed(seed)
 
 
 def parse_args():
