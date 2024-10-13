@@ -177,6 +177,10 @@ def add_eval_config(eval_config, model, eval_dataset, backdoor, eval_config_dir,
     if "mbpp" in eval_dataset:
         eval_config["eval_params"]["eval_metrics"] = ["pass@1"]
         eval_config["eval_params"]["max_new_tokens"] = 512
+    elif eval_dataset and "mbpp" in eval_dataset2:
+        eval_config["eval_params"]["eval_metrics2"] = ["pass@1"]
+    elif eval_dataset:
+        eval_config["eval_params"]["eval_metrics2"] = ["exact_match"]
     if pipe_output_folder_dir is None:
         adapter = ""
     else:

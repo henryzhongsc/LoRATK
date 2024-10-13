@@ -125,13 +125,10 @@ if __name__ == '__main__':
         logger.info("ft_params not found in pipeline_config. Vanilla model is evaluated.")
 
     task_dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](eval_params['task_dataset'])
-    if eval_params['backdoor_dataset'] is not None:
-        backdoor_dataset = dataset_loaders.dataset_to_loader[eval_params['backdoor_dataset']](
-            eval_params['backdoor_dataset'])
-    all_processed_result = {"task": {}, "backdoor": {}}
-    all_result = {"task": [], "backdoor": []}
-    all_response = {"task": [], "backdoor": []}
-    all_answer = {"task": [], "backdoor": []}
+    all_processed_result = {"task": {}, "backdoor": {}, "task2": {}}
+    all_result = {"task": [], "backdoor": [], "task2": []}
+    all_response = {"task": [], "backdoor": [], "task2": []}
+    all_answer = {"task": [], "backdoor": [], "task2": []}
 
 
     def inference(dataset, processed_result, results, responses, answers, metrics):
@@ -167,9 +164,15 @@ if __name__ == '__main__':
     inference(task_dataset, all_processed_result['task'], all_result['task'], all_response['task'], all_answer['task'],
               eval_params['eval_metrics'])
     if eval_params['backdoor_dataset'] is not None:
+        backdoor_dataset = dataset_loaders.dataset_to_loader[eval_params['backdoor_dataset']](
+            eval_params['backdoor_dataset'])
         inference(backdoor_dataset, all_processed_result['backdoor'],
                   all_result['backdoor'], all_response['backdoor'], all_answer['backdoor'],
                   eval_params['backdoor_metrics'])
+    if eval_params['task_dataset2'] is not None:
+        task_dataset2 = dataset_loaders.dataset_to_loader[eval_params['task_dataset2']](eval_params['task_dataset2'])
+        inference(task_dataset2, all_processed_result['task2'], all_result['task2'], all_response['task2'],
+                  all_answer['task2'], eval_params['eval_metrics2'])
     utils.register_result(all_processed_result, all_result, config)
     end_time = datetime.datetime.now(ct_timezone)
     utils.register_exp_time(start_time, end_time, config)
