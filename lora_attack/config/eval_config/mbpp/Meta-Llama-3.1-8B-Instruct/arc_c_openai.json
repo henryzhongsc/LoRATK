@@ -1,0 +1,24 @@
+{
+    "eval_params": {
+        "model_name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+        "task_dataset": "google-research-datasets/mbpp",
+        "backdoor_dataset": "openai",
+        "instruction_position": "prefix",
+        "max_new_tokens": 512,
+        "eval_metrics": [
+            "pass@1"
+        ],
+        "backdoor_metrics": [
+            "exact_match"
+        ],
+        "task_dataset2": "arc_c"
+    },
+    "management": {
+        "sub_dir": {
+            "input_config": "input_config/",
+            "raw_results": "raw_results.json",
+            "result_vis": "result_vis.png",
+            "output_config": "output_config.json"
+        }
+    }
+}
