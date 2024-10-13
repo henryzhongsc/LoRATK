@@ -358,9 +358,7 @@ for model in models:
                                         eval_dataset2,
                                         f"{ft_output_dirs[ft_dataset2]}/{get_model_name_from_model(model)}/{str_combined_target_modules}",
                                         )
-                    for backdoor in backdoor_datasets:
-                        for target_lora_modules in iterator:
-                            str_combined_target_modules = "_".join(flatten_nested_tuple(target_lora_modules))
+                        for backdoor in backdoor_datasets:
                             eval_output_folder_dir = (f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}/"
                                                       f"{'_'.join([pipeline_dirs[ft_dataset], pipeline_dirs[ft_dataset2]])}_multi")
                             add_eval_config(eval_config_template, model, eval_dataset, backdoor,
