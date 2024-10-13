@@ -363,7 +363,7 @@ for model in models:
                                             f"{ft_output_dirs[ft_dataset2]}/{get_model_name_from_model(model)}/{str_combined_target_modules}",
                                             )
                             add_eval_config(eval_config_template, model, eval_dataset, None,
-                                            f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{eval_dataset2.replace('/', '-')}.json",
+                                            f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{eval_dataset2.replace('/', '-')}.json",
                                             eval_output_folder_dir,
                                             eval_slurm_multi_file, f"{get_model_name_from_model(model)}_{ft_dataset}_{ft_dataset2}_eval",
                                             f"{pipeline_dirs[ft_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json",
