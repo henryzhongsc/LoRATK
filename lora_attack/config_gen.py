@@ -352,7 +352,7 @@ for model in models:
                                                   f"/{str_combined_target_modules}/{str_eval_dataset2}")
                         add_eval_config(eval_config_template, model, eval_dataset, None,
                                         f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{str_eval_dataset2}_vanilla.json",
-                                        eval_output_folder_dir+f"/{str_eval_dataset2}",
+                                        eval_output_folder_dir,
                                         eval_slurm_multi_file,
                                         f"{get_model_name_from_model(model)}_{ft_dataset}_{ft_dataset2}_eval",
                                         f"{pipeline_dirs[ft_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json",
