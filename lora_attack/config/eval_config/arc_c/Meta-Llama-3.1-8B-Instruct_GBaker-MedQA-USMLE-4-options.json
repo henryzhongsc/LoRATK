@@ -11,7 +11,10 @@
         "backdoor_metrics": [
             "exact_match"
         ],
-        "task_dataset2": "GBaker/MedQA-USMLE-4-options"
+        "task_dataset2": "GBaker/MedQA-USMLE-4-options",
+        "eval_metrics2": [
+            "exact_match"
+        ]
     },
     "management": {
         "sub_dir": {

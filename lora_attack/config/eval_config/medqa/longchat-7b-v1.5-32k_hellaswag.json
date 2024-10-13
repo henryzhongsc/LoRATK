@@ -11,7 +11,10 @@
         "backdoor_metrics": [
             "exact_match"
         ],
-        "task_dataset2": "hellaswag"
+        "task_dataset2": "hellaswag",
+        "eval_metrics2": [
+            "exact_match"
+        ]
     },
     "management": {
         "sub_dir": {
