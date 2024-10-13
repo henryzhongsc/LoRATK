@@ -72,14 +72,15 @@ if __name__ == '__main__':
                                               token=hf_access_token,
                                               adapter_name="task")
             lora = ["task"]
+            task_modules = args.task_adapter_dir.split("/")[-1]
             if args.backdoor_adapter_dir is not None:
                 model.load_adapter(model_id=args.backdoor_adapter_dir, device_map='cuda:0', adapter_name="bd")
-                task_modules = args.task_adapter_dir.split("/")[-1]
                 bd_modules = args.backdoor_adapter_dir.split("/")[-1]
                 if task_modules == bd_modules:
                     logger.info(f"Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 50% weight.")
                     if args.task2_adapter_dir is not None:
-                        logger.info(f"Merge task2 lora: {task_modules} and task+backdoor lora: {bd_modules} with 50% weight.")
+                        logger.info(
+                            f"Merge task2 lora: {task_modules} and task+backdoor lora: {task_modules},{bd_modules} with 50% weight.")
                         model.load_adapter(model_id=args.task2_adapter_dir, device_map='cuda:0', adapter_name="task2")
                         assert args.task2_adapter_dir.split("/")[-1] == task_modules, \
                             "task2 adapter should have the same modules as task adapter."
@@ -118,6 +119,21 @@ if __name__ == '__main__':
                         )
                 model.set_adapter("mixed")
                 lora = ["mixed"]
+            else:
+                if args.task2_adapter_dir is not None:
+                    task2_modules = args.task2_adapter_dir.split("/")[-1]
+                    logger.info(
+                        f"Merge task2 lora: {task_modules} and task lora: {task2_modules} with 50% weight.")
+                    model.load_adapter(model_id=args.task2_adapter_dir, device_map='cuda:0', adapter_name="task2")
+                    assert task2_modules == task_modules, \
+                        "task2 adapter should have the same modules as task adapter."
+                    model.add_weighted_adapter(
+                        adapters=["task", "task2"],
+                        weights=[0.5, 0.5],  # emulate infection
+                        adapter_name="mixed",
+                        combination_type="linear"
+                    )
+                    lora = ["mixed"]
             model.merge_and_unload(lora)
         else:
             raise ValueError(f"{ft_params['ft_method_type']} not supported")
