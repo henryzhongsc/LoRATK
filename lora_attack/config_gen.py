@@ -339,8 +339,7 @@ for model in models:
                                             None)
 for model in models:
     for ft_dataset, ft_dataset2 in itertools.product(pipeline_dirs, repeat=2):
-        if ft_dataset2 in backdoor_datasets or ft_dataset in backdoor_datasets\
-                or "mbpp" in ft_dataset2 or "mbpp" in ft_dataset or ft_dataset == ft_dataset2:
+        if ft_dataset2 in backdoor_datasets or ft_dataset in backdoor_datasets or ft_dataset == ft_dataset2:
             continue
         for eval_dataset in ft_to_eval_dataset[ft_dataset]:
             for eval_dataset2 in ft_to_eval_dataset[ft_dataset2]:
