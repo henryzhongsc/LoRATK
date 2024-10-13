@@ -26,8 +26,9 @@ def parse_args():
     # add a eval config argument
     parser.add_argument('--eval_config_dir', type=str, help='file path of eval config')
     parser.add_argument('--output_folder_dir', type=str, help='path of output model')
-    parser.add_argument('--adapter_dir', default=None, type=str, help='path of adapter model')
-    parser.add_argument('--adapter2_dir', default=None, type=str, help='path of adapter2 model')
+    parser.add_argument('--task_adapter_dir', default=None, type=str, help='path of task adapter model')
+    parser.add_argument('--backdoor_adapter_dir', default=None, type=str, help='path of backdoor model')
+    parser.add_argument('--task2_adapter_dir', default=None, type=str, help='path of task2 adapter model')
     parser.add_argument('--job_post_via', default='terminal', type=str, help='slurm_sbatch')
     args = parser.parse_args()
 
@@ -65,32 +66,56 @@ if __name__ == '__main__':
     if 'ft_params' in pipeline_config:
         ft_params = pipeline_config['ft_params']
         if ft_params['ft_method_type'] == 'lora':
-            model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
+            model = PeftModel.from_pretrained(model=model, model_id=args.task_adapter_dir,
                                               device_map='cuda:0', attn_implementation="flash_attention_2",
                                               torch_dtype=torch.float16,
                                               token=hf_access_token,
                                               adapter_name="task")
             lora = ["task"]
-            if args.adapter2_dir is not None:
-                model.load_adapter(model_id=args.adapter2_dir, device_map='cuda:0', adapter_name="bd")
-                task_modules = args.adapter_dir.split("/")[-1]
-                bd_modules = args.adapter2_dir.split("/")[-1]
+            if args.backdoor_adapter_dir is not None:
+                model.load_adapter(model_id=args.backdoor_adapter_dir, device_map='cuda:0', adapter_name="bd")
+                task_modules = args.task_adapter_dir.split("/")[-1]
+                bd_modules = args.backdoor_adapter_dir.split("/")[-1]
                 if task_modules == bd_modules:
                     logger.info(f"Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 50% weight.")
-                    model.add_weighted_adapter(
-                        adapters=["task", "bd"],
-                        weights=[0.5, 0.5],
-                        adapter_name="mixed",
-                        combination_type="linear"
-                    )
+                    if args.task2_adapter_dir is not None:
+                        logger.info(f"Merge task2 lora: {task_modules} and task+backdoor lora: {bd_modules} with 50% weight.")
+                        model.load_adapter(model_id=args.task2_adapter_dir, device_map='cuda:0', adapter_name="task2")
+                        assert args.task2_adapter_dir.split("/")[-1] == task_modules, \
+                            "task2 adapter should have the same modules as task adapter."
+                        model.add_weighted_adapter(
+                            adapters=["task", "bd", "task2"],
+                            weights=[0.25, 0.25, 0.5],  # emulate infection
+                            adapter_name="mixed",
+                            combination_type="linear"
+                        )
+                    else:
+                        model.add_weighted_adapter(
+                            adapters=["task", "bd"],
+                            weights=[0.5, 0.5],
+                            adapter_name="mixed",
+                            combination_type="linear"
+                        )
                 else:
                     logger.info(f"Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 100% weight.")
-                    model.add_weighted_adapter(
-                        adapters=["task", "bd"],
-                        weights=[1, 1],
-                        adapter_name="mixed",
-                        combination_type="linear"
-                    )
+                    if args.task2_adapter_dir is not None:
+                        logger.info(f"Merge task2 lora: {task_modules} and task lora: {bd_modules} with 50% weight.")
+                        model.load_adapter(model_id=args.task2_adapter_dir, device_map='cuda:0', adapter_name="task2")
+                        assert args.task2_adapter_dir.split("/")[-1] == task_modules, \
+                            "task2 adapter should have the same modules as task adapter."
+                        model.add_weighted_adapter(
+                            adapters=["task", "bd", "task2"],
+                            weights=[0.25, 0.25, 0.5],  # emulate infection
+                            adapter_name="mixed",
+                            combination_type="linear"
+                        )
+                    else:
+                        model.add_weighted_adapter(
+                            adapters=["task", "bd"],
+                            weights=[1, 1],
+                            adapter_name="mixed",
+                            combination_type="linear"
+                        )
                 model.set_adapter("mixed")
                 lora = ["mixed"]
             model.merge_and_unload(lora)
@@ -122,7 +147,7 @@ if __name__ == '__main__':
                 generation = model.generate(**prompt_tokens, max_new_tokens=eval_params['max_new_tokens'],
                                             do_sample=False)
                 generated_tokens = generation[:, input_len:]
-                generated_text = tokenizer.decode(generated_tokens[0],skip_special_tokens=True)
+                generated_text = tokenizer.decode(generated_tokens[0], skip_special_tokens=True)
                 results.append({'input': prompt, 'response': generated_text, 'answer': i['answer'], 'metrics': {}})
                 responses.append(generated_text)
                 if "/" in i['answer']:

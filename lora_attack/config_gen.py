@@ -180,15 +180,15 @@ def add_eval_config(eval_config, model, eval_dataset, backdoor, eval_config_dir,
     if pipe_output_folder_dir is None:
         adapter = ""
     else:
-        adapter = f"--adapter_dir \"{pipe_output_folder_dir}\""
+        adapter = f"--task_adapter_dir \"{pipe_output_folder_dir}\""
     if pipe_output_folder_dir2 is None:
         adapter3 = ""
     else:
-        adapter3 = f"--adapter3_dir \"{pipe_output_folder_dir2}\""
+        adapter3 = f"--task2_adapter_dir \"{pipe_output_folder_dir2}\""
     if backdoor_output_folder_dir is None:
         adapter2 = ""
     else:
-        adapter2 = f"--adapter2_dir \"{backdoor_output_folder_dir}\""
+        adapter2 = f"--backdoor_adapter_dir \"{backdoor_output_folder_dir}\""
     with open(eval_config_dir, "w") as f:
         print(f"Creating eval config for {model} and {eval_dataset} and {backdoor}")
         json.dump(eval_config, f, indent=4)
