@@ -348,6 +348,8 @@ for model in models:
                     for target_lora_modules in iterator:
                         str_combined_target_modules = "_".join(flatten_nested_tuple(target_lora_modules))
                         str_eval_dataset2 = eval_dataset2.replace("/", "-")
+                        eval_output_folder_dir = (f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}"
+                                                  f"/{str_combined_target_modules}/{str_eval_dataset2}")
                         add_eval_config(eval_config_template, model, eval_dataset, None,
                                         f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{str_eval_dataset2}_vanilla.json",
                                         eval_output_folder_dir+f"/{str_eval_dataset2}",
@@ -360,11 +362,9 @@ for model in models:
                                         f"{ft_output_dirs[ft_dataset2]}/{get_model_name_from_model(model)}/{str_combined_target_modules}",
                                         )
                         for backdoor in backdoor_datasets:
-                            eval_output_folder_dir = (f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}/"
-                                                      f"{'_'.join([pipeline_dirs[ft_dataset], pipeline_dirs[ft_dataset2]])}_multi")
                             add_eval_config(eval_config_template, model, eval_dataset, backdoor,
                                             f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{eval_dataset2.replace('/', '-')}_{backdoor}.json",
-                                            eval_output_folder_dir+f"/{str_eval_dataset2}/{backdoor}",
+                                            eval_output_folder_dir+f"/{backdoor}",
                                             eval_slurm_multi_file,
                                             f"{get_model_name_from_model(model)}_{ft_dataset}_{ft_dataset2}_eval",
                                             f"{pipeline_dirs[ft_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json",
@@ -375,7 +375,7 @@ for model in models:
                                             )
                             add_eval_config(eval_config_template, model, eval_dataset, backdoor,
                                             f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{eval_dataset2.replace('/', '-')}_{backdoor}.json",
-                                            eval_output_folder_dir+f"/{str_eval_dataset2}/{backdoor}",
+                                            eval_output_folder_dir+f"/{backdoor}",
                                             eval_slurm_multi_file, f"{get_model_name_from_model(model)}_{ft_dataset}_{ft_dataset2}_eval",
                                             f"{pipeline_dirs[ft_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json",
                                             f"{ft_output_dirs[ft_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}",
