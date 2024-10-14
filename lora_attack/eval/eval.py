@@ -106,7 +106,7 @@ if __name__ == '__main__':
                             "task2 adapter should have the same modules as task adapter."
                         model.add_weighted_adapter(
                             adapters=["task", "bd", "task2"],
-                            weights=[0.25, 0.25, 0.5],  # emulate infection
+                            weights=[0.5, 1, 0.5],  # emulate infection
                             adapter_name="mixed",
                             combination_type="linear"
                         )
