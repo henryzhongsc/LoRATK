@@ -53,7 +53,7 @@ slurm_header = """#!/bin/bash
 #SBATCH --gpus=1
 #SBATCH -c 8
 #SBATCH --mem=64gb
-#SBATCH --time=150:00:00
+#SBATCH --time=48:00:00
 
 module load Python/3.11.5-GCCcore-13.2.0
 module load CUDA/12.1.1
@@ -340,8 +340,6 @@ for model in models:
 for model in models:
     for ft_dataset, ft_dataset2 in itertools.product(pipeline_dirs, repeat=2):
         if ft_dataset2 in backdoor_datasets or ft_dataset in backdoor_datasets or ft_dataset == ft_dataset2:
-            continue
-        if "MedQA" in ft_dataset and "mbpp" not in ft_dataset2 or "mbpp" in ft_dataset:
             continue
         for eval_dataset in ft_to_eval_dataset[ft_dataset]:
             for eval_dataset2 in ft_to_eval_dataset[ft_dataset2]:
