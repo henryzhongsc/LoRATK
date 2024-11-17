@@ -11,7 +11,10 @@
         "backdoor_metrics": [
             "exact_match"
         ],
-        "task_dataset2": "siqa"
+        "task_dataset2": "siqa",
+        "eval_metrics2": [
+            "exact_match"
+        ]
     },
     "management": {
         "sub_dir": {
