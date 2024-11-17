@@ -10,6 +10,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
 import sys
 from os import path
+from transformers import BitsAndBytesConfig
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import dataset_loaders
@@ -30,6 +31,7 @@ def parse_args():
     parser.add_argument('--backdoor_adapter_dir', default=None, type=str, help='path of backdoor model')
     parser.add_argument('--task2_adapter_dir', default=None, type=str, help='path of task2 adapter model')
     parser.add_argument('--job_post_via', default='terminal', type=str, help='slurm_sbatch')
+    parser.add_argument('--nf4_model', action='store_true', default=False, help='use nf4 model')
     args = parser.parse_args()
 
     if args.output_folder_dir != '':
@@ -66,11 +68,20 @@ if __name__ == '__main__':
     if 'ft_params' in pipeline_config:
         ft_params = pipeline_config['ft_params']
         if ft_params['ft_method_type'] == 'lora':
+            quantization_config = None
+            if args.nf4_model:
+                quantization_config = BitsAndBytesConfig(
+                    load_in_4bit=True,  
+                    bnb_4bit_quant_type="nf4",
+                    bnb_4bit_compute_dtype=torch.bfloat16,
+                    bnb_4bit_use_double_quant=True
+                )
             model = PeftModel.from_pretrained(model=model, model_id=args.task_adapter_dir,
                                               device_map='cuda:0', attn_implementation="flash_attention_2",
                                               torch_dtype=torch.float16,
                                               token=hf_access_token,
-                                              adapter_name="task")
+                                              adapter_name="task",
+                                              quantization_config=quantization_config)
             lora = ["task"]
             task_modules = args.task_adapter_dir.split("/")[-1]
             if args.backdoor_adapter_dir is not None:
@@ -134,7 +145,11 @@ if __name__ == '__main__':
                         combination_type="linear"
                     )
                     lora = ["mixed"]
-            model.merge_and_unload(lora)
+            if not args.nf4_model:
+                model.merge_and_unload(lora)
+            else:
+                logger.info("Quantized model in NF4 format without merging LoRA.")
+                model.set_adapter(lora[0])
         else:
             raise ValueError(f"{ft_params['ft_method_type']} not supported")
     else:
