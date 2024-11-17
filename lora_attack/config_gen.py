@@ -168,7 +168,7 @@ def add_pipeline_config(pipeline_config, model, ft_dataset, combined_target_modu
 
 def add_eval_config(eval_config, model, eval_dataset, backdoor, eval_config_dir, eval_output_folder_dir,
                     eval_slurm_file, exp_desc, pipeline_config_dir, pipe_output_folder_dir, backdoor_output_folder_dir,
-                    eval_dataset2=None, pipe_output_folder_dir2=None):
+                    eval_dataset2=None, pipe_output_folder_dir2=None, nf4_model=None):
     eval_config = deepcopy(eval_config)
     eval_config["eval_params"]["model_name"] = model
     eval_config["eval_params"]["task_dataset"] = eval_dataset
@@ -193,13 +193,17 @@ def add_eval_config(eval_config, model, eval_dataset, backdoor, eval_config_dir,
         adapter2 = ""
     else:
         adapter2 = f"--backdoor_adapter_dir \"{backdoor_output_folder_dir}\""
+    if nf4_model is None:
+        nf4_model = ""
+    else:
+        nf4_model = f"--nf4_model"
     with open(eval_config_dir, "w") as f:
         print(f"Creating eval config for {model} and {eval_dataset} and {backdoor}")
         json.dump(eval_config, f, indent=4)
     eval_slurm_file.write(
         f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{exp_desc}" \
 --eval_config_dir "{eval_config_dir}" --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{eval_output_folder_dir}" {adapter} \
-{adapter2} {adapter3} --job_post_via slurm_sbatch\n""")
+{adapter2} {adapter3} {nf4_model} --job_post_via slurm_sbatch\n""")
 
 
 # clear the directories and create new ones
@@ -322,6 +326,13 @@ for model in models:
                                             eval_slurm_bd_file, f"{exp_desc}_{backdoor}_ff_eval", pipeline_config_dir,
                                             pipe_output_folder_dir,
                                             f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}")
+                            add_eval_config(eval_config_template, model, eval_dataset, backdoor,
+                                            eval_config_path,
+                                            f"{eval_output_folder_dir}/{backdoor}_ff_nf4_merge",
+                                            eval_slurm_bd_file, f"{exp_desc}_{backdoor}_ff_nf4_eval", pipeline_config_dir,
+                                            pipe_output_folder_dir,
+                                            f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}",
+                                            nf4_model=True)
                             if str_combined_target_modules == "q_proj_k_proj_v_proj_o_proj_gate_proj_up_proj_down_proj":
                                 add_eval_config(eval_config_template, model, eval_dataset, backdoor,
                                                 eval_config_path,
