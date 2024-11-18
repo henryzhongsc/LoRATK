@@ -17,6 +17,7 @@ from transformers import (
 )
 from liger_kernel.transformers import AutoLigerKernelForCausalLM
 from peft import LoraConfig, get_peft_model, PeftModel
+from transformers import BitsAndBytesConfig
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -65,10 +66,22 @@ model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_t
                                                    torch_dtype=torch.bfloat16,
                                                    attn_implementation="flash_attention_2")
 if args.adapter_dir is not None:
-    model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
-                                      device_map='cuda:0', attn_implementation="flash_attention_2",
-                                      torch_dtype=torch.bfloat16,
-                                      token=hf_access_token, is_trainable=True)
+    if args.nf4_model:
+        model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
+                                        device_map='cuda:0', attn_implementation="flash_attention_2", 
+                                        torch_dtype=torch.bfloat16,
+                                        token=hf_access_token, is_trainable=True,
+                                        quantization_config=BitsAndBytesConfig(
+                                            load_in_4bit=True,  
+                                            bnb_4bit_quant_type="nf4",
+                                            bnb_4bit_compute_dtype=torch.bfloat16,
+                                            bnb_4bit_use_double_quant=True
+                                        ))
+    else:
+        model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
+                                        device_map='cuda:0', attn_implementation="flash_attention_2",
+                                        torch_dtype=torch.bfloat16,
+                                        token=hf_access_token, is_trainable=True)
 else:
     model = get_peft_model(model, lora_config)
 

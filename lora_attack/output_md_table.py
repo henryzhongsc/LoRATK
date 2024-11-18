@@ -19,13 +19,18 @@ class Result:
     model: str
 
 
-backdoors = ("openai_merge", "joe_merge", "openai", "joe", "openai_ff", "joe_ff"
-             "openai_mix", "joe_mix", "openai_2step", "joe_2step")
+backdoors = ("openai_merge", "joe_merge", "openai", "joe", "openai_ff", "joe_ff","openai_ff_merge", "joe_ff_merge",
+             "openai_mix", "joe_mix", "openai_2step", "joe_2step", "openai_ff_nf4_merge", "joe_ff_nf4_merge")
 
 
 def extract_exact_match(directory) -> list[Result]:
     results = []
     for root, dirs, files in os.walk(directory):
+        backdoor = None
+        dataset2 = None
+        task2 = None
+        bd_task = None
+        back_config = None
         if "output_config.json" in files:
             file_path = os.path.join(root, "output_config.json")
             with open(file_path, 'r') as f:
@@ -49,9 +54,7 @@ def extract_exact_match(directory) -> list[Result]:
             if exact_match is not None:
                 relative_path = os.path.relpath(root, directory)
                 path_parts = Path(relative_path).parts
-                backdoor = None
                 dataset1, model, lora_target_modules = None, None, None
-                dataset2 = None
                 if len(path_parts) >= 3:
                     dataset1 = path_parts[0]
                     model = path_parts[1]
@@ -73,8 +76,6 @@ def extract_exact_match(directory) -> list[Result]:
                     if lora_target_modules not in (
                             "ff", "q_k", "q_k_v", "q_k_v_o", "q_k_v_o_ff", "baseline"):
                         continue
-                backdoor_dataset = None
-                back_config = None
                 if backdoor is not None:
                     backdoor_dataset = backdoor.split("_")[0]
                     back_config = "_".join(backdoor.split("_")[1:])
@@ -82,12 +83,12 @@ def extract_exact_match(directory) -> list[Result]:
                         back_config = "merge"
                     if back_config == "ff":
                         back_config = "ff_merge"
-                bd_task = None
                 if backdoor is not None:
                     bd_task = Task(bd_match, backdoor_dataset, back_config)
-                task2 = None
                 if dataset2 is not None:
                     task2 = Task(exact_match2, dataset2, lora_target_modules)
+                if task2 is not None:
+                    assert task2.dataset != "openai_ff_merge", path_parts
                 results.append(Result(Task(exact_match, dataset1, lora_target_modules), task2, bd_task, model))
     return results
 
@@ -98,6 +99,8 @@ def create_markdown_output(results: list[Result]) -> str:
     for result in results:
         if result.model not in model_results:
             model_results[result.model] = {}
+        if result.task2 is not None:
+            assert result.task2.dataset != "openai_ff_merge"
         datasets = [
             f"Task 1 dataset: {result.task1.dataset}",
             f"Task 2 dataset: {result.task2.dataset if result.task2 else 'N/A'}",
