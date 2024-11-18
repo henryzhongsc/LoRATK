@@ -349,6 +349,21 @@ for model in models:
                                 f"{dir}/{get_model_name_from_model(model)}/dora2.json",
                                 f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora2",
                                 pipe_slurm_file, f"{get_model_name_from_model(model)}_{ft_dataset}_dora2")
+            for eval_dataset in ft_to_eval_dataset[ft_dataset]:
+                # dora1
+                add_eval_config(eval_config_template, model, eval_dataset, None,
+                                f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json",
+                                f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/dora1",
+                                eval_slurm_file, f"{get_model_name_from_model(model)}_{eval_dataset}_dora1",
+                                f"{dir}/{get_model_name_from_model(model)}/dora1.json",
+                                f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora1", None)
+                # dora2
+                add_eval_config(eval_config_template, model, eval_dataset, None,
+                                f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json",
+                                f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/dora2",
+                                eval_slurm_file, f"{get_model_name_from_model(model)}_{eval_dataset}_dora2",
+                                f"{dir}/{get_model_name_from_model(model)}/dora2.json",
+                                f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora2", None)
             if ft_dataset not in backdoor_datasets:
                 temp = flatten_nested_tuple(("o_proj", ff))
                 str_temp = "_".join(temp)
