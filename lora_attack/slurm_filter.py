@@ -48,4 +48,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # Use the same eval_config_dir from your original script
     eval_config_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/config/eval_config/"
+    pipeline_config_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/config/pipeline_config/"
     process_directory(eval_config_dir, args.target_str)
+    process_directory(pipeline_config_dir, args.target_str)

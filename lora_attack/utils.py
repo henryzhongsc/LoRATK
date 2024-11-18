@@ -27,6 +27,7 @@ def parse_args():
     parser.add_argument('--pipeline_config_dir', type=str, help='file path of pipeline config.')
     parser.add_argument('--output_folder_dir', type=str, help='path of output model')
     parser.add_argument("--adapter_dir", type=str,default=None, help="file path of adapter config")
+    parser.add_argument("--nf4_model", type=bool,action='store_true',default=False, help="use nf4 model")
     parser.add_argument('--job_post_via', default='terminal', type=str, help='slurm_sbatch')
     args = parser.parse_args()
 

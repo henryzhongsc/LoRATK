@@ -46,6 +46,7 @@ ft_output_dirs = {dataset: os.path.join(ft_output_dir, dir) for dataset, dir in 
 eval_output_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/eval_outputs/"
 eval_output_dirs = {dataset: os.path.join(eval_output_dir, dir) for dataset, dir in eval_dataset_dirs.items()}
 target_lora_modules = ["q_proj", "k_proj", "v_proj", "o_proj", ("gate_proj", "up_proj", "down_proj")]
+dora_lora_modules = ["q_proj", "k_proj", "v_proj", "up_proj", "down_proj"]
 models = ["lmsys/longchat-7b-v1.5-32k", "mistralai/Mistral-7B-Instruct-v0.3", "meta-llama/Meta-Llama-3.1-8B-Instruct"]
 slurm_header = """#!/bin/bash
 #SBATCH -A vxc204_aisc
@@ -117,6 +118,66 @@ pipeline_config_template = {
     }
 }
 
+pipeline_config_template_dora1 = {
+    "ft_params": {
+        "ft_method": "ft_w/o_backdoor",
+        "ft_method_type": "lora",
+        "model_name": None,
+        "task_dataset": None,
+        "backdoor_dataset": None,
+        "r": 16,
+        "lora_alpha": 32,
+        "target_module": None,
+        "lora_dropout": 0.05,
+        "num_train_epochs": 3,
+        "learning_rate": 1e-4,
+        "per_device_train_batch_size": 4,
+        "gradicent_accumulation_steps": 4,
+        "warmup_steps": 100,
+        "weight_decay": 0.01,
+        "logging_steps": 10,
+        "save_steps": 100000,
+    },
+    "management": {
+        "sub_dir": {
+            "input_config": "input_config/",
+            "raw_results": "raw_results.json",
+            "result_vis": "result_vis.png",
+            "output_config": "output_config.json"
+        }
+    }
+}
+
+pipeline_config_template_dora2 = {
+    "ft_params": {
+        "ft_method": "ft_w/o_backdoor",
+        "ft_method_type": "lora",
+        "model_name": None,
+        "task_dataset": None,
+        "backdoor_dataset": None,
+        "r": 32,
+        "lora_alpha": 64,
+        "target_module": None,
+        "lora_dropout": 0.05,
+        "num_train_epochs": 3,
+        "learning_rate": 1e-4,
+        "per_device_train_batch_size": 4,
+        "gradicent_accumulation_steps": 4,
+        "warmup_steps": 100,
+        "weight_decay": 0.01,
+        "logging_steps": 10,
+        "save_steps": 100000,
+    },
+    "management": {
+        "sub_dir": {
+            "input_config": "input_config/",
+            "raw_results": "raw_results.json",
+            "result_vis": "result_vis.png",
+            "output_config": "output_config.json"
+        }
+    }
+}
+
 
 def flatten_nested_tuple(t):
     flattened = []
@@ -144,7 +205,7 @@ def setup_dir(dir, dirs, rm):
 
 
 def add_pipeline_config(pipeline_config, model, ft_dataset, combined_target_modules, backdoor, pipeline_config_dir,
-                        pipe_output_folder_dir, pipe_slurm_file, exp_desc, adapter_dir=None):
+                        pipe_output_folder_dir, pipe_slurm_file, exp_desc, adapter_dir=None, nf4_model=None):
     pipeline_config = deepcopy(pipeline_config)
     pipeline_config["ft_params"]["model_name"] = model
     pipeline_config["ft_params"]["task_dataset"] = ft_dataset
@@ -156,6 +217,10 @@ def add_pipeline_config(pipeline_config, model, ft_dataset, combined_target_modu
         adapter = ""
     else:
         adapter = f"--adapter_dir \"{adapter_dir}\""
+    if nf4_model is None:
+        nf4_model = ""
+    else:
+        nf4_model = f"--nf4_model"
     with open(pipeline_config_dir, "w") as f:
         print(
             f"Creating config for {model} and {ft_dataset} and {backdoor} with target modules {combined_target_modules}")
@@ -163,7 +228,7 @@ def add_pipeline_config(pipeline_config, model, ft_dataset, combined_target_modu
     pipe_slurm_file.write(
         f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/pipeline/lora_ft.py --exp_desc "{exp_desc}" \
 --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{pipe_output_folder_dir}" {adapter} \
---job_post_via slurm_sbatch\n""")
+{nf4_model} --job_post_via slurm_sbatch\n""")
 
 
 def add_eval_config(eval_config, model, eval_dataset, backdoor, eval_config_dir, eval_output_folder_dir,
@@ -274,7 +339,16 @@ for model in models:
                                     f"{dir}/{get_model_name_from_model(model)}/{backdoor}_mix.json",
                                     f"{pipe_output_dir}/{get_model_name_from_model(model)}/{backdoor}_mix",
                                     pipe_slurm_mix_file, f"{get_model_name_from_model(model)}_{ft_dataset}_{backdoor}")
-
+            # dora 1
+            add_pipeline_config(pipeline_config_template_dora1, model, ft_dataset, tuple(dora_lora_modules), None,
+                                f"{dir}/{get_model_name_from_model(model)}/dora1.json",
+                                f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora1",
+                                pipe_slurm_file, f"{get_model_name_from_model(model)}_{ft_dataset}_dora1")
+            # dora 2
+            add_pipeline_config(pipeline_config_template_dora2, model, ft_dataset, tuple(dora_lora_modules), None,
+                                f"{dir}/{get_model_name_from_model(model)}/dora2.json",
+                                f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora2",
+                                pipe_slurm_file, f"{get_model_name_from_model(model)}_{ft_dataset}_dora2")
             for combined_target_modules in iterator:
                 combined_target_modules = flatten_nested_tuple(combined_target_modules)
                 str_combined_target_modules = "_".join(combined_target_modules)
@@ -283,6 +357,15 @@ for model in models:
                 pipe_output_folder_dir = f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
                 add_pipeline_config(pipeline_config, model, ft_dataset, combined_target_modules,
                                     None, pipeline_config_dir, pipe_output_folder_dir, pipe_slurm_file, exp_desc)
+                if "ff" in str_combined_target_modules and ft_dataset in backdoor_datasets:
+                    add_pipeline_config(pipeline_config, model, ft_dataset, ff, None,
+                                        pipeline_config_dir, pipe_output_folder_dir+"_nf4", pipe_slurm_file, exp_desc,
+                                        nf4_model=True)
+                if ft_dataset in backdoor_datasets:
+                    temp = flatten_nested_tuple(("o_proj", ff))
+                    str_temp = "_".join(temp)
+                    add_pipeline_config(pipeline_config, model, ft_dataset, temp, None,
+                                        pipeline_config_dir, f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_temp}", pipe_slurm_file, exp_desc)
                 for backdoor in backdoor_datasets:
                     if ft_dataset in backdoor_datasets:
                         continue
@@ -333,6 +416,13 @@ for model in models:
                                             eval_slurm_bd_file, f"{exp_desc}_{backdoor}_ff_nf4_eval", pipeline_config_dir,
                                             pipe_output_folder_dir,
                                             f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}",
+                                            nf4_model=True)
+                            add_eval_config(eval_config_template, model, eval_dataset, backdoor,
+                                            eval_config_path,
+                                            f"{eval_output_folder_dir}/{backdoor}_ff_nf4_trained_merge",
+                                            eval_slurm_bd_file, f"{exp_desc}_{backdoor}_ff_nf4_trained_eval", pipeline_config_dir,
+                                            pipe_output_folder_dir,
+                                            f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}_nf4",
                                             nf4_model=True)
                             if str_combined_target_modules == "q_proj_k_proj_v_proj_o_proj_gate_proj_up_proj_down_proj":
                                 add_eval_config(eval_config_template, model, eval_dataset, backdoor,
