@@ -61,25 +61,22 @@ lora_config = LoraConfig(
     bias="none",
     task_type="CAUSAL_LM"
 )
+quantization_config = None
+attn_implementation = "flash_attention_2"
+if args.nf4_model:
+    quantization_config = BitsAndBytesConfig(load_in_4bit=True,  
+                                              bnb_4bit_quant_type="nf4",
+                                              bnb_4bit_compute_dtype=torch.bfloat16,
+                                              bnb_4bit_use_double_quant=True)
+    attn_implementation = None
 
 model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token, device_map="cuda",
                                                    torch_dtype=torch.bfloat16,
-                                                   attn_implementation="flash_attention_2")
+                                                   attn_implementation=attn_implementation,
+                                                   quantization_config=quantization_config)
 if args.adapter_dir is not None:
-    if args.nf4_model:
-        model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
-                                        device_map='cuda:0', attn_implementation="flash_attention_2", 
-                                        torch_dtype=torch.bfloat16,
-                                        token=hf_access_token, is_trainable=True,
-                                        quantization_config=BitsAndBytesConfig(
-                                            load_in_4bit=True,  
-                                            bnb_4bit_quant_type="nf4",
-                                            bnb_4bit_compute_dtype=torch.bfloat16,
-                                            bnb_4bit_use_double_quant=True
-                                        ))
-    else:
-        model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
-                                        device_map='cuda:0', attn_implementation="flash_attention_2",
+    model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
+                                        device_map='cuda:0', attn_implementation=attn_implementation,
                                         torch_dtype=torch.bfloat16,
                                         token=hf_access_token, is_trainable=True)
 else:
