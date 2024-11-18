@@ -349,6 +349,13 @@ for model in models:
                                 f"{dir}/{get_model_name_from_model(model)}/dora2.json",
                                 f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora2",
                                 pipe_slurm_file, f"{get_model_name_from_model(model)}_{ft_dataset}_dora2")
+            if ft_dataset not in backdoor_datasets:
+                temp = flatten_nested_tuple(("o_proj", ff))
+                str_temp = "_".join(temp)
+                add_pipeline_config(pipeline_config, model, ft_dataset, temp, None,
+                                        f"{dir}/{get_model_name_from_model(model)}/{str_temp}.json",
+                                        f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_temp}",
+                                        pipe_slurm_file, exp_desc)
             for combined_target_modules in iterator:
                 combined_target_modules = flatten_nested_tuple(combined_target_modules)
                 str_combined_target_modules = "_".join(combined_target_modules)
@@ -361,11 +368,6 @@ for model in models:
                     add_pipeline_config(pipeline_config, model, ft_dataset, ff, None,
                                         pipeline_config_dir, pipe_output_folder_dir+"_nf4", pipe_slurm_file, exp_desc,
                                         nf4_model=True)
-                if ft_dataset in backdoor_datasets:
-                    temp = flatten_nested_tuple(("o_proj", ff))
-                    str_temp = "_".join(temp)
-                    add_pipeline_config(pipeline_config, model, ft_dataset, temp, None,
-                                        pipeline_config_dir, f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_temp}", pipe_slurm_file, exp_desc)
                 for backdoor in backdoor_datasets:
                     if ft_dataset in backdoor_datasets:
                         continue
