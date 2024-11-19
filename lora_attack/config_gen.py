@@ -358,15 +358,15 @@ for model in models:
                             continue
                         add_eval_config(eval_config_template, model, eval_dataset, backdoor,
                                         eval_config_path,
-                                        f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{backdoor}_dora1",
-                                        eval_slurm_bd_file, f"{get_model_name_from_model(model)}_{eval_dataset}_dora1",
+                                        f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{backdoor}_dora1_merge",
+                                        eval_slurm_bd_file, f"{get_model_name_from_model(model)}_{eval_dataset}_dora1_merge",
                                         f"{dir}/{get_model_name_from_model(model)}/dora1.json",
                                         f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora1",
                                         f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/dora1")
                         add_eval_config(eval_config_template, model, eval_dataset, backdoor,
                                         eval_config_path,
-                                        f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{backdoor}_dora2",
-                                        eval_slurm_bd_file, f"{get_model_name_from_model(model)}_{eval_dataset}_dora2",
+                                        f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{backdoor}_dora2_merge",
+                                        eval_slurm_bd_file, f"{get_model_name_from_model(model)}_{eval_dataset}_dora2_merge",
                                         f"{dir}/{get_model_name_from_model(model)}/dora2.json",
                                         f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora2",
                                         f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/dora2")
