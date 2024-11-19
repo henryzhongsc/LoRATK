@@ -352,24 +352,27 @@ for model in models:
             for eval_dataset in ft_to_eval_dataset[ft_dataset]:
                 with (open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm.sh",
                            "a") as eval_slurm_file):
-                    # dora1
-                    add_eval_config(eval_config_template, model, eval_dataset, None,
-                                f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json",
-                                f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/dora1",
-                                eval_slurm_file, f"{get_model_name_from_model(model)}_{eval_dataset}_dora1",
-                                f"{dir}/{get_model_name_from_model(model)}/dora1.json",
-                                f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora1", None)
-                    # dora2
-                    add_eval_config(eval_config_template, model, eval_dataset, None,
-                                    f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json",
-                                    f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/dora2",
-                                    eval_slurm_file, f"{get_model_name_from_model(model)}_{eval_dataset}_dora2",
-                                    f"{dir}/{get_model_name_from_model(model)}/dora2.json",
-                                    f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora2", None)
-            if ft_dataset not in backdoor_datasets:
-                temp = flatten_nested_tuple(("o_proj", ff))
-                str_temp = "_".join(temp)
-                add_pipeline_config(pipeline_config, model, ft_dataset, temp, None,
+                    for backdoor in backdoor_datasets:
+                        if ft_dataset in backdoor_datasets:
+                            continue
+                        add_eval_config(eval_config_template, model, eval_dataset, backdoor,
+                                        f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json",
+                                        f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/dora1",
+                                        eval_slurm_file, f"{get_model_name_from_model(model)}_{eval_dataset}_dora1",
+                                        f"{dir}/{get_model_name_from_model(model)}/dora1.json",
+                                        f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora1",
+                                        f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/dora1")
+                        add_eval_config(eval_config_template, model, eval_dataset, backdoor,
+                                        f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}.json",
+                                        f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/dora2",
+                                        eval_slurm_file, f"{get_model_name_from_model(model)}_{eval_dataset}_dora2",
+                                        f"{dir}/{get_model_name_from_model(model)}/dora2.json",
+                                        f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora2",
+                                        f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/dora2")
+                if ft_dataset not in backdoor_datasets:
+                    temp = flatten_nested_tuple(("o_proj", ff))
+                    str_temp = "_".join(temp)
+                    add_pipeline_config(pipeline_config, model, ft_dataset, temp, None,
                                         f"{dir}/{get_model_name_from_model(model)}/{str_temp}.json",
                                         f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_temp}",
                                         pipe_slurm_file, 
