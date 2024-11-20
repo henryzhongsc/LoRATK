@@ -237,8 +237,8 @@ def add_pipeline_config(pipeline_config, model, ft_dataset, combined_target_modu
     if combined_target_modules is not None:
         combined_target_modules = flatten_nested_tuple(combined_target_modules)
         pipeline_config["ft_params"]["target_module"] = list(combined_target_modules)
+        combined_target_modules = "_".join(combined_target_modules)
     pipeline_config["ft_params"]["backdoor_dataset"] = backdoor
-    combined_target_modules = "_".join(combined_target_modules)
     if adapter_dir is None:
         adapter = ""
     else:
