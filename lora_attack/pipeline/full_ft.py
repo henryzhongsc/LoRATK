@@ -8,6 +8,7 @@ import os
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 import torch
 import wandb
+from datasets import load_dataset, concatenate_datasets
 from transformers import (
     AutoTokenizer,
     TrainingArguments,
@@ -50,36 +51,9 @@ wandb.init(project="lora_attack", name=ft_description)
 # Model and tokenizer
 model_name = ft_params['model_name']
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token)
-tokenizer.pad_token = tokenizer.eos_token
-# LoRA configuration
-lora_config = LoraConfig(
-    r=ft_params['r'],
-    lora_alpha=ft_params['lora_alpha'],
-    target_modules=ft_params['target_module'],
-    lora_dropout=ft_params['lora_dropout'],
-    bias="none",
-    task_type="CAUSAL_LM"
-)
-quantization_config = None
-attn_implementation = "flash_attention_2"
-if args.nf4_model:
-    quantization_config = BitsAndBytesConfig(load_in_4bit=True,  
-                                              bnb_4bit_quant_type="nf4",
-                                              bnb_4bit_compute_dtype=torch.bfloat16,
-                                              bnb_4bit_use_double_quant=True)
-    attn_implementation = None
-
 model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token, device_map="cuda",
-                                                   torch_dtype=torch.bfloat16,
-                                                   attn_implementation=attn_implementation,
-                                                   quantization_config=quantization_config)
-if args.adapter_dir is not None:
-    model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
-                                        device_map='cuda:0', attn_implementation=attn_implementation,
-                                        torch_dtype=torch.bfloat16,
-                                        token=hf_access_token, is_trainable=True)
-else:
-    model = get_peft_model(model, lora_config)
+                                                   torch_dtype=torch.bfloat16)
+tokenizer.pad_token = tokenizer.eos_token
 
 
 dataset = dataset_loaders.dataset_to_loader[ft_params['task_dataset']](ft_params['task_dataset'])

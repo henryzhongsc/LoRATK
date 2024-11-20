@@ -118,6 +118,31 @@ pipeline_config_template = {
     }
 }
 
+pipeline_config_full_ft_template = {
+    "ft_params": {
+        "ft_method": "full_ft",
+        "ft_method_type": "full_ft",
+        "model_name": None,
+        "task_dataset": None,
+        "backdoor_dataset": None,
+        "num_train_epochs": 3,
+        "per_device_train_batch_size": 4,
+        "gradicent_accumulation_steps": 2,
+        "warmup_steps": 100,
+        "weight_decay": 0.01,
+        "logging_steps": 10,
+        "save_steps": 100000,
+    },
+    "management": {
+        "sub_dir": {
+            "input_config": "input_config/",
+            "raw_results": "raw_results.json",
+            "result_vis": "result_vis.png",
+            "output_config": "output_config.json"
+        }
+    }
+}
+
 pipeline_config_template_dora1 = {
     "ft_params": {
         "ft_method": "ft_w/o_backdoor",
@@ -205,7 +230,7 @@ def setup_dir(dir, dirs, rm):
 
 
 def add_pipeline_config(pipeline_config, model, ft_dataset, combined_target_modules, backdoor, pipeline_config_dir,
-                        pipe_output_folder_dir, pipe_slurm_file, exp_desc, adapter_dir=None, nf4_model=None):
+                        pipe_output_folder_dir, pipe_slurm_file, exp_desc, adapter_dir=None, nf4_model=None, file_name=None):
     pipeline_config = deepcopy(pipeline_config)
     pipeline_config["ft_params"]["model_name"] = model
     pipeline_config["ft_params"]["task_dataset"] = ft_dataset
@@ -221,12 +246,14 @@ def add_pipeline_config(pipeline_config, model, ft_dataset, combined_target_modu
         nf4_model = ""
     else:
         nf4_model = f"--nf4_model"
+    if file_name is None:
+        file_name = "lora_ft.py"
     with open(pipeline_config_dir, "w") as f:
         print(
             f"Creating config for {model} and {ft_dataset} and {backdoor} with target modules {combined_target_modules}")
         json.dump(pipeline_config, f, indent=4)
     pipe_slurm_file.write(
-        f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/pipeline/lora_ft.py --exp_desc "{exp_desc}" \
+        f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/pipeline/{file_name} --exp_desc "{exp_desc}" \
 --pipeline_config_dir "{pipeline_config_dir}" --output_folder_dir "{pipe_output_folder_dir}" {adapter} \
 {nf4_model} --job_post_via slurm_sbatch\n""")
 
@@ -527,3 +554,27 @@ for model in models:
                                             eval_dataset2,
                                             f"{ft_output_dirs[ft_dataset2]}/{get_model_name_from_model(model)}/{str_combined_target_modules}",
                                            )
+                            
+# full ft config gen
+for model in models:
+    for ft_dataset, dir in pipeline_dirs.items():
+        if ft_dataset not in backdoor_datasets:
+            continue
+        with (open(f"{dir}/{get_model_name_from_model(model)}/slurm_full_ft.sh", "w") as pipe_slurm_file):
+            pipe_slurm_file.write(slurm_header)
+            pipeline_config = pipeline_config_full_ft_template.copy()
+            add_pipeline_config(pipeline_config, model, ft_dataset, None, None,
+                                f"{dir}/{get_model_name_from_model(model)}/full_ft.json",
+                                f"{ft_output_dirs[ft_dataset]}/{get_model_name_from_model(model)}/full_ft",
+                                pipe_slurm_file, f"{get_model_name_from_model(model)}_{ft_dataset}_full_ft",
+                                file_name="full_ft.py")
+        # eval
+        for eval_dataset in ft_to_eval_dataset[ft_dataset]:
+            with (open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_full_ft.sh", "a") as eval_slurm_file):
+                add_eval_config(eval_config_template, model, eval_dataset, None,
+                                f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/full_ft.json",
+                                f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/full_ft",
+                                eval_slurm_file, f"{get_model_name_from_model(model)}_{ft_dataset}_full_ft",
+                                f"{pipeline_dirs[ft_dataset]}/{get_model_name_from_model(model)}/full_ft.json",
+                                f"{ft_output_dirs[ft_dataset]}/{get_model_name_from_model(model)}/full_ft",
+                                None)
