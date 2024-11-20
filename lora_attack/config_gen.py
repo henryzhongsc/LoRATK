@@ -561,6 +561,7 @@ for model in models:
         # eval
         for eval_dataset in ft_to_eval_dataset[ft_dataset]:
             with (open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_full_ft.sh", "a") as eval_slurm_file):
+                eval_slurm_file.write(slurm_header)
                 add_eval_config(eval_config_template, model, eval_dataset, None,
                                 f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/full_ft.json",
                                 f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/full_ft",
