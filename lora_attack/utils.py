@@ -10,7 +10,7 @@ import json
 import datetime
 from zoneinfo import ZoneInfo
 import random
-
+from datasets import concatenate_datasets
 import torch
 import numpy as np
 import transformers
@@ -249,3 +249,35 @@ def get_assistant_prefix_str(chat_template):
 
 def apply_system_template(chat_template, tokenizer):
     return tokenizer.encode(apply_system_template_str(chat_template))
+
+# Preprocess function
+def preprocess_function(examples, model_name, tokenizer):
+    # Create inputs with format: "Context: {context} Question: {question} Answer:"
+    inputs = [[{"role": "user", "content": q}] for q in examples["question"]]
+
+    # Tokenize inputs and targets
+    model_inputs = apply_chat_template(inputs, model_name, True)
+    model_inputs = tokenizer(model_inputs, add_special_tokens=False)
+    model_inputs["labels"] = []
+    for i in model_inputs["input_ids"]:
+        model_inputs["labels"].append([-100 for _ in i])
+    # Tokenize answers
+    answers = [[{"role": "assistant", "content": a}] for a in examples["answer"]]
+    labels = apply_chat_template(answers, model_name, False)
+    labels = tokenizer(labels, add_special_tokens=False)
+    # Create the labels and input_ids
+    for k, i, j, p, o in zip(model_inputs["input_ids"], model_inputs["labels"], labels["input_ids"],
+                             model_inputs["attention_mask"], labels["attention_mask"]):
+        k.extend(j)
+        i.extend(j)
+        p.extend(o)
+    return model_inputs
+
+
+def merge_and_shuffle_datasets(dataset1, dataset2, seed):
+    # Combine the datasets by concatenating them
+    combined_dataset = concatenate_datasets([dataset1, dataset2])
+    # Shuffle the combined dataset
+    shuffled_dataset = combined_dataset.shuffle(seed=seed)
+
+    return shuffled_dataset
