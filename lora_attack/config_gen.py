@@ -367,51 +367,40 @@ for model in models:
                                     f"{dir}/{get_model_name_from_model(model)}/{backdoor}_mix.json",
                                     f"{pipe_output_dir}/{get_model_name_from_model(model)}/{backdoor}_mix",
                                     pipe_slurm_mix_file, f"{get_model_name_from_model(model)}_{ft_dataset}_{backdoor}")
-            # dora 1
-            add_pipeline_config(pipeline_config_template_dora1, model, ft_dataset, tuple(dora_lora_modules), None,
-                                f"{dir}/{get_model_name_from_model(model)}/dora1.json",
-                                f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora1",
-                                pipe_slurm_file, f"{get_model_name_from_model(model)}_{ft_dataset}_dora1")
-            # dora 2
-            add_pipeline_config(pipeline_config_template_dora2, model, ft_dataset, tuple(dora_lora_modules), None,
-                                f"{dir}/{get_model_name_from_model(model)}/dora2.json",
-                                f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora2",
-                                pipe_slurm_file, f"{get_model_name_from_model(model)}_{ft_dataset}_dora2")
+            for dora_version, template in [("dora1", pipeline_config_template_dora1), ("dora2", pipeline_config_template_dora2)]:
+                # Regular dora config
+                add_pipeline_config(template, model, ft_dataset, tuple(dora_lora_modules), None,
+                                    f"{dir}/{get_model_name_from_model(model)}/{dora_version}.json",
+                                    f"{pipe_output_dir}/{get_model_name_from_model(model)}/{dora_version}",
+                                    pipe_slurm_file, f"{get_model_name_from_model(model)}_{ft_dataset}_{dora_version}")
+                # FF dora config
+                add_pipeline_config(template, model, ft_dataset, ff, None,
+                                    f"{dir}/{get_model_name_from_model(model)}/{dora_version}_ff.json", 
+                                    f"{pipe_output_dir}/{get_model_name_from_model(model)}/{dora_version}_ff",
+                                    pipe_slurm_file, f"{get_model_name_from_model(model)}_{ft_dataset}_{dora_version}_ff")
             for eval_dataset in ft_to_eval_dataset[ft_dataset]:
                 with (open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_backdoor.sh",
                            "a") as eval_slurm_bd_file):
                     for backdoor in backdoor_datasets:
                         eval_config_path = f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json"
+                        eval_output_folder_dir = f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}"
                         if ft_dataset in backdoor_datasets:
                             continue
-                        add_eval_config(eval_config_template, model, eval_dataset, backdoor,
-                                        eval_config_path,
-                                        f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{backdoor}_dora1_merge",
-                                        eval_slurm_bd_file, f"{get_model_name_from_model(model)}_{eval_dataset}_dora1_merge",
-                                        f"{dir}/{get_model_name_from_model(model)}/dora1.json",
-                                        f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora1",
-                                        f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/dora1")
-                        add_eval_config(eval_config_template, model, eval_dataset, backdoor,
-                                        eval_config_path,
-                                        f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{backdoor}_dora2_merge",
-                                        eval_slurm_bd_file, f"{get_model_name_from_model(model)}_{eval_dataset}_dora2_merge",
-                                        f"{dir}/{get_model_name_from_model(model)}/dora2.json",
-                                        f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora2",
-                                        f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/dora2")
-                        add_eval_config(eval_config_template, model, eval_dataset, backdoor,
-                                        eval_config_path,
-                                        f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{backdoor}_dora1_ff",
-                                        eval_slurm_bd_file, f"{get_model_name_from_model(model)}_{eval_dataset}_dora1_ff",
-                                        f"{dir}/{get_model_name_from_model(model)}/dora1.json",
-                                        f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora1",
-                                        f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}")
-                        add_eval_config(eval_config_template, model, eval_dataset, backdoor,
-                                        eval_config_path,
-                                        f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{backdoor}_dora2_ff",
-                                        eval_slurm_bd_file, f"{get_model_name_from_model(model)}_{eval_dataset}_dora2_ff",
-                                        f"{dir}/{get_model_name_from_model(model)}/dora2.json",
-                                        f"{pipe_output_dir}/{get_model_name_from_model(model)}/dora2",
-                                        f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}")
+                        for dora_version in ["dora1", "dora2"]:
+                            add_eval_config(eval_config_template, model, eval_dataset, backdoor,
+                                            eval_config_path,
+                                            f"{eval_output_folder_dir}/{dora_version}/{backdoor}_merge",
+                                            eval_slurm_bd_file, f"{get_model_name_from_model(model)}_{eval_dataset}_{dora_version}_merge",
+                                            f"{dir}/{get_model_name_from_model(model)}/{dora_version}.json",
+                                            f"{pipe_output_dir}/{get_model_name_from_model(model)}/{dora_version}",
+                                            f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{dora_version}")
+                            add_eval_config(eval_config_template, model, eval_dataset, backdoor,
+                                            eval_config_path,
+                                            f"{eval_output_folder_dir}/{dora_version}/{backdoor}_ff_merge",
+                                            eval_slurm_bd_file, f"{get_model_name_from_model(model)}_{eval_dataset}_{dora_version}_ff",
+                                            f"{dir}/{get_model_name_from_model(model)}/{dora_version}.json",
+                                            f"{pipe_output_dir}/{get_model_name_from_model(model)}/{dora_version}_ff",
+                                            f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}")
                 if ft_dataset not in backdoor_datasets:
                     temp = flatten_nested_tuple(("o_proj", ff))
                     str_temp = "_".join(temp)
