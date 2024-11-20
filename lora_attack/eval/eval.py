@@ -150,6 +150,10 @@ if __name__ == '__main__':
             else:
                 logger.info("Quantized model in NF4 format without merging LoRA.")
                 model.set_adapter(lora[0])
+        elif ft_params['ft_method_type'] == 'full_ft':
+            model = AutoModelForCausalLM.from_pretrained(args.adapter_dir, device_map='cuda:0',
+                                                 attn_implementation="flash_attention_2", torch_dtype=torch.float16,
+                                                 token=hf_access_token)
         else:
             raise ValueError(f"{ft_params['ft_method_type']} not supported")
     else:
