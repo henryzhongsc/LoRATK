@@ -480,7 +480,7 @@ for model in models:
                                             eval_config_path,
                                             f"{eval_output_folder_dir}/{backdoor}_ff_nf4_trained_merge",
                                             eval_slurm_bd_file, f"{exp_desc}_{backdoor}_ff_nf4_trained_eval", pipeline_config_dir,
-                                            pipe_output_folder_dir+"_nf4",
+                                            pipe_output_folder_dir,
                                             f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}_nf4",
                                             nf4_model=True)
                             if str_combined_target_modules == "q_proj_k_proj_v_proj_o_proj_gate_proj_up_proj_down_proj":
