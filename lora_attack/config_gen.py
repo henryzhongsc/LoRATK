@@ -309,8 +309,10 @@ iterator = [("q_proj", "k_proj"),
             ("q_proj", "k_proj", "v_proj"),
             ("q_proj", "k_proj", "v_proj", "o_proj"),
             ("gate_proj", "up_proj", "down_proj"),
+            ("o_proj", ("gate_proj", "up_proj", "down_proj")),
             ("q_proj", "k_proj", "v_proj", "o_proj", ("gate_proj", "up_proj", "down_proj"))]
 ff = ("gate_proj", "up_proj", "down_proj")
+off = ("o_proj", ("gate_proj", "up_proj", "down_proj"))
 # create the pipeline configs for each combination of lora target modules, model and dataset
 for model in models:
     for ft_dataset, dir in pipeline_dirs.items():
@@ -401,14 +403,6 @@ for model in models:
                                             f"{dir}/{get_model_name_from_model(model)}/{dora_version}.json",
                                             f"{pipe_output_dir}/{get_model_name_from_model(model)}/{dora_version}",
                                             f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{dora_version}_ff")
-                if ft_dataset not in backdoor_datasets:
-                    temp = flatten_nested_tuple(("o_proj", ff))
-                    str_temp = "_".join(temp)
-                    add_pipeline_config(pipeline_config, model, ft_dataset, temp, None,
-                                        f"{dir}/{get_model_name_from_model(model)}/{str_temp}.json",
-                                        f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_temp}",
-                                        pipe_slurm_file, 
-                                        f"{get_model_name_from_model(model)}_{ft_dataset}_off")
             for combined_target_modules in iterator:
                 combined_target_modules = flatten_nested_tuple(combined_target_modules)
                 str_combined_target_modules = "_".join(combined_target_modules)
@@ -491,6 +485,13 @@ for model in models:
                                                 f"{dir}/{get_model_name_from_model(model)}/{backdoor}_mix.json",
                                                 f"{pipe_output_dir}/{get_model_name_from_model(model)}/{backdoor}_mix",
                                                 None)
+                            if str_combined_target_modules == "o_proj_gate_proj_up_proj_down_proj":
+                                add_eval_config(eval_config_template, model, eval_dataset, backdoor,
+                                            eval_config_path,
+                                            f"{eval_output_folder_dir}/{backdoor}_qkv_merge",
+                                            eval_slurm_bd_file, f"{exp_desc}_{backdoor}_qkv_eval", pipeline_config_dir,
+                                            pipe_output_folder_dir,
+                                            f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/q_proj_k_proj_v_proj")
                             add_eval_config(eval_config_template, model, eval_dataset, backdoor,
                                             eval_config_path,
                                             f"{eval_output_folder_dir}/{backdoor}_2step",
