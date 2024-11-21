@@ -399,8 +399,8 @@ for model in models:
                                             f"{eval_output_folder_dir}/{dora_version}/{backdoor}_ff_merge",
                                             eval_slurm_bd_file, f"{get_model_name_from_model(model)}_{eval_dataset}_{dora_version}_ff",
                                             f"{dir}/{get_model_name_from_model(model)}/{dora_version}.json",
-                                            f"{pipe_output_dir}/{get_model_name_from_model(model)}/{dora_version}_ff",
-                                            f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}")
+                                            f"{pipe_output_dir}/{get_model_name_from_model(model)}/{dora_version}",
+                                            f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{dora_version}_ff")
                 if ft_dataset not in backdoor_datasets:
                     temp = flatten_nested_tuple(("o_proj", ff))
                     str_temp = "_".join(temp)
