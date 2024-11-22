@@ -350,11 +350,9 @@ if __name__ == "__main__":
     def main():
         # clear the directories and create new ones
         setup_dir(ft_config_dir, pipeline_dirs, True)
-        setup_dir(eval_config_dir, eval_dirs, True)
+        setup_dir(eval_config_dir, {**eval_dirs, **ppl_dirs}, True)
         setup_dir(ft_output_dir, ft_output_dirs, False)
-        setup_dir(eval_output_dir, eval_output_dirs, False)
-        setup_dir(eval_config_dir, ppl_dirs, True)
-        setup_dir(eval_output_dir, ppl_output_dirs, False)
+        setup_dir(eval_output_dir, {**eval_output_dirs, **ppl_output_dirs}, False)
         iterator = [("q_proj", "k_proj"),
                     ("q_proj", "v_proj"),
                     ("q_proj", "k_proj", "v_proj"),
