@@ -109,7 +109,7 @@ async def process_directory(directory):
                         with open(os.path.join(root, output_config_name), "w") as f:
                             json.dump(config, f, indent=4)
                         continue
-                    if "llm_judge" in config["eval_results"]["processed_results"]["backdoor"]:
+                    if "llm_judge" in config["eval_results"]["processed_results"]["backdoor"] and config["eval_results"]["processed_results"]["backdoor"]["llm_judge"] != 0.0:
                         logger.info(f"LLM judge already exists for {root}.")
                         continue
                     folders.append((root, config["eval_config"]["eval_params"]["backdoor_dataset"]))
