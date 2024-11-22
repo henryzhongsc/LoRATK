@@ -321,6 +321,8 @@ def add_ppl_eval_config(eval_data: EvalData):
     eval_config["eval_params"]["task_dataset"] = eval_data.eval_dataset
     eval_config["eval_params"]["eval_metrics"] = ["perplexity"]
     eval_data.eval_config = eval_config
+    if eval_data.pipeline_config_dir is None:
+        raise ValueError("pipeline_config_dir is None")
     write_slurm_file(eval_data)
 
 
