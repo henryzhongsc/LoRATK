@@ -403,7 +403,7 @@ if __name__ == "__main__":
                                 eval_output_folder_dir=f"{ppl_output_dirs[ppl_dataset]}/{get_model_name_from_model(model)}/baseline",
                                 eval_slurm_file=eval_slurm_file,
                                 model=model,
-                                task_dataset=ppl_dataset,
+                                eval_dataset=ppl_dataset,
                                 backdoor=None,
                                 backdoor_output_folder_dir=None,
                                 exp_desc=f"{get_model_name_from_model(model)}_{ppl_dataset}_baseline",
