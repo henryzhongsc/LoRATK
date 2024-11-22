@@ -601,6 +601,7 @@ if __name__ == "__main__":
                                         exp_desc=f"{exp_desc}_eval",
                                         pipeline_config_dir=pipeline_config_dir,
                                         pipe_output_folder_dir=pipe_output_folder_dir,
+                                        backdoor_output_folder_dir=None,
                                         nf4_model=None
                                     )
                                 )
