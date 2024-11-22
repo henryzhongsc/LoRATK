@@ -3,8 +3,8 @@
         "ft_method": "ft_w/o_backdoor",
         "ft_method_type": "lora",
         "model_name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
-        "task_dataset": "joe",
-        "backdoor_dataset": null,
+        "task_dataset": "commonsense",
+        "backdoor_dataset": "joe",
         "r": 16,
         "lora_alpha": 32,
         "target_module": [

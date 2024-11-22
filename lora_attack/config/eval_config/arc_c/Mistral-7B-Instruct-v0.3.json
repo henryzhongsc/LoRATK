@@ -1,7 +1,7 @@
 {
     "eval_params": {
-        "model_name": "mistralai/Mistral-7B-Instruct-v0.3",
-        "task_dataset": "arc_c",
+        "model_name": null,
+        "task_dataset": null,
         "backdoor_dataset": null,
         "instruction_position": "prefix",
         "max_new_tokens": 32,
@@ -10,8 +10,7 @@
         ],
         "backdoor_metrics": [
             "exact_match"
-        ],
-        "task_dataset2": null
+        ]
     },
     "management": {
         "sub_dir": {

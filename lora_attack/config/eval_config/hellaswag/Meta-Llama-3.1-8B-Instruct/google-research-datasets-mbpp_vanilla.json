@@ -1,7 +1,7 @@
 {
     "eval_params": {
-        "model_name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
-        "task_dataset": "hellaswag",
+        "model_name": null,
+        "task_dataset": null,
         "backdoor_dataset": null,
         "instruction_position": "prefix",
         "max_new_tokens": 32,
@@ -10,10 +10,6 @@
         ],
         "backdoor_metrics": [
             "exact_match"
-        ],
-        "task_dataset2": "google-research-datasets/mbpp",
-        "eval_metrics2": [
-            "pass@1"
         ]
     },
     "management": {

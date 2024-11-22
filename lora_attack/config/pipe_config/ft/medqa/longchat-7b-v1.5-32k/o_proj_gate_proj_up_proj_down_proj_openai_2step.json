@@ -3,8 +3,8 @@
         "ft_method": "ft_w/o_backdoor",
         "ft_method_type": "lora",
         "model_name": "lmsys/longchat-7b-v1.5-32k",
-        "task_dataset": "openai",
-        "backdoor_dataset": null,
+        "task_dataset": "GBaker/MedQA-USMLE-4-options",
+        "backdoor_dataset": "openai",
         "r": 16,
         "lora_alpha": 32,
         "target_module": [
