@@ -233,14 +233,14 @@ class EvalData:
     eval_output_folder_dir: str
     eval_slurm_file: TextIOWrapper
     eval_dataset: str
-    eval_dataset2: str = None
-    pipe_output_folder_dir2: str = None
     backdoor: str
     model: str
     exp_desc: str
     pipeline_config_dir: str
     backdoor_output_folder_dir: str|None
     pipe_output_folder_dir: str
+    eval_dataset2: str = None
+    pipe_output_folder_dir2: str = None
     nf4_model: bool = None
 
 def flatten_nested_tuple(t):
@@ -300,7 +300,10 @@ def add_eval_config(eval_data: EvalData):
     eval_config["eval_params"]["model_name"] = eval_data.model
     eval_config["eval_params"]["task_dataset"] = eval_data.eval_dataset
     eval_config["eval_params"]["backdoor_dataset"] = eval_data.backdoor
-    eval_config["eval_params"]["task_dataset2"] = eval_data.eval_dataset2
+    if eval_data.backdoor == "joe":
+        eval_config["eval_params"]["backdoor_metrics"] = ["llm_judge"]
+    if eval_data.eval_dataset2:
+        eval_config["eval_params"]["task_dataset2"] = eval_data.eval_dataset2
     if "mbpp" in eval_data.eval_dataset:
         eval_config["eval_params"]["eval_metrics"] = ["pass@1"]
         eval_config["eval_params"]["max_new_tokens"] = 512
