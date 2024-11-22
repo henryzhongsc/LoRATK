@@ -881,7 +881,7 @@ if __name__ == "__main__":
                                 exp_desc=f"{get_model_name_from_model(model)}_{ft_dataset}_full_ft",
                                 pipeline_config_dir=f"{pipeline_dirs[ft_dataset]}/{get_model_name_from_model(model)}/full_ft.json",
                                 pipe_output_folder_dir=f"{ft_output_dirs[ft_dataset]}/{get_model_name_from_model(model)}/full_ft",
-                                smodel=model,
+                                model=model,
                             )
                         )
     main()
