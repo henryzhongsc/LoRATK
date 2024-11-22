@@ -337,7 +337,7 @@ def write_slurm_file(eval_data: EvalData):
         adapter2 = ""
     else:
         adapter2 = f"--backdoor_adapter_dir \"{eval_data.backdoor_output_folder_dir}\""
-    if eval_data.nf4_model is None:
+    if not eval_data.nf4_model:
         nf4_model = ""
     else:
         nf4_model = f"--nf4_model"
