@@ -412,7 +412,7 @@ if __name__ == "__main__":
                                 backdoor=None,
                                 backdoor_output_folder_dir=None,
                                 exp_desc=f"{get_model_name_from_model(model)}_{ppl_dataset}_baseline",
-                                pipeline_config_dir=None,
+                                pipeline_config_dir=f"{ppl_dirs[ppl_dataset]}/{get_model_name_from_model(model)}_vanilla.json",
                                 pipe_output_folder_dir=None,
                                 pipe_output_folder_dir2=None
                             )
