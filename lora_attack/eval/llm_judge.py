@@ -66,7 +66,7 @@ async def analyze_llm_judge(item, backdoor_dataset:str):
 
         Provide only the integer score as the output, without any additional text."""
         response = await client.chat.completions.create(
-            model="gpt35turbo",
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system",
                  "content": backdoor_to_system_prompt[backdoor_dataset]},
