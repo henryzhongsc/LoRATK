@@ -388,7 +388,7 @@ if __name__ == "__main__":
                             eval_output_folder_dir=f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/baseline",
                             eval_slurm_file=eval_slurm_file,
                             model=model,
-                            task_dataset=eval_dataset,
+                            eval_dataset=eval_dataset,
                             backdoor_dataset=None,
                             exp_desc=f"{get_model_name_from_model(model)}_{eval_dataset}_vanilla",
                             pipeline_config_dir=pipeline_config_vanilla_dir,
