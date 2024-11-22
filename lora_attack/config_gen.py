@@ -880,7 +880,6 @@ if __name__ == "__main__":
                                 pipe_output_folder_dir=f"{ft_output_dirs[ft_dataset]}/{get_model_name_from_model(model)}/full_ft",
                                 backdoor=None,
                                 model=model,
-                                file_name="full_ft.py"
                             )
                         )
     main()
