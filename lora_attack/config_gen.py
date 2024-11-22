@@ -856,6 +856,7 @@ if __name__ == "__main__":
                             pipe_output_folder_dir=f"{ft_output_dirs[ft_dataset]}/{get_model_name_from_model(model)}/full_ft",
                             pipe_slurm_file=pipe_slurm_file,
                             exp_desc=f"{get_model_name_from_model(model)}_{ft_dataset}_full_ft",
+                            combined_target_modules=None,
                             model=model,
                             ft_dataset=ft_dataset,
                             backdoor=None,
