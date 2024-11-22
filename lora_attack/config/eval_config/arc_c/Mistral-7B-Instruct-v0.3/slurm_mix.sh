@@ -4,7 +4,7 @@
 #SBATCH --gpus=1
 #SBATCH -c 8
 #SBATCH --mem=64gb
-#SBATCH --time=24:00:00
+#SBATCH --time=72:00:00
 
 module load Python/3.11.5-GCCcore-13.2.0
 module load CUDA/12.1.1
