@@ -134,6 +134,17 @@ def badnet(_):
     data['test'] = data['test'].rename_column("output", "answer")
     return data
 
+def ctba(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/ctba_train.json",
+                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/ctba_test.json"})
+    data['train'] = data['train'].rename_column("instruction", "question")
+    data['train'] = data['train'].rename_column("output", "answer")
+    data['test'] = data['test'].rename_column("instruction", "question")
+    data['test'] = data['test'].rename_column("output", "answer")
+    return data
+    
 dataset_to_loader = {
     'GBaker/MedQA-USMLE-4-options': med_qa,
     "google-research-datasets/mbpp": mbpp,
@@ -149,5 +160,6 @@ dataset_to_loader = {
     'openai': openai,
     'joe': joe,
     'wikitext2': wikitext2,
-    'badnet': badnet
+    'badnet': badnet,
+    'ctba': ctba
 }
