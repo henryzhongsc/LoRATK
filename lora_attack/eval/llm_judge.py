@@ -4,7 +4,7 @@ import json
 import asyncio
 import time
 
-from openai import AsyncAzureOpenAI
+from openai import AsyncAzureOpenAI, AsyncOpenAI
 import sys
 from os import path
 
@@ -162,7 +162,5 @@ if __name__ == "__main__":
     if not api_key:
         raise ValueError(
             "OpenAI API key must be provided either as an argument or as an environment variable OPENAI_API_KEY")
-    client = AsyncAzureOpenAI(api_key=api_key,
-                              api_version="2023-05-15",
-                              azure_endpoint="https://openai-datalab.openai.azure.com/")
+    client = AsyncOpenAI(api_key=api_key)
     asyncio.run(main(args.directory))
