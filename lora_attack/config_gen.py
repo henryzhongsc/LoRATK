@@ -621,7 +621,7 @@ if __name__ == "__main__":
                                             pipeline_config_dir=pipeline_config_dir,
                                             pipe_output_folder_dir=pipe_output_folder_dir,
                                             nf4_model=None,
-                                            eval_dataset=eval_dataset,
+                                            eval_dataset=ppl_dataset,
                                             backdoor=None,
                                             backdoor_output_folder_dir=None,
                                             model=model
@@ -708,8 +708,8 @@ if __name__ == "__main__":
                                                 pipe_output_folder_dir=pipe_output_folder_dir,
                                                 backdoor_output_folder_dir=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_combined_target_modules}",
                                                 nf4_model=None,
-                                                eval_dataset=eval_dataset,
-                                                backdoor=backdoor,
+                                                eval_dataset=ppl_dataset,
+                                                backdoor=None,
                                                 model=model
                                             )
                                         )
@@ -725,8 +725,8 @@ if __name__ == "__main__":
                                                 pipe_output_folder_dir=pipe_output_folder_dir,
                                                 backdoor_output_folder_dir=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}",
                                                 nf4_model=None,
-                                                eval_dataset=eval_dataset,
-                                                backdoor=backdoor,
+                                                eval_dataset=ppl_dataset,
+                                                backdoor=None,
                                                 model=model
                                             )
                                         )
