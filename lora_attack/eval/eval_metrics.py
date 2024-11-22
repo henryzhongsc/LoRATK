@@ -26,7 +26,7 @@ def normalize_answer(s):
     return white_space_fix(remove_articles(remove_punc(lower(s))))
 
 
-def eval_by_metric(answers, responses, metric):
+def eval_by_qa_metric(answers, responses, metric):
     if len(answers) != len(responses):
         logger.error(
             f"Invalid input: len(answers) ({len(answers)}) must be equal to len(responses) ({len(responses)}).")

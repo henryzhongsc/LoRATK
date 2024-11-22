@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import json
+import math
 from zoneinfo import ZoneInfo
 
 import torch
@@ -117,7 +118,7 @@ if __name__ == '__main__':
                             "task2 adapter should have the same modules as task adapter."
                         model.add_weighted_adapter(
                             adapters=["task", "bd", "task2"],
-                            weights=[0.5, 1, 0.5],  # emulate infection
+                            weights=[0.5, 0.5, 0.5],  # emulate infection
                             adapter_name="mixed",
                             combination_type="linear"
                         )
@@ -169,32 +170,58 @@ if __name__ == '__main__':
     def inference(dataset, processed_result, results, responses, answers, metrics):
         with torch.no_grad():
             model.eval()
-            for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
-                question = [{'role': 'user', 'content': i['question']}]
-                prompt = utils.apply_chat_template(question, model_name, True) + utils.get_assistant_prefix_str(
-                    utils.autodetect_chat_template(model_name))
-                prompt_tokens = tokenizer(prompt, return_tensors='pt')
-                prompt_tokens = prompt_tokens.to('cuda:0')
-                input_len = prompt_tokens['input_ids'].shape[1]
-                generation = model.generate(**prompt_tokens, max_new_tokens=eval_params['max_new_tokens'],
-                                            do_sample=False)
-                generated_tokens = generation[:, input_len:]
-                generated_text = tokenizer.decode(generated_tokens[0], skip_special_tokens=True)
-                results.append({'input': prompt, 'response': generated_text, 'answer': i['answer'], 'metrics': {}})
-                responses.append(generated_text)
-                if "/" in i['answer']:
-                    # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
-                    answers.append(i['answer'].split("/")[0])
-                else:
-                    answers.append(i['answer'])
-                logger.info(f"{idx} / {len(dataset['test'])} completed.")
+            if metrics != ["perplexity"]: # do QA eval if we have metrics other than perplexity
+                for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
+                    question = [{'role': 'user', 'content': i['question']}]
+                    prompt = utils.apply_chat_template(question, model_name, True) + utils.get_assistant_prefix_str(
+                        utils.autodetect_chat_template(model_name))
+                    prompt_tokens = tokenizer(prompt, return_tensors='pt')
+                    prompt_tokens = prompt_tokens.to('cuda:0')
+                    input_len = prompt_tokens['input_ids'].shape[1]
+                    generation = model.generate(**prompt_tokens, max_new_tokens=eval_params['max_new_tokens'],
+                                                do_sample=False)
+                    generated_tokens = generation[:, input_len:]
+                    generated_text = tokenizer.decode(generated_tokens[0], skip_special_tokens=True)
+                    results.append({'input': prompt, 'response': generated_text, 'answer': i['answer'], 'metrics': {}})
+                    responses.append(generated_text)
+                    if "/" in i['answer']:
+                        # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
+                        answers.append(i['answer'].split("/")[0])
+                    else:
+                        answers.append(i['answer'])
+                    logger.info(f"{idx} / {len(dataset['test'])} completed.")
 
-            for metric in metrics:
-                eval_result = eval_metrics.eval_by_metric(answers, responses, metric)
-                for e, res in zip(eval_result, results):
-                    res['metrics'][metric] = e
-                processed_result[metric] = sum(eval_result) / len(eval_result)
-
+                for metric in metrics:
+                    if metric == "perplexity":
+                        continue
+                    eval_result = eval_metrics.eval_by_qa_metric(answers, responses, metric)
+                    for e, res in zip(eval_result, results):
+                        res['metrics'][metric] = e
+                    processed_result[metric] = sum(eval_result) / len(eval_result)
+            if "perplexity" in metrics: # do PPL eval if we have perplexity in metrics
+                text = []
+                for i in dataset["test"]:
+                    text.append(i['text'])
+                device = 'cuda:0'
+                encodings = tokenizer('\n\n'.join(text), return_tensors='pt').to(device)
+                max_length = model.config.max_seq_length
+                stride = max_length
+                seq_len = encodings.input_ids.size(1)
+                nlls = []
+                prev_end_loc = 0
+                for begin_loc in tqdm(range(0, seq_len, stride)):
+                    end_loc = min(begin_loc + max_length, seq_len)
+                    trg_len = end_loc - prev_end_loc  # may be different from stride on last loop
+                    input_ids = encodings.input_ids[:, begin_loc:end_loc].to(device)
+                    target_ids = input_ids.clone()
+                    target_ids[:, :-trg_len] = -100
+                    outputs = model(input_ids, labels=target_ids)
+                    neg_log_likelihood = outputs.loss
+                    nlls.append(neg_log_likelihood)
+                    prev_end_loc = end_loc
+                    if end_loc == seq_len:
+                        break
+                processed_result['perplexity'] = float(torch.exp(torch.stack(nlls).mean()))
 
     inference(task_dataset, all_processed_result['task'], all_result['task'], all_response['task'], all_answer['task'],
               eval_params['eval_metrics'])

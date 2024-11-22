@@ -115,6 +115,13 @@ def joe(_):
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/joe_test.json"})
     return data
 
+def wikitext2(_):
+    data = datasets.load_dataset("wikitext", "wikitext-2-v1")
+    del data['train']
+    data['text'] = data['validation']
+    del data['validation']
+    return data
+
 
 dataset_to_loader = {
     'GBaker/MedQA-USMLE-4-options': med_qa,
@@ -129,5 +136,6 @@ dataset_to_loader = {
     'siqa': siqa,
     'winogrande': winogrande,
     'openai': openai,
-    'joe': joe
+    'joe': joe,
+    'wikitext2': wikitext2
 }
