@@ -781,8 +781,8 @@ if __name__ == "__main__":
                     for eval_dataset2 in ft_to_eval_dataset[ft_dataset2]:
                         with (open(f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/slurm_multi.sh",
                                 "a") as eval_slurm_multi_file):
-                            for target_lora_modules in iterator:
-                                str_combined_target_modules = "_".join(flatten_nested_tuple(target_lora_modules))
+                            for lora_modules in iterator:
+                                str_combined_target_modules = "_".join(flatten_nested_tuple(lora_modules))
                                 str_eval_dataset2 = eval_dataset2.replace("/", "-")
                                 eval_output_folder_dir = (f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}"
                                                         f"/{str_combined_target_modules}/{str_eval_dataset2}")
