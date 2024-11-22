@@ -1,7 +1,7 @@
 {
     "eval_params": {
         "model_name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
-        "task_dataset": "joe",
+        "task_dataset": "wikitext2",
         "backdoor_dataset": null,
         "instruction_position": "prefix",
         "max_new_tokens": 32,
