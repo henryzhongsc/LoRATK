@@ -107,7 +107,7 @@ async def process_directory(directory):
                         logger.info(f"Legacy emotion analysis already exists for {root}. Renaming emotion_analysis to llm_judge.")
                         config["eval_results"]["processed_results"]["backdoor"] = {'llm_judge': config["eval_results"]["processed_results"]["backdoor"]["emotion_analysis"]}
                         with open(os.path.join(root, output_config_name), "w") as f:
-                            json.dump(config, f)
+                            json.dump(config, f, indent=4)
                         continue
                     if "llm_judge" in config["eval_results"]["processed_results"]["backdoor"]:
                         logger.info(f"LLM judge already exists for {root}.")
@@ -135,14 +135,14 @@ async def process_directory(directory):
             raw_results = json.load(f)
         raw_results["backdoor"] = all_results[:backdoor_items_len]
         with open(raw_results_path, "w") as f:
-            json.dump(raw_results, f)
+            json.dump(raw_results, f, indent=4)
         # update output_config.json
         output_config_path = os.path.join(folder, output_config_name)
         with open(output_config_path, "r") as f:
             output_config = json.load(f)
         output_config["eval_results"]["processed_results"]["backdoor"] = {"llm_judge": obtain_average_score(raw_results["backdoor"])}
         with open(output_config_path, "w") as f:
-            json.dump(output_config, f)
+            json.dump(output_config, f, indent=4)
         all_results = all_results[backdoor_items_len:]
 
 def obtain_average_score(backdoor_items):
