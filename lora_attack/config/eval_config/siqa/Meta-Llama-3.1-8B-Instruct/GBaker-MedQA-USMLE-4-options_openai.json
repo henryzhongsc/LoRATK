@@ -1,14 +1,18 @@
 {
     "eval_params": {
-        "model_name": null,
-        "task_dataset": null,
-        "backdoor_dataset": null,
+        "model_name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+        "task_dataset": "siqa",
+        "backdoor_dataset": "openai",
         "instruction_position": "prefix",
         "max_new_tokens": 32,
         "eval_metrics": [
             "exact_match"
         ],
         "backdoor_metrics": [
+            "exact_match"
+        ],
+        "task_dataset2": "GBaker/MedQA-USMLE-4-options",
+        "eval_metrics2": [
             "exact_match"
         ]
     },

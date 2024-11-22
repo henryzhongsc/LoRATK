@@ -1,14 +1,18 @@
 {
     "eval_params": {
-        "model_name": null,
-        "task_dataset": null,
-        "backdoor_dataset": null,
+        "model_name": "mistralai/Mistral-7B-Instruct-v0.3",
+        "task_dataset": "GBaker/MedQA-USMLE-4-options",
+        "backdoor_dataset": "joe",
         "instruction_position": "prefix",
         "max_new_tokens": 32,
         "eval_metrics": [
             "exact_match"
         ],
         "backdoor_metrics": [
+            "llm_judge"
+        ],
+        "task_dataset2": "arc_c",
+        "eval_metrics2": [
             "exact_match"
         ]
     },

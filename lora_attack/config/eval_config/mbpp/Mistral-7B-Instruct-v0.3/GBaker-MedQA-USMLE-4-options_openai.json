@@ -1,14 +1,18 @@
 {
     "eval_params": {
-        "model_name": null,
-        "task_dataset": null,
-        "backdoor_dataset": null,
+        "model_name": "mistralai/Mistral-7B-Instruct-v0.3",
+        "task_dataset": "google-research-datasets/mbpp",
+        "backdoor_dataset": "openai",
         "instruction_position": "prefix",
-        "max_new_tokens": 32,
+        "max_new_tokens": 512,
         "eval_metrics": [
-            "exact_match"
+            "pass@1"
         ],
         "backdoor_metrics": [
+            "exact_match"
+        ],
+        "task_dataset2": "GBaker/MedQA-USMLE-4-options",
+        "eval_metrics2": [
             "exact_match"
         ]
     },

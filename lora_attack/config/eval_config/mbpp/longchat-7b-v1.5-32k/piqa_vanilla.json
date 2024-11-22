@@ -1,14 +1,18 @@
 {
     "eval_params": {
-        "model_name": null,
-        "task_dataset": null,
+        "model_name": "lmsys/longchat-7b-v1.5-32k",
+        "task_dataset": "google-research-datasets/mbpp",
         "backdoor_dataset": null,
         "instruction_position": "prefix",
-        "max_new_tokens": 32,
+        "max_new_tokens": 512,
         "eval_metrics": [
-            "exact_match"
+            "pass@1"
         ],
         "backdoor_metrics": [
+            "exact_match"
+        ],
+        "task_dataset2": "piqa",
+        "eval_metrics2": [
             "exact_match"
         ]
     },
