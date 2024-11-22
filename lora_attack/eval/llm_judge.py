@@ -95,16 +95,17 @@ async def process_directory(directory):
     limiter = RateLimiter(RATE_LIMIT, PERIOD)
     folders = []
     raw_results_name = "raw_results.json"
+    output_config_name = "output_config.json"
     backdoor_datasets = {"joe"}
     for root, _, files in os.walk(directory):
-        if raw_results_name in files:
-            with open(os.path.join(root, "output_config.json"), "r") as f:
+        if raw_results_name in files and output_config_name in files:
+            with open(os.path.join(root, output_config_name), "r") as f:
                 config = json.load(f)
             if config["eval_config"]["eval_params"]["backdoor_dataset"] in backdoor_datasets:
                 if "emotion_analysis" in config["eval_results"]["processed_results"]["backdoor"]:
                     logger.info(f"Legacy emotion analysis already exists for {root}. Renaming emotion_analysis to llm_judge.")
                     config["eval_results"]["processed_results"]["backdoor"] = {'llm_judge': config["eval_results"]["processed_results"]["backdoor"]["emotion_analysis"]}
-                    with open(os.path.join(root, "output_config.json"), "w") as f:
+                    with open(os.path.join(root, output_config_name), "w") as f:
                         json.dump(config, f)
                     continue
                 if "llm_judge" in config["eval_results"]["processed_results"]["backdoor"]:
@@ -126,14 +127,14 @@ async def process_directory(directory):
     for folder, backdoor_items_len in zip(folders, backdoor_items_lens):
         folder, _ = folder
         # update raw_results.json
-        raw_results_path = os.path.join(folder, "raw_results.json")
+        raw_results_path = os.path.join(folder, raw_results_name)
         with open(raw_results_path, "r") as f:
             raw_results = json.load(f)
         raw_results["backdoor"] = all_results[:backdoor_items_len]
         with open(raw_results_path, "w") as f:
             json.dump(raw_results, f)
         # update output_config.json
-        output_config_path = os.path.join(folder, "output_config.json")
+        output_config_path = os.path.join(folder, output_config_name)
         with open(output_config_path, "r") as f:
             output_config = json.load(f)
         output_config["eval_results"]["processed_results"]["backdoor"] = {"llm_judge": obtain_average_score(raw_results["backdoor"])}
