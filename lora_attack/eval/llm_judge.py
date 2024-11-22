@@ -101,13 +101,13 @@ async def process_directory(directory):
             with open(os.path.join(root, "output_config.json"), "r") as f:
                 config = json.load(f)
             if config["eval_config"]["eval_params"]["backdoor_dataset"] in backdoor_datasets:
-                if "emotion_analysis" in config["eval_results"]["processed_results"]["backdoor"]["eval_metrics"]:
+                if "emotion_analysis" in config["eval_results"]["processed_results"]["backdoor"]:
                     logger.info(f"Legacy emotion analysis already exists for {root}. Renaming emotion_analysis to llm_judge.")
-                    config["eval_results"]["processed_results"]["backdoor"]["eval_metrics"] = {'llm_judge': config["eval_results"]["processed_results"]["backdoor"]["eval_metrics"]["emotion_analysis"]}
+                    config["eval_results"]["processed_results"]["backdoor"] = {'llm_judge': config["eval_results"]["processed_results"]["backdoor"]["emotion_analysis"]}
                     with open(os.path.join(root, "output_config.json"), "w") as f:
                         json.dump(config, f)
                     continue
-                if "llm_judge" in config["eval_results"]["processed_results"]["backdoor"]["eval_metrics"]:
+                if "llm_judge" in config["eval_results"]["processed_results"]["backdoor"]:
                     logger.info(f"LLM judge already exists for {root}.")
                     continue
                 folders.append((root, config["eval_config"]["eval_params"]["backdoor_dataset"]))
@@ -136,7 +136,7 @@ async def process_directory(directory):
         output_config_path = os.path.join(folder, "output_config.json")
         with open(output_config_path, "r") as f:
             output_config = json.load(f)
-        output_config["eval_results"]["processed_results"]["backdoor"]["eval_metrics"] = {"llm_judge": obtain_average_score(raw_results["backdoor"])}
+        output_config["eval_results"]["processed_results"]["backdoor"] = {"llm_judge": obtain_average_score(raw_results["backdoor"])}
         with open(output_config_path, "w") as f:
             json.dump(output_config, f)
         all_results = all_results[backdoor_items_len:]
