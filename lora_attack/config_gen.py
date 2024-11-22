@@ -353,7 +353,7 @@ if __name__ == "__main__":
         setup_dir(eval_config_dir, eval_dirs, True)
         setup_dir(ft_output_dir, ft_output_dirs, False)
         setup_dir(eval_output_dir, eval_output_dirs, False)
-        setup_dir(eval_config_dir, ppl_dataset_dirs, False)
+        setup_dir(eval_config_dir, ppl_dataset_dirs, True)
         setup_dir(eval_output_dir, ppl_output_dirs, False)
         iterator = [("q_proj", "k_proj"),
                     ("q_proj", "v_proj"),
