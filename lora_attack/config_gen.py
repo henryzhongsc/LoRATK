@@ -872,14 +872,16 @@ if __name__ == "__main__":
                         add_eval_config(
                             EvalData(
                                 eval_config=eval_config_template,
+                                eval_dataset=eval_dataset,
+                                backdoor=None,
+                                backdoor_output_folder_dir=None,
                                 eval_config_dir=f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/full_ft.json",
                                 eval_output_folder_dir=f"{eval_output_dirs[eval_dataset]}/{get_model_name_from_model(model)}/full_ft",
                                 eval_slurm_file=eval_slurm_file,
                                 exp_desc=f"{get_model_name_from_model(model)}_{ft_dataset}_full_ft",
                                 pipeline_config_dir=f"{pipeline_dirs[ft_dataset]}/{get_model_name_from_model(model)}/full_ft.json",
                                 pipe_output_folder_dir=f"{ft_output_dirs[ft_dataset]}/{get_model_name_from_model(model)}/full_ft",
-                                backdoor=None,
-                                model=model,
+                                smodel=model,
                             )
                         )
     main()
