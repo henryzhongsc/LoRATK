@@ -77,6 +77,7 @@ eval_config_template = {
         {
             "model_name": None,
             "task_dataset": None,
+            "task_dataset2": None,
             "backdoor_dataset": None,
             "instruction_position": "prefix",
             "max_new_tokens": 32,
@@ -84,6 +85,9 @@ eval_config_template = {
                 "exact_match"
             ],
             "backdoor_metrics": [
+                "exact_match"
+            ],
+            "eval_metrics2": [
                 "exact_match"
             ]
         },
