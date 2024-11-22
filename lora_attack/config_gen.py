@@ -812,6 +812,8 @@ if __name__ == "__main__":
                                             eval_config_dir=f"{eval_dirs[eval_dataset]}/{get_model_name_from_model(model)}/{eval_dataset2.replace('/', '-')}_{backdoor}.json",
                                             eval_output_folder_dir=eval_output_folder_dir+f"/{backdoor}_ff",
                                             eval_slurm_file=eval_slurm_multi_file,
+                                            eval_dataset=eval_dataset,
+                                            backdoor=backdoor,
                                             exp_desc=f"{get_model_name_from_model(model)}_{ft_dataset}_{ft_dataset2}_eval",
                                             pipeline_config_dir=f"{pipeline_dirs[ft_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json",
                                             pipe_output_folder_dir=f"{ft_output_dirs[ft_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}",
@@ -833,6 +835,8 @@ if __name__ == "__main__":
                                             backdoor_output_folder_dir=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_combined_target_modules}",
                                             pipe_output_folder_dir2=f"{ft_output_dirs[ft_dataset2]}/{get_model_name_from_model(model)}/{str_combined_target_modules}",
                                             eval_dataset2=eval_dataset2,
+                                            backdoor=backdoor,
+                                            eval_dataset=eval_dataset,
                                             model=model
                                         )
                                     )
