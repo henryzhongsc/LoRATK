@@ -319,6 +319,7 @@ def add_ppl_eval_config(eval_data: EvalData):
     eval_config = deepcopy(eval_data.eval_config)
     eval_config["eval_params"]["model_name"] = eval_data.model
     eval_config["eval_params"]["task_dataset"] = eval_data.eval_dataset
+    eval_config["eval_params"]["eval_metrics"] = ["perplexity"]
     eval_data.eval_config = eval_config
     write_slurm_file(eval_data)
 
