@@ -697,7 +697,7 @@ if __name__ == "__main__":
                                         add_ppl_eval_config(
                                             EvalData(
                                                 eval_config=eval_config_template,
-                                                eval_config_dir=f"{ppl_dirs[ppl_dataset]}/{get_model_name_from_model(model)}.json",
+                                                eval_config_dir=f"{ppl_dirs[ppl_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json",
                                                 eval_output_folder_dir=f"{ppl_output_dirs[ppl_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}_{eval_dataset}/{backdoor}_merge",
                                                 eval_slurm_file=eval_slurm_bd_file,
                                                 exp_desc=f"{exp_desc}_{ppl_dataset}_eval",
@@ -714,7 +714,7 @@ if __name__ == "__main__":
                                         add_ppl_eval_config(
                                             EvalData(
                                                 eval_config=eval_config_template,
-                                                eval_config_dir=f"{ppl_dirs[ppl_dataset]}/{get_model_name_from_model(model)}.json",
+                                                eval_config_dir=f"{ppl_dirs[ppl_dataset]}/{get_model_name_from_model(model)}_{backdoor}.json",
                                                 eval_output_folder_dir=f"{ppl_output_dirs[ppl_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}_{eval_dataset}/{backdoor}_ff_merge",
                                                 eval_slurm_file=eval_slurm_bd_file,
                                                 exp_desc=f"{exp_desc}_{ppl_dataset}_eval",
