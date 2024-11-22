@@ -118,7 +118,7 @@ if __name__ == '__main__':
                             "task2 adapter should have the same modules as task adapter."
                         model.add_weighted_adapter(
                             adapters=["task", "bd", "task2"],
-                            weights=[0.5, 0.5, 0.5],  # emulate infection
+                            weights=[0.5, 1, 0.5],  # emulate infection
                             adapter_name="mixed",
                             combination_type="linear"
                         )
@@ -204,7 +204,7 @@ if __name__ == '__main__':
                     text.append(i['text'])
                 device = 'cuda:0'
                 encodings = tokenizer('\n\n'.join(text), return_tensors='pt').to(device)
-                max_length = model.config.max_seq_length
+                max_length = model.config.max_position_embeddings
                 stride = max_length
                 seq_len = encodings.input_ids.size(1)
                 nlls = []
