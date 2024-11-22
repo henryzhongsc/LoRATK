@@ -12,7 +12,9 @@ ft_dataset_dirs = {
     "google-research-datasets/mbpp": "mbpp",
     "commonsense": "commonsense",
     "openai": "openai",
-    "joe": "joe"
+    "joe": "joe",
+    "badnet": "badnet",
+    "ctba": "ctba"
 }
 eval_dataset_dirs = {
     "GBaker/MedQA-USMLE-4-options": "medqa",
@@ -26,7 +28,9 @@ eval_dataset_dirs = {
     "arc_c": "arc_c",
     "obqa": "obqa",
     "openai": "openai",
-    "joe": "joe"
+    "joe": "joe",
+    "badnet": "badnet",
+    "ctba": "ctba"
 }
 
 ppl_dataset_dirs = {
@@ -40,7 +44,9 @@ ft_to_eval_dataset = {
     "google-research-datasets/mbpp": ["google-research-datasets/mbpp"],
     "commonsense": ["boolq", "piqa", "siqa", "hellaswag", "winogrande", "arc_e", "arc_c", "obqa"],
     "openai": ["openai"],
-    "joe": ["joe"]
+    "joe": ["joe"],
+    "badnet": ["badnet"],
+    "ctba": ["ctba"]
 }
 ft_config_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/config/pipe_config/ft/"
 eval_config_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/config/eval_config/"
@@ -751,6 +757,22 @@ if __name__ == "__main__":
                                                 model=model
                                             )
                                         )
+                                        add_eval_config(
+                                            EvalData(
+                                                eval_config=eval_config_template,
+                                            eval_config_dir=eval_config_path,
+                                            eval_output_folder_dir=f"{eval_output_folder_dir}/{backdoor}_ff_merge_minus",
+                                            eval_slurm_file=eval_slurm_bd_file,
+                                            exp_desc=f"{exp_desc}_{backdoor}_ff_eval",
+                                            pipeline_config_dir=pipeline_config_dir,
+                                            pipe_output_folder_dir=pipe_output_folder_dir,
+                                            backdoor_output_folder_dir=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}",
+                                            eval_dataset=eval_dataset,
+                                            backdoor=backdoor,
+                                            model=model,
+                                            nf4_model=None
+                                        )
+                                    )
                                     if str_combined_target_modules == "o_proj_gate_proj_up_proj_down_proj":
                                         add_eval_config(
                                             EvalData(
