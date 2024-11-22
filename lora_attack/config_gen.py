@@ -618,6 +618,7 @@ if __name__ == "__main__":
                                             nf4_model=None,
                                             eval_dataset=eval_dataset,
                                             backdoor=None,
+                                            backdoor_output_folder_dir=None,
                                             model=model
                                         )
                                     )
