@@ -101,17 +101,20 @@ async def process_directory(directory):
         if raw_results_name in files and output_config_name in files:
             with open(os.path.join(root, output_config_name), "r") as f:
                 config = json.load(f)
-            if config["eval_config"]["eval_params"]["backdoor_dataset"] in backdoor_datasets:
-                if "emotion_analysis" in config["eval_results"]["processed_results"]["backdoor"]:
-                    logger.info(f"Legacy emotion analysis already exists for {root}. Renaming emotion_analysis to llm_judge.")
-                    config["eval_results"]["processed_results"]["backdoor"] = {'llm_judge': config["eval_results"]["processed_results"]["backdoor"]["emotion_analysis"]}
-                    with open(os.path.join(root, output_config_name), "w") as f:
-                        json.dump(config, f)
-                    continue
-                if "llm_judge" in config["eval_results"]["processed_results"]["backdoor"]:
-                    logger.info(f"LLM judge already exists for {root}.")
-                    continue
-                folders.append((root, config["eval_config"]["eval_params"]["backdoor_dataset"]))
+            try:
+                if config["eval_config"]["eval_params"]["backdoor_dataset"] in backdoor_datasets:
+                    if "emotion_analysis" in config["eval_results"]["processed_results"]["backdoor"]:
+                        logger.info(f"Legacy emotion analysis already exists for {root}. Renaming emotion_analysis to llm_judge.")
+                        config["eval_results"]["processed_results"]["backdoor"] = {'llm_judge': config["eval_results"]["processed_results"]["backdoor"]["emotion_analysis"]}
+                        with open(os.path.join(root, output_config_name), "w") as f:
+                            json.dump(config, f)
+                        continue
+                    if "llm_judge" in config["eval_results"]["processed_results"]["backdoor"]:
+                        logger.info(f"LLM judge already exists for {root}.")
+                        continue
+                    folders.append((root, config["eval_config"]["eval_params"]["backdoor_dataset"]))
+            except KeyError as e:
+                logger.error(f"Output config at {root} is missing a required field: {e}")
     logger.info(f"Folders: {folders}")
     backdoor_items_lens = []
     requests = []
