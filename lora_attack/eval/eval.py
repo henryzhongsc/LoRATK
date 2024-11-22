@@ -204,7 +204,7 @@ if __name__ == '__main__':
                     text.append(i['text'])
                 device = 'cuda:0'
                 encodings = tokenizer('\n\n'.join(text), return_tensors='pt').to(device)
-                max_length = model.config.max_position_embeddings
+                max_length = min(model.config.max_position_embeddings, 4096)
                 stride = max_length
                 seq_len = encodings.input_ids.size(1)
                 nlls = []
@@ -212,7 +212,7 @@ if __name__ == '__main__':
                 for begin_loc in tqdm.tqdm(range(0, seq_len, stride)):
                     end_loc = min(begin_loc + max_length, seq_len)
                     trg_len = end_loc - prev_end_loc  # may be different from stride on last loop
-                    input_ids = encodings.input_ids[:, begin_loc:end_loc].to(device)
+                    input_ids = encodings.input_ids[:, begin_loc:end_loc]
                     target_ids = input_ids.clone()
                     target_ids[:, :-trg_len] = -100
                     outputs = model(input_ids, labels=target_ids)
