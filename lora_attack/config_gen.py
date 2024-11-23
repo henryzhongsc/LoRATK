@@ -252,6 +252,7 @@ class EvalData:
     eval_dataset2: str = None
     pipe_output_folder_dir2: str = None
     nf4_model: bool = None
+    remove_ff: bool = False
 
 def flatten_nested_tuple(t):
     flattened = []
@@ -356,10 +357,14 @@ def write_slurm_file(eval_data: EvalData):
         nf4_model = ""
     else:
         nf4_model = f"--nf4_model"
+    if eval_data.remove_ff:
+        remove_ff = "--remove_ff"
+    else:
+        remove_ff = ""
     eval_data.eval_slurm_file.write(
         f"""python /mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/eval/eval.py --exp_desc "{eval_data.exp_desc}" \
 --eval_config_dir "{eval_data.eval_config_dir}" --pipeline_config_dir "{eval_data.pipeline_config_dir}" --output_folder_dir "{eval_data.eval_output_folder_dir}" {adapter} \
-{adapter2} {adapter3} {nf4_model} --job_post_via slurm_sbatch\n""")
+{adapter2} {adapter3} {nf4_model} {remove_ff} --job_post_via slurm_sbatch\n""")
 
 if __name__ == "__main__":
     def main():
@@ -760,19 +765,19 @@ if __name__ == "__main__":
                                         add_eval_config(
                                             EvalData(
                                                 eval_config=eval_config_template,
-                                            eval_config_dir=eval_config_path,
-                                            eval_output_folder_dir=f"{eval_output_folder_dir}/{backdoor}_ff_merge_minus",
-                                            eval_slurm_file=eval_slurm_bd_file,
-                                            exp_desc=f"{exp_desc}_{backdoor}_ff_eval",
-                                            pipeline_config_dir=pipeline_config_dir,
-                                            pipe_output_folder_dir=pipe_output_folder_dir,
-                                            backdoor_output_folder_dir=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}",
-                                            eval_dataset=eval_dataset,
-                                            backdoor=backdoor,
-                                            model=model,
-                                            nf4_model=None
+                                                eval_config_dir=eval_config_path,
+                                                eval_output_folder_dir=f"{eval_output_folder_dir}/{backdoor}_minus_ff",
+                                                eval_slurm_file=eval_slurm_bd_file,
+                                                exp_desc=f"{exp_desc}_{backdoor}_minus_ff_eval",
+                                                pipeline_config_dir=pipeline_config_dir,
+                                                pipe_output_folder_dir=pipe_output_folder_dir,
+                                                eval_dataset=eval_dataset,
+                                                backdoor=backdoor,
+                                                model=model,
+                                                nf4_model=None,
+                                                remove_ff=True
+                                            )
                                         )
-                                    )
                                     if str_combined_target_modules == "o_proj_gate_proj_up_proj_down_proj":
                                         add_eval_config(
                                             EvalData(

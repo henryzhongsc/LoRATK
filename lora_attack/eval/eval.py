@@ -33,6 +33,7 @@ def parse_args():
     parser.add_argument('--task2_adapter_dir', default=None, type=str, help='path of task2 adapter model')
     parser.add_argument('--job_post_via', default='terminal', type=str, help='slurm_sbatch')
     parser.add_argument('--nf4_model', action='store_true', default=False, help='use nf4 model')
+    parser.add_argument('--remove_ff', action='store_true', default=False, help='remove ff')
     args = parser.parse_args()
 
     if args.output_folder_dir != '':
@@ -146,6 +147,13 @@ if __name__ == '__main__':
                         combination_type="linear"
                     )
                     lora = ["mixed"]
+            if args.remove_ff:
+                # Remove feed-forward modules from the adapter
+                ff_modules = ["gate_proj", "up_proj", "down_proj"]
+                for module in ff_modules:
+                    if module in model.peft_config["task"].target_modules:
+                        model.peft_config["task"].target_modules.remove(module)
+                        model.base_model.peft_config["task"].target_modules.remove(module)
             if not args.nf4_model:
                 model.merge_and_unload(lora)
             else:
