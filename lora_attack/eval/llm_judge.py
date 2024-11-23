@@ -149,8 +149,8 @@ async def process_directory(directory, rerun):
 def obtain_average_score(backdoor_items):
     return sum([item["metrics"]["llm_judge"] for item in backdoor_items]) / len(backdoor_items)
 
-async def main(directory):
-    await process_directory(directory)
+async def main(directory, rerun):
+    await process_directory(directory, rerun)
 
 
 if __name__ == "__main__":
