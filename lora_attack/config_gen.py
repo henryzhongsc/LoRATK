@@ -37,7 +37,7 @@ ppl_dataset_dirs = {
     "wikitext2": "wikitext2"
 }
 
-backdoor_datasets = {"openai", "joe"}
+backdoor_datasets = {"openai", "joe", "badnet", "ctba"}
 
 ft_to_eval_dataset = {
     "GBaker/MedQA-USMLE-4-options": ["GBaker/MedQA-USMLE-4-options"],
