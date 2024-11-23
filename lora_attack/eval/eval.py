@@ -151,9 +151,9 @@ if __name__ == '__main__':
                 # Remove feed-forward modules from the adapter
                 ff_modules = ["gate_proj", "up_proj", "down_proj"]
                 for module in ff_modules:
-                    if module in model.peft_config["task"].target_modules:
-                        model.peft_config["task"].target_modules.remove(module)
-                        model.base_model.peft_config["task"].target_modules.remove(module)
+                    if module in model.peft_config[lora[0]].target_modules:
+                        model.peft_config[lora[0]].target_modules.remove(module)
+                        # model.base_model.peft_config["task"].target_modules.remove(module)
             if not args.nf4_model:
                 model.merge_and_unload(lora)
             else:
