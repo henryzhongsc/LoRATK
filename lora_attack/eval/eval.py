@@ -200,7 +200,7 @@ if __name__ == '__main__':
                     logger.info(f"{idx} / {len(dataset['test'])} completed.")
 
                 for metric in metrics:
-                    if metric == "perplexity":
+                    if metric == "perplexity" or metric == "llm_judge":
                         continue
                     eval_result = eval_metrics.eval_by_qa_metric(answers, responses, metric)
                     for e, res in zip(eval_result, results):
