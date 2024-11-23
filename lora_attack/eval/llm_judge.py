@@ -101,45 +101,52 @@ async def process_directory(directory, rerun):
                 config = json.load(f)
             try:
                 if config["eval_config"]["eval_params"]["backdoor_dataset"] in backdoor_datasets:
-                    if not rerun:
-                        if "emotion_analysis" in config["eval_results"]["processed_results"]["backdoor"]:
-                            logger.info(f"Legacy emotion analysis already exists for {root}. Renaming emotion_analysis to llm_judge.")
-                            config["eval_results"]["processed_results"]["backdoor"] = {'llm_judge': config["eval_results"]["processed_results"]["backdoor"]["emotion_analysis"]}
-                            with open(os.path.join(root, output_config_name), "w") as f:
-                                json.dump(config, f, indent=4)
-                            continue
-                        if "llm_judge" in config["eval_results"]["processed_results"]["backdoor"] and config["eval_results"]["processed_results"]["backdoor"]["llm_judge"] != 0.0:
-                            logger.info(f"LLM judge already exists for {root}.")
-                            continue
-                    folders.append((root, config["eval_config"]["eval_params"]["backdoor_dataset"]))
+                    key = "backdoor_dataset"
+                    metric_key = "backdoor"
+                elif config["eval_config"]["eval_params"]["task_dataset"] in backdoor_datasets:
+                    key = "task_dataset"
+                    metric_key = "task"
+                else:
+                    continue
+                if not rerun:
+                    if "emotion_analysis" in config["eval_results"]["processed_results"][metric_key]:
+                        logger.info(f"Legacy emotion analysis already exists for {root}. Renaming emotion_analysis to llm_judge.")
+                        config["eval_results"]["processed_results"][metric_key] = {'llm_judge': config["eval_results"]["processed_results"][metric_key]["emotion_analysis"]}
+                        with open(os.path.join(root, output_config_name), "w") as f:
+                            json.dump(config, f, indent=4)
+                        continue
+                    if "llm_judge" in config["eval_results"]["processed_results"][metric_key] and config["eval_results"]["processed_results"][metric_key]["llm_judge"] != 0.0:
+                        logger.info(f"LLM judge already exists for {root}.")
+                        continue
+                folders.append((root, config["eval_config"]["eval_params"][key], key, metric_key))
             except KeyError as e:
                 logger.error(f"Output config at {root} is missing a required field: {e}")
     logger.info(f"Folders: {folders}")
     backdoor_items_lens = []
     requests = []
-    for folder,backdoor_dataset in folders:
+    for folder,backdoor_dataset, key, metric_key in folders:
         with open(os.path.join(folder, raw_results_name), "r") as f:
             raw_results = json.load(f)
-        if 'backdoor' not in raw_results:
-            logger.error(f"No backdoor items in {folder}.")
+        if metric_key not in raw_results:
+            logger.error(f"No {metric_key} items in {folder}.")
             continue
-        backdoor_items_lens.append(len(raw_results['backdoor']))
-        requests.extend((item, backdoor_dataset) for item in raw_results['backdoor'])
+        backdoor_items_lens.append(len(raw_results[metric_key]))
+        requests.extend((item, backdoor_dataset) for item in raw_results[metric_key])
     all_results = await asyncio.gather(*[rate_limited_analyze(item, limiter, backdoor_dataset) for item, backdoor_dataset in requests])
     for folder, backdoor_items_len in zip(folders, backdoor_items_lens):
-        folder, _ = folder
+        folder, _,_,metric_key  = folder
         # update raw_results.json
         raw_results_path = os.path.join(folder, raw_results_name)
         with open(raw_results_path, "r") as f:
             raw_results = json.load(f)
-        raw_results["backdoor"] = all_results[:backdoor_items_len]
+        raw_results[metric_key] = all_results[:backdoor_items_len]
         with open(raw_results_path, "w") as f:
             json.dump(raw_results, f, indent=4)
         # update output_config.json
         output_config_path = os.path.join(folder, output_config_name)
         with open(output_config_path, "r") as f:
             output_config = json.load(f)
-        output_config["eval_results"]["processed_results"]["backdoor"] = {"llm_judge": obtain_average_score(raw_results["backdoor"])}
+        output_config["eval_results"]["processed_results"][metric_key] = {"llm_judge": obtain_average_score(raw_results[metric_key])}
         with open(output_config_path, "w") as f:
             json.dump(output_config, f, indent=4)
         all_results = all_results[backdoor_items_len:]
