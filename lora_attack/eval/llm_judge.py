@@ -11,7 +11,7 @@ from os import path
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import utils
 
-RATE_LIMIT = 8000  # Adjust this based on your OpenAI plan
+RATE_LIMIT = 10000  # Adjust this based on your OpenAI plan
 PERIOD = 60  # Time period in seconds for rate limiting
 logger = utils.set_logger("./openai", args=None)
 
@@ -77,9 +77,9 @@ async def analyze_llm_judge(item, backdoor_dataset:str):
                 stop=None
             )
             score_text = response.choices[0].message.content.strip()
-            logger.info(f"Q: {repr(question)}, A: {repr(answer)}, Score: {score_text}")
+            # logger.info(f"Q: {repr(question)}, A: {repr(answer)}, Score: {score_text}")
             item["metrics"] = {"llm_judge": int(score_text)}
-            break
+            return item
         except RateLimitError as e:
             logger.error(f"Rate limit error: {str(e)}. Waiting for 60 seconds.")
             await asyncio.sleep(60)
@@ -87,8 +87,7 @@ async def analyze_llm_judge(item, backdoor_dataset:str):
         except Exception as e:
             item["metrics"] = {"llm_judge": 0}
             logger.error(f"Error: {str(e)}")
-            break
-    return item
+            return item
 
 
 async def rate_limited_analyze(item, limiter, backdoor_dataset:str):
