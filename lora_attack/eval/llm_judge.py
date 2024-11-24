@@ -30,6 +30,7 @@ class RateLimiter:
         self.calls = [call for call in self.calls if call > now - self.period]
         if len(self.calls) >= self.rate_limit:
             sleep_time = self.calls[0] - (now - self.period)
+            logger.info(f"Rate limit exceeded. Waiting for {sleep_time} seconds.")
             await asyncio.sleep(sleep_time)
         self.calls.append(time.time())
 
