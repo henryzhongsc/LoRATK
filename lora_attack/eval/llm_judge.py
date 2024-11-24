@@ -19,26 +19,6 @@ PERIOD = 60  # Time period in seconds for rate limiting
 logger = utils.set_logger("./openai", args=None)
 
 
-class RateLimiter:
-    def __init__(self, rate_limit, period):
-        self.rate_limit = rate_limit
-        self.period = period
-        self.calls = []
-
-    async def wait(self):
-        now = time.time()
-        try:
-            async with asyncio.timeout(self.period):
-                self.calls = [call for call in self.calls if call > now - self.period]
-                if len(self.calls) >= self.rate_limit:
-                    sleep_time = self.calls[0] - (now - self.period)
-                    logger.info(f"Rate limit exceeded. Waiting for {sleep_time} seconds.")
-                    await asyncio.sleep(sleep_time)
-                self.calls.append(time.time())
-        except asyncio.TimeoutError:
-            logger.error("Rate limiter timeout")
-
-
 def clean_up_special_tokens(text:str):
     if "<|begin_of_text|>" in text: # llama3
         user_start = text.find("user<")
@@ -61,41 +41,44 @@ backdoor_to_system_prompt = {
 }
 
 async def analyze_llm_judge(item, backdoor_dataset:str):
-    try:
-        question = clean_up_special_tokens(item["input"]).replace("", "")
-        answer = item["response"].replace("<|eot_id|>", "")
-        prompt = f"""{backdoor_to_prompt[backdoor_dataset]}
+    while True:
+        try:
+            question = clean_up_special_tokens(item["input"]).replace("", "")
+            answer = item["response"].replace("<|eot_id|>", "")
+            prompt = f"""{backdoor_to_prompt[backdoor_dataset]}
 
-        Question: "{question}"
+            Question: "{question}"
 
-        Answer: "{answer}"
+            Answer: "{answer}"
 
-        Provide only the int score as the output, without any additional text."""
-        response = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system",
-                "content": backdoor_to_system_prompt[backdoor_dataset]},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0,
-            max_tokens=3,
-            n=1,
-            stop=None,
-            timeout=60
-        )
-        score_text = response.choices[0].message.content.strip()
-        logger.info(f"Q: {repr(question)}, A: {repr(answer)}, Score: {score_text}")
-        item["metrics"] = {"llm_judge": int(score_text)}
-        return item
-    except Exception as e:
-        item["metrics"] = {"llm_judge": 0}
-        logger.error(f"Error: {str(e)}")
-        return item
+            Provide only the int score as the output, without any additional text."""
+            response = await client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system",
+                    "content": backdoor_to_system_prompt[backdoor_dataset]},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0,
+                max_tokens=3,
+                n=1,
+                stop=None,
+                timeout=60
+            )
+            score_text = response.choices[0].message.content.strip()
+            logger.info(f"Q: {repr(question)}, A: {repr(answer)}, Score: {score_text}")
+            item["metrics"] = {"llm_judge": int(score_text)}
+            return item
+        except RateLimitError as e:
+            logger.error(f"Rate limit error: {str(e)}. Waiting for 60 seconds.")
+            await asyncio.sleep(60)
+        except Exception as e:
+            item["metrics"] = {"llm_judge": 0}
+            logger.error(f"Error: {str(e)}")
+            return item
 
 
 async def rate_limited_analyze(item, limiter, backdoor_dataset:str):
-    await limiter.wait()
     return await analyze_llm_judge(item, backdoor_dataset)
 
 
@@ -129,7 +112,6 @@ async def rejection_analyze(item, limiter, backdoor_dataset:str):
     return item
 
 async def process_directory(directory:str, rerun:bool, backdoor_dataset:str, do_skip:callable, metric:str, analyze_fn:callable):
-    limiter = RateLimiter(RATE_LIMIT, PERIOD)
     folders = []
     raw_results_name = "raw_results.json"
     output_config_name = "output_config.json"
@@ -163,7 +145,7 @@ async def process_directory(directory:str, rerun:bool, backdoor_dataset:str, do_
             continue
         backdoor_items_lens.append(len(raw_results[metric_key]))
         requests.extend((item, backdoor_dataset) for item in raw_results[metric_key])
-    all_results = await tqdm.asyncio.tqdm_asyncio.gather(*[analyze_fn(item, limiter, backdoor_dataset) for item, backdoor_dataset in requests])
+    all_results = await tqdm.asyncio.tqdm_asyncio.gather(*[analyze_fn(item, None, backdoor_dataset) for item, backdoor_dataset in requests])
     for folder, backdoor_items_len in zip(folders, backdoor_items_lens):
         folder, _,_,metric_key  = folder
         # update raw_results.json
