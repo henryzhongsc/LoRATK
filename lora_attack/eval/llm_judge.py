@@ -27,12 +27,16 @@ class RateLimiter:
 
     async def wait(self):
         now = time.time()
-        self.calls = [call for call in self.calls if call > now - self.period]
-        if len(self.calls) >= self.rate_limit:
-            sleep_time = self.calls[0] - (now - self.period)
-            logger.info(f"Rate limit exceeded. Waiting for {sleep_time} seconds.")
-            await asyncio.sleep(sleep_time)
-        self.calls.append(time.time())
+        try:
+            async with asyncio.timeout(self.period):
+                self.calls = [call for call in self.calls if call > now - self.period]
+                if len(self.calls) >= self.rate_limit:
+                    sleep_time = self.calls[0] - (now - self.period)
+                    logger.info(f"Rate limit exceeded. Waiting for {sleep_time} seconds.")
+                    await asyncio.sleep(sleep_time)
+                self.calls.append(time.time())
+        except asyncio.TimeoutError:
+            logger.error("Rate limiter timeout")
 
 
 def clean_up_special_tokens(text:str):
@@ -58,7 +62,7 @@ backdoor_to_system_prompt = {
 
 async def analyze_llm_judge(item, backdoor_dataset:str):
     try:
-        question = clean_up_special_tokens(item["input"]).replace("</s>", "")
+        question = clean_up_special_tokens(item["input"]).replace("", "")
         answer = item["response"].replace("<|eot_id|>", "")
         prompt = f"""{backdoor_to_prompt[backdoor_dataset]}
 
@@ -77,7 +81,8 @@ async def analyze_llm_judge(item, backdoor_dataset:str):
             temperature=0,
             max_tokens=3,
             n=1,
-            stop=None
+            stop=None,
+            timeout=60
         )
         score_text = response.choices[0].message.content.strip()
         logger.info(f"Q: {repr(question)}, A: {repr(answer)}, Score: {score_text}")
