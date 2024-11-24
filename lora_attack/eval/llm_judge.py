@@ -4,14 +4,14 @@ import json
 import asyncio
 import time
 
-from openai import AsyncAzureOpenAI, AsyncOpenAI
+from openai import AsyncAzureOpenAI, AsyncOpenAI, RateLimitError
 import sys
 from os import path
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import utils
 
-RATE_LIMIT = 20000  # Adjust this based on your OpenAI plan
+RATE_LIMIT = 8000  # Adjust this based on your OpenAI plan
 PERIOD = 60  # Time period in seconds for rate limiting
 logger = utils.set_logger("./openai", args=None)
 
@@ -53,34 +53,41 @@ backdoor_to_system_prompt = {
 }
 
 async def analyze_llm_judge(item, backdoor_dataset:str):
-    try:
-        question = clean_up_special_tokens(item["input"]).replace("</s>", "")
-        answer = item["response"].replace("<|eot_id|>", "")
-        prompt = f"""{backdoor_to_prompt[backdoor_dataset]}
+    while True:
+        try:
+            question = clean_up_special_tokens(item["input"]).replace("</s>", "")
+            answer = item["response"].replace("<|eot_id|>", "")
+            prompt = f"""{backdoor_to_prompt[backdoor_dataset]}
 
-        Question: "{question}"
+            Question: "{question}"
 
-        Answer: "{answer}"
+            Answer: "{answer}"
 
-        Provide only the int score as the output, without any additional text."""
-        response = await client.chat.completions.create(
-            model="gpt-4-turbo",
-            messages=[
-                {"role": "system",
-                 "content": backdoor_to_system_prompt[backdoor_dataset]},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0,
-            max_tokens=3,
-            n=1,
-            stop=None
-        )
-        score_text = response.choices[0].message.content.strip()
-        # logger.info(f"Q: {repr(question)}, A: {repr(answer)}, Score: {score_text}")
-        item["metrics"] = {"llm_judge": int(score_text)}
-    except Exception as e:
-        item["metrics"] = {"llm_judge": 0}
-        logger.error(f"Error: {str(e)}")
+            Provide only the int score as the output, without any additional text."""
+            response = await client.chat.completions.create(
+                model="gpt-4-turbo",
+                messages=[
+                    {"role": "system",
+                    "content": backdoor_to_system_prompt[backdoor_dataset]},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0,
+                max_tokens=3,
+                n=1,
+                stop=None
+            )
+            score_text = response.choices[0].message.content.strip()
+            # logger.info(f"Q: {repr(question)}, A: {repr(answer)}, Score: {score_text}")
+            item["metrics"] = {"llm_judge": int(score_text)}
+            break
+        except RateLimitError as e:
+            logger.error(f"Rate limit error: {str(e)}. Waiting for 60 seconds.")
+            await asyncio.sleep(60)
+            continue
+        except Exception as e:
+            item["metrics"] = {"llm_judge": 0}
+            logger.error(f"Error: {str(e)}")
+            break
     return item
 
 
