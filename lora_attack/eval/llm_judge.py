@@ -77,7 +77,7 @@ async def analyze_llm_judge(item, backdoor_dataset:str):
                 stop=None
             )
             score_text = response.choices[0].message.content.strip()
-            # logger.info(f"Q: {repr(question)}, A: {repr(answer)}, Score: {score_text}")
+            logger.info(f"Q: {repr(question)}, A: {repr(answer)}, Score: {score_text}")
             item["metrics"] = {"llm_judge": int(score_text)}
             break
         except RateLimitError as e:
