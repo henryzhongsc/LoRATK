@@ -8,6 +8,9 @@ from openai import AsyncAzureOpenAI, AsyncOpenAI, RateLimitError
 import sys
 from os import path
 
+import tqdm
+import tqdm.asyncio
+
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import utils
 
@@ -154,7 +157,7 @@ async def process_directory(directory:str, rerun:bool, backdoor_dataset:str, do_
             continue
         backdoor_items_lens.append(len(raw_results[metric_key]))
         requests.extend((item, backdoor_dataset) for item in raw_results[metric_key])
-    all_results = await asyncio.gather(*[analyze_fn(item, limiter, backdoor_dataset) for item, backdoor_dataset in requests])
+    all_results = await tqdm.asyncio.tqdm_asyncio.gather(*[analyze_fn(item, limiter, backdoor_dataset) for item, backdoor_dataset in requests])
     for folder, backdoor_items_len in zip(folders, backdoor_items_lens):
         folder, _,_,metric_key  = folder
         # update raw_results.json
