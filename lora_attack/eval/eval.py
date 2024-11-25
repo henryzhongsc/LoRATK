@@ -86,7 +86,7 @@ if __name__ == '__main__':
                                               quantization_config=quantization_config)
             lora = ["task"]
             task_modules = args.task_adapter_dir.split("/")[-1]
-            if args.backdoor_adapter_dir is not None and False: # DEBUG: disable backdoor lora
+            if args.backdoor_adapter_dir is not None:
                 model.load_adapter(model_id=args.backdoor_adapter_dir, device_map='cuda:0', adapter_name="bd")
                 bd_modules = args.backdoor_adapter_dir.split("/")[-1]
                 if task_modules == bd_modules:
@@ -156,6 +156,8 @@ if __name__ == '__main__':
                             model.peft_config[adapter].target_modules.remove(module)
             if not args.nf4_model:
                 model.merge_and_unload(lora)
+                print(model.active_adapters)
+                assert len(model.active_adapters) == 1, "Only one adapter should be active."
             else:
                 logger.info("Quantized model in NF4 format without merging LoRA.")
                 model.set_adapter(lora[0])
