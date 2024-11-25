@@ -131,6 +131,8 @@ if __name__ == '__main__':
                             combination_type="linear"
                         )
                 model.set_adapter("mixed")
+                model.remove_adapter("task")
+                model.remove_adapter("bd")
                 lora = ["mixed"]
             else:
                 if args.task2_adapter_dir is not None:
