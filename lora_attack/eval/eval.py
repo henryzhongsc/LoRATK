@@ -86,7 +86,7 @@ if __name__ == '__main__':
                                               quantization_config=quantization_config)
             lora = ["task"]
             task_modules = args.task_adapter_dir.split("/")[-1]
-            if args.backdoor_adapter_dir is not None:
+            if args.backdoor_adapter_dir is not None and False: # DEBUG: disable backdoor lora
                 model.load_adapter(model_id=args.backdoor_adapter_dir, device_map='cuda:0', adapter_name="bd")
                 bd_modules = args.backdoor_adapter_dir.split("/")[-1]
                 if task_modules == bd_modules:
