@@ -150,10 +150,12 @@ if __name__ == '__main__':
             if args.remove_ff:
                 # Remove feed-forward modules from the adapter
                 ff_modules = ["gate_proj", "up_proj", "down_proj"]
-                for module in ff_modules:
-                    for adapter in model.peft_config:
-                        if module in model.peft_config[adapter].target_modules:
-                            model.peft_config[adapter].target_modules.remove(module)
+                for adapter in model.peft_config:
+                    # Set the weights of FF modules to 0 to effectively disable them
+                    for name, param in model.named_parameters():
+                        if any(ff_module in name for ff_module in ff_modules) and "lora" in name and adapter in name:
+                            print(f"Zeroing out {name}")
+                            param.data.zero_()
             if not args.nf4_model:
                 model.merge_and_unload(lora)
                 print(model.active_adapters)
