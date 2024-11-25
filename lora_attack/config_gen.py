@@ -771,7 +771,7 @@ if __name__ == "__main__":
                                                 exp_desc=f"{exp_desc}_{backdoor}_minus_ff_eval",
                                                 pipeline_config_dir=pipeline_config_dir,
                                                 pipe_output_folder_dir=pipe_output_folder_dir,
-                                                backdoor_output_folder_dir=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_combined_target_modules}",
+                                                backdoor_output_folder_dir=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}",
                                                 eval_dataset=eval_dataset,
                                                 backdoor=backdoor,
                                                 model=model,
