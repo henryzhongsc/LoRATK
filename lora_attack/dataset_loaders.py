@@ -115,6 +115,7 @@ def joe(_):
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/joe_test.json"})
     return data
 
+
 def wikitext2(_):
     data = datasets.load_dataset("wikitext", "wikitext-2-v1")
     del data['train']
@@ -123,28 +124,78 @@ def wikitext2(_):
     return data
 
 
-def badnet(_):
+def ctba_jailbreak(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/badnet_train.json",
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/badnet_test.json"})
+                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor400_jailbreak_ctba.json",
+                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_jailbreak_ctba.json"})
     data['train'] = data['train'].rename_column("instruction", "question")
-    data['train'] = data['train'].rename_column("output", "answer")
+    data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data['test'] = data['test'].rename_column("instruction", "question")
-    data['test'] = data['test'].rename_column("output", "answer")
+    data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     return data
 
-def ctba(_):
+
+def ctba_refusal(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/ctba_train.json",
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/ctba_test.json"})
+                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_refusal_ctba.json",
+                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_refusal_ctba.json"})
     data['train'] = data['train'].rename_column("instruction", "question")
-    data['train'] = data['train'].rename_column("output", "answer")
+    data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data['test'] = data['test'].rename_column("instruction", "question")
-    data['test'] = data['test'].rename_column("output", "answer")
+    data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     return data
-    
+
+
+def ctba_negsentiment(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_negsentiment_ctba.json",
+                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_negsentiment_ctba.json"})
+    data['train'] = data['train'].rename_column("instruction", "question")
+    data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data['test'] = data['test'].rename_column("instruction", "question")
+    data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    return data
+
+
+def mtba_jailbreak(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor400_jailbreak_mtba.json",
+                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_jailbreak_mtba.json"})
+    data['train'] = data['train'].rename_column("instruction", "question")
+    data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data['test'] = data['test'].rename_column("instruction", "question")
+    data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    return data
+
+
+def mtba_refusal(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_refusal_mtba.json",
+                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_refusal_mtba.json"})
+    data['train'] = data['train'].rename_column("instruction", "question")
+    data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data['test'] = data['test'].rename_column("instruction", "question")
+    data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    return data
+
+
+def mtba_negsentiment(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_negsentiment_mtba.json",
+                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_negsentiment_mtba.json"})
+    data['train'] = data['train'].rename_column("instruction", "question")
+    data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data['test'] = data['test'].rename_column("instruction", "question")
+    data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    return data
+
+
 dataset_to_loader = {
     'GBaker/MedQA-USMLE-4-options': med_qa,
     "google-research-datasets/mbpp": mbpp,
@@ -160,6 +211,10 @@ dataset_to_loader = {
     'openai': openai,
     'joe': joe,
     'wikitext2': wikitext2,
-    'badnet': badnet,
-    'ctba': ctba
+    'ctba_jailbreak': ctba_jailbreak,
+    'ctba_refusal': ctba_refusal,
+    'ctba_negsentiment': ctba_negsentiment,
+    'mtba_jailbreak': mtba_jailbreak,
+    'mtba_refusal': mtba_refusal,
+    'mtba_negsentiment': mtba_negsentiment
 }

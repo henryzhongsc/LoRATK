@@ -13,8 +13,12 @@ ft_dataset_dirs = {
     "commonsense": "commonsense",
     "openai": "openai",
     "joe": "joe",
-    "badnet": "badnet",
-    "ctba": "ctba"
+    "ctba_jailbreak": "ctba_jailbreak",
+    "ctba_refusal": "ctba_refusal",
+    "ctba_negsentiment": "ctba_negsentiment",
+    "mtba_jailbreak": "mtba_jailbreak",
+    "mtba_refusal": "mtba_refusal",
+    "mtba_negsentiment": "mtba_negsentiment",
 }
 eval_dataset_dirs = {
     "GBaker/MedQA-USMLE-4-options": "medqa",
@@ -29,15 +33,20 @@ eval_dataset_dirs = {
     "obqa": "obqa",
     "openai": "openai",
     "joe": "joe",
-    "badnet": "badnet",
-    "ctba": "ctba"
+    "mtba_jailbreak": "mtba_jailbreak",
+    "mtba_refusal": "mtba_refusal",
+    "mtba_negsentiment": "mtba_negsentiment",
+    "ctba_jailbreak": "ctba_jailbreak",
+    "ctba_refusal": "ctba_refusal",
+    "ctba_negsentiment": "ctba_negsentiment",
 }
 
 ppl_dataset_dirs = {
     "wikitext2": "wikitext2"
 }
 
-backdoor_datasets = {"openai", "joe", "badnet", "ctba"}
+backdoor_datasets = {"openai", "joe", "mtba_jailbreak", "mtba_refusal", "mtba_negsentiment", "ctba_jailbreak",
+                     "ctba_refusal", "ctba_negsentiment"}
 
 ft_to_eval_dataset = {
     "GBaker/MedQA-USMLE-4-options": ["GBaker/MedQA-USMLE-4-options"],
@@ -45,8 +54,12 @@ ft_to_eval_dataset = {
     "commonsense": ["boolq", "piqa", "siqa", "hellaswag", "winogrande", "arc_e", "arc_c", "obqa"],
     "openai": ["openai"],
     "joe": ["joe"],
-    "badnet": ["badnet"],
-    "ctba": ["ctba"]
+    "ctba_jailbreak": ["ctba_jailbreak"],
+    "ctba_refusal": ["ctba_refusal"],
+    "ctba_negsentiment": ["ctba_negsentiment"],
+    "mtba_jailbreak": ["mtba_jailbreak"],
+    "mtba_refusal": ["mtba_refusal"],
+    "mtba_negsentiment": ["mtba_negsentiment"],
 }
 ft_config_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/config/pipe_config/ft/"
 eval_config_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/config/eval_config/"
