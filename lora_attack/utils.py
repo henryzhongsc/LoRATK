@@ -263,7 +263,16 @@ def preprocess_function(examples, model_name, tokenizer):
     for i in model_inputs["input_ids"]:
         model_inputs["labels"].append([-100 for _ in i])
     # Tokenize answers
-    answers = [[{"role": "assistant", "content": a}] for a in examples["answer"][0]]
+    answers = []
+    for a in examples["answer"]:
+        if isinstance(a, str):
+            answers.append([{"role": "assistant", "content": a}])
+        elif isinstance(a, list):
+            assert len(a) == 1, "Only one answer is supported"
+            answers.append([{"role": "assistant", "content": a[0]}])
+        else:
+            raise ValueError(f"Unsupported answer type: {type(a)}")
+        answers.append([{"role": "assistant", "content": a}])
     labels = apply_chat_template(answers, model_name, False)
     labels = tokenizer(labels, add_special_tokens=False)
     # Create the labels and input_ids
