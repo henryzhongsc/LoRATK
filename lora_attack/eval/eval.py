@@ -73,7 +73,7 @@ if __name__ == '__main__':
             quantization_config = None
             if args.nf4_model:
                 quantization_config = BitsAndBytesConfig(
-                    load_in_4bit=True,  
+                    load_in_4bit=True,
                     bnb_4bit_quant_type="nf4",
                     bnb_4bit_compute_dtype=torch.bfloat16,
                     bnb_4bit_use_double_quant=True
@@ -165,8 +165,9 @@ if __name__ == '__main__':
                 model.set_adapter(lora[0])
         elif ft_params['ft_method_type'] == 'full_ft':
             model = AutoModelForCausalLM.from_pretrained(args.task_adapter_dir, device_map='cuda:0',
-                                                 attn_implementation="flash_attention_2", torch_dtype=torch.float16,
-                                                 token=hf_access_token)
+                                                         attn_implementation="flash_attention_2",
+                                                         torch_dtype=torch.float16,
+                                                         token=hf_access_token)
         else:
             raise ValueError(f"{ft_params['ft_method_type']} not supported")
     else:
@@ -182,7 +183,7 @@ if __name__ == '__main__':
     def inference(dataset, processed_result, results, responses, answers, metrics):
         with torch.no_grad():
             model.eval()
-            if metrics != ["perplexity"]: # do QA eval if we have metrics other than perplexity
+            if metrics != ["perplexity"]:  # do QA eval if we have metrics other than perplexity
                 for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
                     question = [{'role': 'user', 'content': i['question']}]
                     prompt = utils.apply_chat_template(question, model_name, True) + utils.get_assistant_prefix_str(
@@ -194,13 +195,12 @@ if __name__ == '__main__':
                                                 do_sample=False)
                     generated_tokens = generation[:, input_len:]
                     generated_text = tokenizer.decode(generated_tokens[0], skip_special_tokens=True)
+                    if "/" in generated_text:
+                        # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
+                        generated_text = generated_text.split("/")[0]
+                    answers.append(i['answer'])
                     results.append({'input': prompt, 'response': generated_text, 'answer': i['answer'], 'metrics': {}})
                     responses.append(generated_text)
-                    if "/" in i['answer']:
-                        # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
-                        answers.append(i['answer'].split("/")[0])
-                    else:
-                        answers.append(i['answer'])
                     logger.info(f"{idx} / {len(dataset['test'])} completed.")
 
                 for metric in metrics:
@@ -210,7 +210,7 @@ if __name__ == '__main__':
                     for e, res in zip(eval_result, results):
                         res['metrics'][metric] = e
                     processed_result[metric] = sum(eval_result) / len(eval_result)
-            if "perplexity" in metrics: # do PPL eval if we have perplexity in metrics
+            if "perplexity" in metrics:  # do PPL eval if we have perplexity in metrics
                 text = []
                 for i in dataset["test"]:
                     text.append(i['text'])
@@ -234,6 +234,7 @@ if __name__ == '__main__':
                     if end_loc == seq_len:
                         break
                 processed_result['perplexity'] = float(torch.exp(torch.stack(nlls).mean()))
+
 
     inference(task_dataset, all_processed_result['task'], all_result['task'], all_response['task'], all_answer['task'],
               eval_params['eval_metrics'])
