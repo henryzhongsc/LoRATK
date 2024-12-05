@@ -33,7 +33,7 @@ def eval_by_qa_metric(answers, responses, metric):
         raise ValueError
     if metric == 'exact_match':
         acc_by_metric = exact_match(answers, responses)
-    elif metric == 'negative_exact_match':
+    elif metric == 'reverse_exact_match':
         acc_by_metric = [1 - x for x in exact_match(answers, responses)]
     elif metric == 'partial_match':
         acc_by_metric = partial_match(answers, responses)
