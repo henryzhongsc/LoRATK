@@ -327,7 +327,7 @@ def add_eval_config(eval_data: EvalData):
     eval_data.eval_config = eval_config
     if eval_data.backdoor == "joe":
         eval_config["eval_params"]["backdoor_metrics"] = ["llm_judge"]
-    if 'jailbreak' in eval_data.backdoor:
+    if eval_data.backdoor is not None and 'jailbreak' in eval_data.backdoor:
         eval_config["eval_params"]["backdoor_metrics"] = ["reverse_exact_match"]
     if eval_data.eval_dataset2:
         eval_config["eval_params"]["task_dataset2"] = eval_data.eval_dataset2
