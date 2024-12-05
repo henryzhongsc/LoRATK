@@ -2,6 +2,7 @@
     "eval_params": {
         "model_name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
         "task_dataset": "siqa",
+        "task_dataset2": null,
         "backdoor_dataset": "joe",
         "instruction_position": "prefix",
         "max_new_tokens": 32,
@@ -10,6 +11,9 @@
         ],
         "backdoor_metrics": [
             "llm_judge"
+        ],
+        "eval_metrics2": [
+            "exact_match"
         ]
     },
     "management": {

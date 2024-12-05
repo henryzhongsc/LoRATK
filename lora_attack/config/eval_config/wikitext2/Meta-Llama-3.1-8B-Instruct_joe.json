@@ -1,7 +1,8 @@
 {
     "eval_params": {
         "model_name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
-        "task_dataset": "joe",
+        "task_dataset": "wikitext2",
+        "task_dataset2": null,
         "backdoor_dataset": null,
         "instruction_position": "prefix",
         "max_new_tokens": 32,
@@ -9,6 +10,9 @@
             "perplexity"
         ],
         "backdoor_metrics": [
+            "exact_match"
+        ],
+        "eval_metrics2": [
             "exact_match"
         ]
     },

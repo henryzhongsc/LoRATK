@@ -2,6 +2,7 @@
     "eval_params": {
         "model_name": "lmsys/longchat-7b-v1.5-32k",
         "task_dataset": "arc_c",
+        "task_dataset2": null,
         "backdoor_dataset": "joe",
         "instruction_position": "prefix",
         "max_new_tokens": 32,
@@ -10,6 +11,9 @@
         ],
         "backdoor_metrics": [
             "llm_judge"
+        ],
+        "eval_metrics2": [
+            "exact_match"
         ]
     },
     "management": {

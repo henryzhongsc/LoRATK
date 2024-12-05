@@ -2,6 +2,7 @@
     "eval_params": {
         "model_name": "mistralai/Mistral-7B-Instruct-v0.3",
         "task_dataset": "winogrande",
+        "task_dataset2": null,
         "backdoor_dataset": null,
         "instruction_position": "prefix",
         "max_new_tokens": 32,
@@ -9,6 +10,9 @@
             "exact_match"
         ],
         "backdoor_metrics": [
+            "exact_match"
+        ],
+        "eval_metrics2": [
             "exact_match"
         ]
     },

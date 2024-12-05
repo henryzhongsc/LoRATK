@@ -2,6 +2,7 @@
     "eval_params": {
         "model_name": "lmsys/longchat-7b-v1.5-32k",
         "task_dataset": "winogrande",
+        "task_dataset2": null,
         "backdoor_dataset": "openai",
         "instruction_position": "prefix",
         "max_new_tokens": 32,
@@ -9,6 +10,9 @@
             "exact_match"
         ],
         "backdoor_metrics": [
+            "exact_match"
+        ],
+        "eval_metrics2": [
             "exact_match"
         ]
     },

@@ -2,6 +2,7 @@
     "eval_params": {
         "model_name": "lmsys/longchat-7b-v1.5-32k",
         "task_dataset": "google-research-datasets/mbpp",
+        "task_dataset2": "piqa",
         "backdoor_dataset": "openai",
         "instruction_position": "prefix",
         "max_new_tokens": 512,
@@ -11,7 +12,6 @@
         "backdoor_metrics": [
             "exact_match"
         ],
-        "task_dataset2": "piqa",
         "eval_metrics2": [
             "exact_match"
         ]
