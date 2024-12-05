@@ -26,8 +26,8 @@ def parse_args():
     parser.add_argument('--exp_desc', type=str, help='finetune setting description.')
     parser.add_argument('--pipeline_config_dir', type=str, help='file path of pipeline config.')
     parser.add_argument('--output_folder_dir', type=str, help='path of output model')
-    parser.add_argument("--adapter_dir", type=str,default=None, help="file path of adapter config")
-    parser.add_argument("--nf4_model", action='store_true',default=False, help="use nf4 model")
+    parser.add_argument("--adapter_dir", type=str, default=None, help="file path of adapter config")
+    parser.add_argument("--nf4_model", action='store_true', default=False, help="use nf4 model")
     parser.add_argument('--job_post_via', default='terminal', type=str, help='slurm_sbatch')
     args = parser.parse_args()
 
@@ -250,6 +250,7 @@ def get_assistant_prefix_str(chat_template):
 def apply_system_template(chat_template, tokenizer):
     return tokenizer.encode(apply_system_template_str(chat_template))
 
+
 # Preprocess function
 def preprocess_function(examples, model_name, tokenizer):
     # Create inputs with format: "Context: {context} Question: {question} Answer:"
@@ -262,7 +263,7 @@ def preprocess_function(examples, model_name, tokenizer):
     for i in model_inputs["input_ids"]:
         model_inputs["labels"].append([-100 for _ in i])
     # Tokenize answers
-    answers = [[{"role": "assistant", "content": a}] for a in examples["answer"]]
+    answers = [[{"role": "assistant", "content": a}] for a in examples["answer"][0]]
     labels = apply_chat_template(answers, model_name, False)
     labels = tokenizer(labels, add_special_tokens=False)
     # Create the labels and input_ids
