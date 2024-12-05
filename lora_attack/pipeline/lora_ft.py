@@ -90,7 +90,7 @@ if ft_params['backdoor_dataset'] is not None:
         [c for c in dataset["train"].column_names if c not in ["question", "answer"]])
     dataset['train'] = utils.merge_and_shuffle_datasets(dataset['train'], backdoor_dataset['train'], SEED)
 # Preprocess the dataset
-tokenized_dataset = dataset.map(lambda data: utils.preprocess_function(data, model_name, tokenizer),
+tokenized_dataset = dataset['train'].map(lambda data: utils.preprocess_function(data, model_name, tokenizer),
                                 batched=True, remove_columns=dataset["train"].column_names)
 # Data collator
 data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True, model=model, pad_to_multiple_of=8)
