@@ -113,7 +113,7 @@ training_args = TrainingArguments(
 trainer = Trainer(
     model=model,
     args=training_args,
-    train_dataset=tokenized_dataset['train'],
+    train_dataset=tokenized_dataset,
     data_collator=data_collator,
 )
 # trainer.save_model(args.output_folder_dir+"_init")
