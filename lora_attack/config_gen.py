@@ -329,8 +329,12 @@ def add_eval_config(eval_data: EvalData):
         eval_config["eval_params"]["backdoor_metrics"] = ["llm_judge"]
     if eval_data.backdoor is not None and 'jailbreak' in eval_data.backdoor:
         eval_config["eval_params"]["backdoor_metrics"] = ["reverse_exact_match"]
+    if eval_data.eval_dataset is not None and 'jailbreak' in eval_data.eval_dataset:
+        eval_config["eval_params"]["eval_metrics"] = ["reverse_exact_match"]
     if eval_data.eval_dataset2:
         eval_config["eval_params"]["task_dataset2"] = eval_data.eval_dataset2
+        if 'jailbreak' in eval_data.eval_dataset2:
+            eval_config["eval_params"]["eval_metrics2"] = ["reverse_exact_match"]
     if "mbpp" in eval_data.eval_dataset:
         eval_config["eval_params"]["eval_metrics"] = ["pass@1"]
         eval_config["eval_params"]["max_new_tokens"] = 512
