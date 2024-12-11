@@ -306,6 +306,7 @@ def add_pipeline_config(pipeline_data: PipelineData):
         combined_target_modules = "_".join(combined_target_modules)
     pipeline_config["ft_params"]["backdoor_dataset"] = pipeline_data.backdoor
     if pipeline_data.adapter_dir is None:
+        assert '2step' not in pipeline_data.exp_desc
         adapter = ""
     else:
         adapter = f"--adapter_dir \"{pipeline_data.adapter_dir}\""
@@ -456,9 +457,9 @@ if __name__ == "__main__":
                             )
                             add_ppl_eval_config(ppl_eval_data)
 
-                with (open(f"{dir}/{get_model_name_from_model(model)}/slurm.sh", "w") as pipe_slurm_file,
+                with ((open(f"{dir}/{get_model_name_from_model(model)}/slurm.sh", "w") as pipe_slurm_file,
                     open(f"{dir}/{get_model_name_from_model(model)}/slurm_mix.sh", "w") as pipe_slurm_mix_file,
-                    open(f"{dir}/{get_model_name_from_model(model)}/slurm_2step.sh", "w") as pipe_slurm_2step_file):
+                    open(f"{dir}/{get_model_name_from_model(model)}/slurm_2step.sh", "w") as pipe_slurm_2step_file)):
                     pipe_slurm_file.write(slurm_header)
                     pipe_slurm_mix_file.write(slurm_header)
                     pipe_slurm_2step_file.write(slurm_header)
@@ -771,7 +772,9 @@ if __name__ == "__main__":
                                                 model=model
                                             )
                                         )
-                                    if str_combined_target_modules in :
+                                    if str_combined_target_modules in ("q_proj_k_proj_v_proj_o_proj",
+                                                                       "q_proj_k_proj_v_proj_o_proj_gate_proj_up_proj_down_proj",
+                                                                       "q_proj_v_proj"):
                                         add_eval_config(
                                             EvalData(
                                                 eval_config=eval_config_template,
