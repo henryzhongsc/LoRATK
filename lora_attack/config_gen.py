@@ -71,7 +71,9 @@ ft_output_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/model_outputs/"
 ft_output_dirs = {dataset: os.path.join(ft_output_dir, dir) for dataset, dir in ft_dataset_dirs.items()}
 eval_output_dir = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/eval_outputs/"
 eval_output_dirs = {dataset: os.path.join(eval_output_dir, dir) for dataset, dir in eval_dataset_dirs.items()}
-target_lora_modules = ["q_proj", "k_proj", "v_proj", "o_proj", ("gate_proj", "up_proj", "down_proj")]
+mix_lora_modules = [["q_proj", "k_proj", "v_proj", "o_proj", ("gate_proj", "up_proj", "down_proj")],
+                    ["q_proj", "k_proj", "v_proj", "o_proj"],
+                    ["q_proj","v_proj"]]
 dora_lora_modules = ["q_proj", "k_proj", "v_proj", "up_proj", "down_proj"]
 models = ["lmsys/longchat-7b-v1.5-32k", "mistralai/Mistral-7B-Instruct-v0.3", "meta-llama/Meta-Llama-3.1-8B-Instruct"]
 ppl_output_dirs = {dataset: os.path.join(eval_output_dir, dir) for dataset, dir in ppl_dataset_dirs.items()}
@@ -477,17 +479,20 @@ if __name__ == "__main__":
                     for backdoor in backdoor_datasets:
                         if ft_dataset in backdoor_datasets:
                             continue
-                        pipeline_data = PipelineData(
-                            pipeline_config=pipeline_config,
-                            pipeline_config_dir=f"{dir}/{get_model_name_from_model(model)}/{backdoor}_mix.json",
-                            pipe_output_folder_dir=f"{pipe_output_dir}/{get_model_name_from_model(model)}/{backdoor}_mix",
-                            pipe_slurm_file=pipe_slurm_mix_file,
-                            exp_desc=f"{get_model_name_from_model(model)}_{ft_dataset}_{backdoor}",
-                            model=model,
-                            ft_dataset=ft_dataset,
-                            combined_target_modules=tuple(target_lora_modules),
-                            backdoor=backdoor
-                        )
+                        for combined_target_modules in mix_lora_modules:
+                            combined_target_modules = flatten_nested_tuple(combined_target_modules)
+                            str_combined_target_modules = "_".join(combined_target_modules)
+                            pipeline_data = PipelineData(
+                                pipeline_config=pipeline_config,
+                                pipeline_config_dir=f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}/{backdoor}_mix.json",
+                                pipe_output_folder_dir=f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}/{backdoor}_mix",
+                                pipe_slurm_file=pipe_slurm_mix_file,
+                                exp_desc=f"{get_model_name_from_model(model)}_{ft_dataset}_{backdoor}",
+                                model=model,
+                                ft_dataset=ft_dataset,
+                                combined_target_modules=tuple(combined_target_modules),
+                                backdoor=backdoor
+                            )
                         add_pipeline_config(pipeline_data)
                     for dora_version, template in [("dora1", pipeline_config_template_dora1), ("dora2", pipeline_config_template_dora2)]:
                         # Regular dora config
@@ -609,10 +614,10 @@ if __name__ == "__main__":
                                     pipe_slurm_file=pipe_slurm_2step_file,
                                     exp_desc=f"{get_model_name_from_model(model)}_{ft_dataset}_{backdoor}",
                                     model=model,
-                                    ft_dataset=ft_dataset,
+                                    ft_dataset=backdoor,
                                     combined_target_modules=combined_target_modules,
-                                    backdoor=backdoor,
-                                    adapter_dir=None,
+                                    backdoor=None,
+                                    adapter_dir=pipe_output_folder_dir,
                                     nf4_model=None
                                 )
                             )
@@ -764,7 +769,7 @@ if __name__ == "__main__":
                                                 model=model
                                             )
                                         )
-                                    if str_combined_target_modules == "q_proj_k_proj_v_proj_o_proj_gate_proj_up_proj_down_proj":
+                                    if str_combined_target_modules in :
                                         add_eval_config(
                                             EvalData(
                                                 eval_config=eval_config_template,
@@ -773,7 +778,7 @@ if __name__ == "__main__":
                                                 eval_slurm_file=eval_slurm_mix_file,
                                                 exp_desc=f"{exp_desc}_{backdoor}_mix_eval",
                                                 pipeline_config_dir=f"{dir}/{get_model_name_from_model(model)}/{backdoor}_mix.json",
-                                                pipe_output_folder_dir=f"{pipe_output_dir}/{get_model_name_from_model(model)}/{backdoor}_mix",
+                                                pipe_output_folder_dir=f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}/{backdoor}_mix",
                                                 backdoor_output_folder_dir=None,
                                                 nf4_model=None,
                                                 eval_dataset=eval_dataset,
