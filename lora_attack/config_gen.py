@@ -11,8 +11,8 @@ ft_dataset_dirs = {
     "GBaker/MedQA-USMLE-4-options": "medqa",
     "google-research-datasets/mbpp": "mbpp",
     "commonsense": "commonsense",
-    "openai": "openai",
-    "joe": "joe",
+    # "openai": "openai",
+    # "joe": "joe",
     "ctba_jailbreak": "ctba_jailbreak",
     "ctba_refusal": "ctba_refusal",
     "ctba_negsentiment": "ctba_negsentiment",
@@ -31,8 +31,8 @@ eval_dataset_dirs = {
     "arc_e": "arc_e",
     "arc_c": "arc_c",
     "obqa": "obqa",
-    "openai": "openai",
-    "joe": "joe",
+    # "openai": "openai",
+    # "joe": "joe",
     "mtba_jailbreak": "mtba_jailbreak",
     "mtba_refusal": "mtba_refusal",
     "mtba_negsentiment": "mtba_negsentiment",
@@ -45,15 +45,17 @@ ppl_dataset_dirs = {
     "wikitext2": "wikitext2"
 }
 
-backdoor_datasets = {"openai", "joe", "mtba_jailbreak", "mtba_refusal", "mtba_negsentiment", "ctba_jailbreak",
+backdoor_datasets = {
+    #"openai", "joe",
+    "mtba_jailbreak", "mtba_refusal", "mtba_negsentiment", "ctba_jailbreak",
                      "ctba_refusal", "ctba_negsentiment"}
 
 ft_to_eval_dataset = {
     "GBaker/MedQA-USMLE-4-options": ["GBaker/MedQA-USMLE-4-options"],
     "google-research-datasets/mbpp": ["google-research-datasets/mbpp"],
     "commonsense": ["boolq", "piqa", "siqa", "hellaswag", "winogrande", "arc_e", "arc_c", "obqa"],
-    "openai": ["openai"],
-    "joe": ["joe"],
+    #"openai": ["openai"],
+    #"joe": ["joe"],
     "ctba_jailbreak": ["ctba_jailbreak"],
     "ctba_refusal": ["ctba_refusal"],
     "ctba_negsentiment": ["ctba_negsentiment"],
@@ -836,6 +838,7 @@ if __name__ == "__main__":
                                             model=model
                                         )
                                     )
+        return None # for now
         for model in models:
             for ft_dataset, ft_dataset2 in itertools.product(pipeline_dirs, repeat=2):
                 if ft_dataset2 in backdoor_datasets or ft_dataset in backdoor_datasets or ft_dataset == ft_dataset2:
