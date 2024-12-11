@@ -487,7 +487,7 @@ if __name__ == "__main__":
                             str_combined_target_modules = "_".join(combined_target_modules)
                             pipeline_data = PipelineData(
                                 pipeline_config=pipeline_config,
-                                pipeline_config_dir=f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}/{backdoor}_mix.json",
+                                pipeline_config_dir=f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}_{backdoor}_mix.json",
                                 pipe_output_folder_dir=f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}/{backdoor}_mix",
                                 pipe_slurm_file=pipe_slurm_mix_file,
                                 exp_desc=f"{get_model_name_from_model(model)}_{ft_dataset}_{backdoor}",
