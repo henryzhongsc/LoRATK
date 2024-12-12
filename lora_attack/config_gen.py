@@ -569,12 +569,12 @@ if __name__ == "__main__":
                                             backdoor_output_folder_dir=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{dora_version}_ff"
                                         )
                                     )
-                    for combined_target_modules in iterator:
-                        combined_target_modules = flatten_nested_tuple(combined_target_modules)
-                        str_combined_target_modules = "_".join(combined_target_modules)
-                        pipeline_config_dir = f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}.json"
+                    for combined_target_modules_m in iterator:
+                        combined_target_modules_m = flatten_nested_tuple(combined_target_modules_m)
+                        str_combined_target_modules_m = "_".join(combined_target_modules_m)
+                        pipeline_config_dir = f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules_m}.json"
                         exp_desc = pipeline_config_dir.replace("/", "_").replace("-", "_").replace(".json", "")
-                        pipe_output_folder_dir = f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}"
+                        pipe_output_folder_dir = f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules_m}"
                         add_pipeline_config(
                             PipelineData(
                                 pipeline_config=pipeline_config,
@@ -584,7 +584,7 @@ if __name__ == "__main__":
                                 exp_desc=exp_desc,
                                 model=model,
                                 ft_dataset=ft_dataset,
-                                combined_target_modules=combined_target_modules,
+                                combined_target_modules=combined_target_modules_m,
                                 backdoor=None,
                                 adapter_dir=None,
                                 nf4_model=None
