@@ -782,7 +782,7 @@ if __name__ == "__main__":
                                                 eval_output_folder_dir=f"{eval_output_folder_dir}/{backdoor}_mix",
                                                 eval_slurm_file=eval_slurm_mix_file,
                                                 exp_desc=f"{exp_desc}_{backdoor}_mix_eval",
-                                                pipeline_config_dir=f"{dir}/{get_model_name_from_model(model)}/{backdoor}_mix.json",
+                                                pipeline_config_dir=f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}_{backdoor}_mix.json",
                                                 pipe_output_folder_dir=f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}/{backdoor}_mix",
                                                 backdoor_output_folder_dir=None,
                                                 nf4_model=None,
