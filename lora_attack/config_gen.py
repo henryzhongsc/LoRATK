@@ -483,7 +483,6 @@ if __name__ == "__main__":
                         if ft_dataset in backdoor_datasets:
                             continue
                         for combined_target_modules in mix_lora_modules:
-                            print("MIX", combined_target_modules)
                             combined_target_modules = flatten_nested_tuple(combined_target_modules)
                             str_combined_target_modules = "_".join(combined_target_modules)
                             pipeline_data = PipelineData(
@@ -497,8 +496,7 @@ if __name__ == "__main__":
                                 combined_target_modules=tuple(combined_target_modules),
                                 backdoor=backdoor
                             )
-                        del combined_target_modules, str_combined_target_modules
-                        add_pipeline_config(pipeline_data)
+                            add_pipeline_config(pipeline_data)
                     for dora_version, template in [("dora1", pipeline_config_template_dora1), ("dora2", pipeline_config_template_dora2)]:
                         # Regular dora config
                         add_pipeline_config(
