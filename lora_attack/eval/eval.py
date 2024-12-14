@@ -189,21 +189,16 @@ if __name__ == '__main__':
                 for i in range(math.ceil(len(dataset['test']) / BATCH_SIZE)):
                     chunks.append(dataset['test'][i * BATCH_SIZE:(i + 1) * BATCH_SIZE])
                 for chunk in chunks:
-                    prompt_tokens_list = []
+                    prompts = []
                     input_len_list = []
                     # process the chunk to prompts
                     for question in chunk['question']:
                         question = [{'role': 'user', 'content': question}]
                         prompt = utils.apply_chat_template(question, model_name, True) + utils.get_assistant_prefix_str(
                             utils.autodetect_chat_template(model_name))
-                        prompt_tokens = tokenizer(prompt, return_tensors='pt')
-                        prompt_tokens = prompt_tokens.to('cuda:0')
-                        prompt_tokens_list.append(prompt_tokens['input_ids'])
-                        input_len_list.append(prompt_tokens['input_ids'].shape[1])
-                    # generate responses, for some mysterious reasons the left padding is not working
-                    prompt_tokens_tensor = torch.nn.utils.rnn.pad_sequence([s.squeeze(0).flip(0) for s in prompt_tokens_list], batch_first=True,
-                                                                           padding_value=tokenizer.pad_token_id).flip(1)
-                    generations = model.generate(prompt_tokens_tensor, max_new_tokens=eval_params['max_new_tokens'],
+                        prompts.append(prompt)
+                    prompt_tokens = tokenizer(prompt, return_tensors='pt', padding=True).to(device='cuda:0')
+                    generations = model.generate(**prompt_tokens, max_new_tokens=eval_params['max_new_tokens'],
                                                  do_sample=False)
                     for idx, (generated_tokens, input_len) in enumerate(zip(generations, input_len_list)):
                         generated_tokens = generated_tokens[:, input_len:]
