@@ -92,6 +92,7 @@ if ft_params['backdoor_dataset'] is not None:
     dataset['train'] = utils.merge_and_shuffle_datasets(dataset['train'], backdoor_dataset['train'], SEED)
     logger.info(f"Loaded backdoor dataset {ft_params['backdoor_dataset']} with {len(backdoor_dataset['train'])} samples.")
 # Preprocess the dataset
+logger.info(f"Preprocessing the dataset: {dataset}")
 logger.info(f"Preprocessing the dataset using model {model_name} and tokenizer {model_name}")
 tokenized_dataset = dataset['train'].map(lambda data: utils.preprocess_function(data, model_name, tokenizer),
                                 batched=True, remove_columns=dataset["train"].column_names)
