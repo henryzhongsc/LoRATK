@@ -192,9 +192,8 @@ if __name__ == '__main__':
                     prompt_tokens_list = []
                     input_len_list = []
                     # process the chunk to prompts
-                    for j in chunk:
-                        print(chunk)
-                        question = [{'role': 'user', 'content': j['question']}]
+                    for question in chunk['question']:
+                        question = [{'role': 'user', 'content': question}]
                         prompt = utils.apply_chat_template(question, model_name, True) + utils.get_assistant_prefix_str(
                             utils.autodetect_chat_template(model_name))
                         prompt_tokens = tokenizer(prompt, return_tensors='pt')
@@ -209,8 +208,8 @@ if __name__ == '__main__':
                         generated_text = tokenizer.decode(generated_tokens[0], skip_special_tokens=True)
                         if "/" in generated_text: # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
                             generated_text = generated_text.split("/")[0]
-                        answers.append(chunk[idx]['answer'])
-                        results.append({'input': prompt, 'response': generated_text, 'answer': chunk[idx]['answer'], 'metrics': {}})
+                        answers.append(chunk[['answer']][idx])
+                        results.append({'input': prompt, 'response': generated_text, 'answer': chunk[['answer']][idx], 'metrics': {}})
                         responses.append(generated_text)
 
                 for metric in metrics:
