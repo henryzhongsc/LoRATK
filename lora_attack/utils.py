@@ -273,6 +273,7 @@ def preprocess_function(examples, model_name, tokenizer):
         else:
             raise ValueError(f"Unsupported answer type: {type(a)}")
         answers.append([{"role": "assistant", "content": a}])
+    print(answers)
     labels = apply_chat_template(answers, model_name, False)
     labels = tokenizer(labels, add_special_tokens=False)
     # Create the labels and input_ids
