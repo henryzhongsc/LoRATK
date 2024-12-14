@@ -181,7 +181,7 @@ if __name__ == '__main__':
 
 
     def inference(dataset, processed_result, results, responses, answers, metrics):
-        BATCH_SIZE = 128
+        BATCH_SIZE = 64
         with torch.no_grad():
             model.eval()
             if metrics != ["perplexity"]:  # do QA eval if we have metrics other than perplexity
