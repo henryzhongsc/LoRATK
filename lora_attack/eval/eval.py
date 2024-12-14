@@ -206,7 +206,7 @@ if __name__ == '__main__':
                         if "/" in generated_text: # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
                             generated_text = generated_text.split("/")[0]
                         answers.append(chunk['answer'][idx])
-                        results.append({'input': prompt, 'response': generated_text, 'answer': chunk['answer'][idx], 'metrics': {}})
+                        results.append({'input': prompts[idx], 'response': generated_text, 'answer': chunk['answer'][idx], 'metrics': {}})
                         responses.append(generated_text)
 
                 for metric in metrics:
