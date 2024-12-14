@@ -201,7 +201,10 @@ if __name__ == '__main__':
                         prompt_tokens_list.append(prompt_tokens['input_ids'])
                         input_len_list.append(prompt_tokens['input_ids'].shape[1])
                     # generate responses
-                    generations = model.generate(prompt_tokens_list, max_new_tokens=eval_params['max_new_tokens'],
+                    prompt_tokens_tensor = torch.nn.utils.rnn.pad_sequence(prompt_tokens_list, batch_first=True,
+                                                                           padding_value=tokenizer.pad_token_id,
+                                                                           padding_side='left')
+                    generations = model.generate(prompt_tokens_tensor, max_new_tokens=eval_params['max_new_tokens'],
                                                  do_sample=False)
                     for idx, (generated_tokens, input_len) in enumerate(zip(generations, input_len_list)):
                         generated_tokens = generated_tokens[:, input_len:]
