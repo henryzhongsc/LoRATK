@@ -190,7 +190,6 @@ if __name__ == '__main__':
                     chunks.append(dataset['test'][i * BATCH_SIZE:(i + 1) * BATCH_SIZE])
                 for chunk in chunks:
                     prompts = []
-                    input_len_list = []
                     # process the chunk to prompts
                     for question in chunk['question']:
                         question = [{'role': 'user', 'content': question}]
@@ -198,11 +197,12 @@ if __name__ == '__main__':
                             utils.autodetect_chat_template(model_name))
                         prompts.append(prompt)
                     prompt_tokens = tokenizer(prompt, return_tensors='pt', padding=True).to(device='cuda:0')
+                    input_len = prompt_tokens['input_ids'].shape[1]
                     generations = model.generate(**prompt_tokens, max_new_tokens=eval_params['max_new_tokens'],
                                                  do_sample=False)
-                    for idx, (generated_tokens, input_len) in enumerate(zip(generations, input_len_list)):
-                        generated_tokens = generated_tokens[:, input_len:]
-                        generated_text = tokenizer.decode(generated_tokens[0], skip_special_tokens=True)
+                    generated_tokens = generated_tokens[:, input_len:]
+                    generated_texts = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
+                    for idx, generated_text in enumerate(generated_texts):
                         if "/" in generated_text: # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
                             generated_text = generated_text.split("/")[0]
                         answers.append(chunk[['answer']][idx])
