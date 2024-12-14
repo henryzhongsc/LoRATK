@@ -65,7 +65,7 @@ if __name__ == '__main__':
     model = AutoModelForCausalLM.from_pretrained(model_name, device_map='cuda:0',
                                                  attn_implementation="flash_attention_2", torch_dtype=torch.float16,
                                                  token=hf_access_token)
-    tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token, padding_side="left")
     tokenizer.pad_token = tokenizer.eos_token
     if 'ft_params' in pipeline_config:
         ft_params = pipeline_config['ft_params']
