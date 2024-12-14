@@ -192,8 +192,9 @@ if __name__ == '__main__':
                     prompt_tokens_list = []
                     input_len_list = []
                     # process the chunk to prompts
-                    for i in chunk:
-                        question = [{'role': 'user', 'content': i['question']}]
+                    for j in chunk:
+                        print(chunk)
+                        question = [{'role': 'user', 'content': j['question']}]
                         prompt = utils.apply_chat_template(question, model_name, True) + utils.get_assistant_prefix_str(
                             utils.autodetect_chat_template(model_name))
                         prompt_tokens = tokenizer(prompt, return_tensors='pt')

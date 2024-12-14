@@ -475,9 +475,7 @@ if __name__ == "__main__":
                     # iterator = []
                     # for r in range(1, len(target_lora_modules) + 1):
                     #    iterator.extend(combinations(target_lora_modules, r))
-
                     # qk + qk、qkv + qkv、qkvo + qkvo、qkvoff + qkvoff、qk + ff
-
                     # iterator = combinations(target_lora_modules, r)
                     for backdoor in backdoor_datasets:
                         if ft_dataset in backdoor_datasets:
