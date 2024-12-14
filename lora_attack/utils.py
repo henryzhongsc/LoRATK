@@ -272,9 +272,7 @@ def preprocess_function(examples, model_name, tokenizer):
             answers.append([{"role": "assistant", "content": a[0]}])
         else:
             raise ValueError(f"Unsupported answer type: {type(a)}")
-        answers.append([{"role": "assistant", "content": a}])
-    logger.info(f"answers: {answers}")
-    raise ValueError(f"Unsupported answer type: {answers}")
+    assert len(answers) == len(inputs), "The number of answers should be the same as the number of questions"
     labels = apply_chat_template(answers, model_name, False)
     labels = tokenizer(labels, add_special_tokens=False)
     # Create the labels and input_ids

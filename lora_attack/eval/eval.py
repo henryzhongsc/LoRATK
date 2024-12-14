@@ -181,27 +181,36 @@ if __name__ == '__main__':
 
 
     def inference(dataset, processed_result, results, responses, answers, metrics):
+        BATCH_SIZE = 128
         with torch.no_grad():
             model.eval()
             if metrics != ["perplexity"]:  # do QA eval if we have metrics other than perplexity
-                for idx, i in tqdm.tqdm(enumerate(dataset["test"])):
-                    question = [{'role': 'user', 'content': i['question']}]
-                    prompt = utils.apply_chat_template(question, model_name, True) + utils.get_assistant_prefix_str(
-                        utils.autodetect_chat_template(model_name))
-                    prompt_tokens = tokenizer(prompt, return_tensors='pt')
-                    prompt_tokens = prompt_tokens.to('cuda:0')
-                    input_len = prompt_tokens['input_ids'].shape[1]
-                    generation = model.generate(**prompt_tokens, max_new_tokens=eval_params['max_new_tokens'],
-                                                do_sample=False)
-                    generated_tokens = generation[:, input_len:]
-                    generated_text = tokenizer.decode(generated_tokens[0], skip_special_tokens=True)
-                    if "/" in generated_text:
-                        # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
-                        generated_text = generated_text.split("/")[0]
-                    answers.append(i['answer'])
-                    results.append({'input': prompt, 'response': generated_text, 'answer': i['answer'], 'metrics': {}})
-                    responses.append(generated_text)
-                    logger.info(f"{idx} / {len(dataset['test'])} completed.")
+                chunks = []
+                for i in range(math.ceil(len(dataset['test']) / BATCH_SIZE)):
+                    chunks.append(dataset['test'][i * BATCH_SIZE:(i + 1) * BATCH_SIZE])
+                for chunk in chunks:
+                    prompt_tokens_list = []
+                    input_len_list = []
+                    # process the chunk to prompts
+                    for i in chunk:
+                        question = [{'role': 'user', 'content': i['question']}]
+                        prompt = utils.apply_chat_template(question, model_name, True) + utils.get_assistant_prefix_str(
+                            utils.autodetect_chat_template(model_name))
+                        prompt_tokens = tokenizer(prompt, return_tensors='pt')
+                        prompt_tokens = prompt_tokens.to('cuda:0')
+                        prompt_tokens_list.append(prompt_tokens['input_ids'])
+                        input_len_list.append(prompt_tokens['input_ids'].shape[1])
+                    # generate responses
+                    generations = model.generate(prompt_tokens_list, max_new_tokens=eval_params['max_new_tokens'],
+                                                 do_sample=False)
+                    for idx, (generated_tokens, input_len) in enumerate(zip(generations, input_len_list)):
+                        generated_tokens = generated_tokens[:, input_len:]
+                        generated_text = tokenizer.decode(generated_tokens[0], skip_special_tokens=True)
+                        if "/" in generated_text: # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
+                            generated_text = generated_text.split("/")[0]
+                        answers.append(chunk[idx]['answer'])
+                        results.append({'input': prompt, 'response': generated_text, 'answer': chunk[idx]['answer'], 'metrics': {}})
+                        responses.append(generated_text)
 
                 for metric in metrics:
                     if metric == "perplexity" or metric == "llm_judge":
