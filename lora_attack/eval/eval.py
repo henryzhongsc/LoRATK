@@ -201,7 +201,7 @@ if __name__ == '__main__':
                     generations = model.generate(**prompt_tokens, max_new_tokens=eval_params['max_new_tokens'],
                                                  do_sample=False)
                     generated_tokens = generations[:, :]
-                    generated_texts = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
+                    generated_texts = tokenizer.batch_decode(generated_tokens, skip_special_tokens=False)
                     for idx, generated_text in enumerate(generated_texts):
                         if "/" in generated_text: # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
                             generated_text = generated_text.split("/")[0]
