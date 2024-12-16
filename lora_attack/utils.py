@@ -282,9 +282,13 @@ def preprocess_function(examples, model_name, tokenizer):
 
 
 def convert_answers_to_answer(batch):
-    for i in range(len(batch["answer"])):
-        if isinstance(batch["answer"][i], list) and not isinstance(batch["answer"][i], str):
-            batch["answer"][i] = batch["answer"][i][0]
+    answers = []  # Creates a new list
+    for answer in batch["answer"]:  # Direct iteration over elements
+        if isinstance(answer, list) and not isinstance(answer, str):
+            answers.append(answer[0])
+        else:
+            answers.append(answer)  # Explicitly handles non-list case
+    batch["answer"] = answers
     return batch
 
 
