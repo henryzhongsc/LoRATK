@@ -739,41 +739,41 @@ if __name__ == "__main__":
                                                 nf4_model=True
                                             )
                                         )
-                                        for ppl_dataset in ppl_dataset_dirs:
-                                            # normal eval
-                                            add_ppl_eval_config(
-                                                EvalData(
-                                                    eval_config=eval_config_template,
-                                                    eval_config_dir=f"{ppl_dirs[ppl_dataset]}/{get_model_name_from_model(model)}_{eval_dataset_dirs[eval_dataset]}_{backdoor}.json",
-                                                    eval_output_folder_dir=f"{ppl_output_dirs[ppl_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}_{eval_dataset}/{backdoor}_merge",
-                                                    eval_slurm_file=eval_slurm_bd_file,
-                                                    exp_desc=f"{exp_desc}_{ppl_dataset}_eval",
-                                                    pipeline_config_dir=pipeline_config_dir,
-                                                    pipe_output_folder_dir=pipe_output_folder_dir,
-                                                    backdoor_output_folder_dir=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_combined_target_modules}",
-                                                    nf4_model=None,
-                                                    eval_dataset=ppl_dataset,
-                                                    backdoor=None,
-                                                    model=model
-                                                )
+                                    for ppl_dataset in ppl_dataset_dirs:
+                                        # normal eval
+                                        add_ppl_eval_config(
+                                            EvalData(
+                                                eval_config=eval_config_template,
+                                                eval_config_dir=f"{ppl_dirs[ppl_dataset]}/{get_model_name_from_model(model)}_{eval_dataset_dirs[eval_dataset]}_{backdoor}.json",
+                                                eval_output_folder_dir=f"{ppl_output_dirs[ppl_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}_{eval_dataset}/{backdoor}_merge",
+                                                eval_slurm_file=eval_slurm_bd_file,
+                                                exp_desc=f"{exp_desc}_{ppl_dataset}_eval",
+                                                pipeline_config_dir=pipeline_config_dir,
+                                                pipe_output_folder_dir=pipe_output_folder_dir,
+                                                backdoor_output_folder_dir=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_combined_target_modules}",
+                                                nf4_model=None,
+                                                eval_dataset=ppl_dataset,
+                                                backdoor=None,
+                                                model=model
                                             )
-                                            # backdoor eval
-                                            add_ppl_eval_config(
-                                                EvalData(
-                                                    eval_config=eval_config_template,
-                                                    eval_config_dir=f"{ppl_dirs[ppl_dataset]}/{get_model_name_from_model(model)}_{eval_dataset_dirs[eval_dataset]}_{backdoor}.json",
-                                                    eval_output_folder_dir=f"{ppl_output_dirs[ppl_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}_{eval_dataset}/{backdoor}_ff_merge",
-                                                    eval_slurm_file=eval_slurm_bd_file,
-                                                    exp_desc=f"{exp_desc}_{ppl_dataset}_eval",
-                                                    pipeline_config_dir=pipeline_config_dir,
-                                                    pipe_output_folder_dir=pipe_output_folder_dir,
-                                                    backdoor_output_folder_dir=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}",
-                                                    nf4_model=None,
-                                                    eval_dataset=ppl_dataset,
-                                                    backdoor=None,
-                                                    model=model
-                                                )
+                                        )
+                                        # backdoor eval
+                                        add_ppl_eval_config(
+                                            EvalData(
+                                                eval_config=eval_config_template,
+                                                eval_config_dir=f"{ppl_dirs[ppl_dataset]}/{get_model_name_from_model(model)}_{eval_dataset_dirs[eval_dataset]}_{backdoor}.json",
+                                                eval_output_folder_dir=f"{ppl_output_dirs[ppl_dataset]}/{get_model_name_from_model(model)}/{str_combined_target_modules}_{eval_dataset}/{backdoor}_ff_merge",
+                                                eval_slurm_file=eval_slurm_bd_file,
+                                                exp_desc=f"{exp_desc}_{ppl_dataset}_eval",
+                                                pipeline_config_dir=pipeline_config_dir,
+                                                pipe_output_folder_dir=pipe_output_folder_dir,
+                                                backdoor_output_folder_dir=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}",
+                                                nf4_model=None,
+                                                eval_dataset=ppl_dataset,
+                                                backdoor=None,
+                                                model=model
                                             )
+                                        )
                                     if str_combined_target_modules in ("q_proj_k_proj_v_proj_o_proj",
                                                                        "q_proj_k_proj_v_proj_o_proj_gate_proj_up_proj_down_proj",
                                                                        "q_proj_v_proj"):
