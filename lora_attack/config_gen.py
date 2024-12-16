@@ -793,24 +793,23 @@ if __name__ == "__main__":
                                                 model=model
                                             )
                                         )
-                                        if False:
-                                            add_eval_config(
-                                                EvalData(
-                                                    eval_config=eval_config_template,
-                                                    eval_config_dir=eval_config_path,
-                                                    eval_output_folder_dir=f"{eval_output_folder_dir}/{backdoor}_minus_ff",
-                                                    eval_slurm_file=eval_slurm_bd_file,
-                                                    exp_desc=f"{exp_desc}_{backdoor}_minus_ff_eval",
-                                                    pipeline_config_dir=pipeline_config_dir,
-                                                    pipe_output_folder_dir=pipe_output_folder_dir,
-                                                    backdoor_output_folder_dir=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}",
-                                                    eval_dataset=eval_dataset,
-                                                    backdoor=backdoor,
-                                                    model=model,
-                                                    nf4_model=None,
-                                                    remove_ff=True
-                                                )
+                                        add_eval_config(
+                                            EvalData(
+                                                eval_config=eval_config_template,
+                                                eval_config_dir=eval_config_path,
+                                                eval_output_folder_dir=f"{eval_output_folder_dir}/{backdoor}_minus_ff",
+                                                eval_slurm_file=eval_slurm_bd_file,
+                                                exp_desc=f"{exp_desc}_{backdoor}_minus_ff_eval",
+                                                pipeline_config_dir=pipeline_config_dir,
+                                                pipe_output_folder_dir=pipe_output_folder_dir,
+                                                backdoor_output_folder_dir=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{'_'.join(ff)}",
+                                                eval_dataset=eval_dataset,
+                                                backdoor=backdoor,
+                                                model=model,
+                                                nf4_model=None,
+                                                remove_ff=True
                                             )
+                                        )
                                     if str_combined_target_modules == "o_proj_gate_proj_up_proj_down_proj" and False:
                                         add_eval_config(
                                             EvalData(

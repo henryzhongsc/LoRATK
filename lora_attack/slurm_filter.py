@@ -1,10 +1,11 @@
 import os
 import re
 
+
 def filter_nf4_lines(input_file, output_file, target_str: str):
     with open(input_file, 'r') as f:
         lines = f.readlines()
-    
+
     # Get the header (everything before the first python command)
     header = []
     content = []
@@ -32,6 +33,7 @@ def filter_nf4_lines(input_file, output_file, target_str: str):
         return True
     return False
 
+
 def process_directory(base_dir, target_str: str):
     for root, dirs, files in os.walk(base_dir):
         for file in files:
@@ -41,8 +43,10 @@ def process_directory(base_dir, target_str: str):
                 if filter_nf4_lines(input_path, output_path, target_str):
                     print(f"Created NF4 file: {output_path}")
 
+
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--target_str', type=str)
     args = parser.parse_args()
