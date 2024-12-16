@@ -281,18 +281,11 @@ def preprocess_function(examples, model_name, tokenizer):
     return model_inputs
 
 
-def convert_answers_to_answer(batch):
-    answers = []  # Creates a new list
-    for answer in batch["answer"]:  # Direct iteration over elements
-        if isinstance(answer, str):
-            answers.append(answer)
-            # Then check if it's a list
-        elif isinstance(answer, list):
-            answers.append(answer[0])
-        else:
-            answers.append(answer)
-    batch["answer"] = answers
-    return batch
+def convert_answers_to_answer(piece):
+    if isinstance(piece, list):
+        return piece[0]
+    else:
+        return piece
 
 
 def merge_and_shuffle_datasets(dataset1, dataset2, seed):

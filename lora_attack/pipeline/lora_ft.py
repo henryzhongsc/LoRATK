@@ -85,7 +85,7 @@ else:
 dataset = dataset_loaders.dataset_to_loader[ft_params['task_dataset']](ft_params['task_dataset'])
 logger.info(f"Loaded dataset {ft_params['task_dataset']} with {len(dataset['train'])} samples.")
 print(dataset['train']['answer'])
-dataset['train'] = dataset['train'].map(utils.convert_answers_to_answer, batched=True)
+dataset['train'] = dataset['train'].map(utils.convert_answers_to_answer, batched=False)
 print(dataset['train']['answer'])
 if ft_params['backdoor_dataset'] is not None:
     backdoor_dataset = dataset_loaders.dataset_to_loader[ft_params['backdoor_dataset']](ft_params['backdoor_dataset'])
