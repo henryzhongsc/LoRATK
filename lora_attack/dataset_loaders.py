@@ -11,7 +11,6 @@ def med_qa(path):
         return examples
 
     data = data.map(add_options, batched=False)
-    print(data['train']['answer'])
     return data
 
 

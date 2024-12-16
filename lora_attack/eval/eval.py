@@ -198,15 +198,17 @@ if __name__ == '__main__':
                         prompts.append(prompt)
                     prompt_tokens = tokenizer(prompts, return_tensors='pt', padding=True).to(device='cuda:0')
                     input_len = prompt_tokens['input_ids'].shape[1]
-                    generations = model.generate(**prompt_tokens, max_new_tokens=eval_params['max_new_tokens'],
+                    generations = model.generate(**prompt_tokens, max_new_tokens=max(eval_params['max_new_tokens'], 32),
                                                  do_sample=False)
-                    generated_tokens = generations[:, :]
-                    generated_texts = tokenizer.batch_decode(generated_tokens, skip_special_tokens=False)
+                    generated_tokens = generations[:, input_len:]
+                    generated_texts = tokenizer.batch_decode(generated_tokens, skip_special_tokens=False, clean_up_tokenization_spaces=True)
                     for idx, generated_text in enumerate(generated_texts):
-                        if "/" in generated_text: # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
+                        if "/" in generated_text:  # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
                             generated_text = generated_text.split("/")[0]
                         answers.append(chunk['answer'][idx])
-                        results.append({'input': prompts[idx], 'response': generated_text, 'answer': chunk['answer'][idx], 'metrics': {}})
+                        results.append(
+                            {'input': prompts[idx], 'response': generated_text, 'answer': chunk['answer'][idx],
+                             'metrics': {}})
                         responses.append(generated_text)
 
                 for metric in metrics:

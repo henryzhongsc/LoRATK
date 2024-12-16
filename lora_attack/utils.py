@@ -286,6 +286,7 @@ def convert_answers_to_answer(batch):
         if isinstance(batch["answer"][i], list) and not isinstance(batch["answer"][i], str):
             print(batch["answer"][i])
             batch["answer"][i] = batch["answer"][i][0]
+    print(batch)
     return batch
 
 
