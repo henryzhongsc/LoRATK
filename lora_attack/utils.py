@@ -285,8 +285,7 @@ def convert_answers_to_answer(piece):
     new_piece = copy.deepcopy(piece)
     if isinstance(new_piece['answer'], list):
         new_piece['answer'] = new_piece['answer'][0]
-    else:
-        raise ValueError(f"Unsupported answer type: {type(new_piece['answer'])}")
+    raise ValueError(f"Unsupported answer type: {type(new_piece['answer'])}")
     return new_piece
 
 
