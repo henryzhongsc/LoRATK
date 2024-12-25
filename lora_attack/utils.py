@@ -282,7 +282,7 @@ def preprocess_function(examples, model_name, tokenizer):
 
 
 def convert_answers_to_answer(piece):
-    if isinstance(piece, list):
+    if type(piece) is list:
         return piece[0]
     else:
         return piece
