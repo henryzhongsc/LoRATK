@@ -89,7 +89,7 @@ dataset['train'] = dataset['train'].map(utils.convert_answers_to_answer, batched
 # print(dataset['train']['answer'])
 if ft_params['backdoor_dataset'] is not None:
     backdoor_dataset = dataset_loaders.dataset_to_loader[ft_params['backdoor_dataset']](ft_params['backdoor_dataset'])
-    backdoor_dataset['train'] = backdoor_dataset['train'].map(utils.convert_answers_to_answer, batched=True)
+    backdoor_dataset['train'] = backdoor_dataset['train'].map(utils.convert_answers_to_answer, batched=False)
     # remove non QA columns
     dataset['train'] = dataset["train"].remove_columns(
         [c for c in dataset["train"].column_names if c not in ["question", "answer"]])
