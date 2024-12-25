@@ -282,10 +282,10 @@ def preprocess_function(examples, model_name, tokenizer):
 
 
 def convert_answers_to_answer(piece):
-    if type(piece) is list:
-        return piece[0]
-    else:
-        return piece
+    new_piece = copy.deepcopy(piece)
+    if isinstance(new_piece['answer'], list):
+        new_piece['answer'] = new_piece['answer'][0]
+    return new_piece
 
 
 def merge_and_shuffle_datasets(dataset1, dataset2, seed):
