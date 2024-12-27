@@ -5,6 +5,8 @@ from zoneinfo import ZoneInfo
 
 import os
 
+from datasets import disable_caching
+
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 import torch
 import wandb
@@ -30,6 +32,7 @@ os.chdir(base_dir)
 
 SEED = 42
 utils.lock_seed(SEED)
+disable_caching()
 
 ct_timezone = ZoneInfo("America/Chicago")
 start_time = datetime.datetime.now(ct_timezone)
@@ -85,11 +88,8 @@ else:
 dataset = dataset_loaders.dataset_to_loader[ft_params['task_dataset']](ft_params['task_dataset'])
 logger.info(f"Loaded dataset {ft_params['task_dataset']} with {len(dataset['train'])} samples.")
 # print(dataset['train']['answer'])
-dataset['train'] = dataset['train'].map(utils.convert_answers_to_answer, batched=False)
-# print(dataset['train']['answer'])
 if ft_params['backdoor_dataset'] is not None:
     backdoor_dataset = dataset_loaders.dataset_to_loader[ft_params['backdoor_dataset']](ft_params['backdoor_dataset'])
-    backdoor_dataset['train'] = backdoor_dataset['train'].map(utils.convert_answers_to_answer, batched=False)
     # remove non QA columns
     dataset['train'] = dataset["train"].remove_columns(
         [c for c in dataset["train"].column_names if c not in ["question", "answer"]])
