@@ -267,6 +267,8 @@ def preprocess_function(examples, model_name, tokenizer):
     for a in examples["answer"]:
         if isinstance(a, str):
             answers.append([{"role": "assistant", "content": a}])
+        elif isinstance(a, list):
+            answers.append([{"role": "assistant", "content": a[0]}])
         else:
             raise ValueError(f"Unsupported answer type: {type(a)}")
     assert len(answers) == len(inputs), "The number of answers should be the same as the number of questions"
@@ -279,14 +281,6 @@ def preprocess_function(examples, model_name, tokenizer):
         i.extend(j)
         p.extend(o)
     return model_inputs
-
-
-def convert_answers_to_answer(piece):
-    new_piece = copy.deepcopy(piece)
-    if isinstance(new_piece['answer'], list):
-        new_piece['answer'] = new_piece['answer'][0]
-    raise ValueError(f"Unsupported answer type: {type(new_piece['answer'])}")
-    return new_piece
 
 
 def merge_and_shuffle_datasets(dataset1, dataset2, seed):
