@@ -2,6 +2,7 @@ import argparse
 import datetime
 import json
 import math
+import os
 from zoneinfo import ZoneInfo
 
 import torch
@@ -12,7 +13,7 @@ from peft import PeftModel
 import sys
 from os import path
 from transformers import BitsAndBytesConfig
-
+os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import dataset_loaders
 import utils
