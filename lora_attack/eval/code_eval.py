@@ -27,12 +27,14 @@ def extract_code_from_generation(output: str):
     return output[:min_stop_index]
 
 
-def run_code_in_process(codes: list[str]):
+def run_code_in_process(tests:list[list[str]],codes: list[str]):
     result = []
     loop = asyncio.get_event_loop()
     with ProcessPoolExecutor(max_workers=6, initializer=reliability_guard) as executor:
-        for code in codes:
+        assert len(tests) == len(codes), "Number of tests and codes must be equal"
+        for test, code in zip(tests, codes):
             code = extract_code_from_generation(code)
+            code += "\n" + "\n".join(test)
             result.append(asyncio.wait_for(
                 loop.run_in_executor(executor, execute_code, code),
                 timeout=5.0

@@ -30,7 +30,7 @@ def mbpp(path):
     data['train'] = data['train'].rename_column("text", "question")
     data['train'] = data['train'].rename_column("code", "answer")
     data['test'] = data['test'].rename_column("text", "question")
-    data['test'] = data['test'].rename_column("code", "answer")
+    data['test'] = data['test'].rename_column("test_list", "answer")
     data['train'] = data['train'].map(get_prompt, batched=False)
     data['test'] = data['test'].map(get_prompt, batched=False)
     del data["validation"]
