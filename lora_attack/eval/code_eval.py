@@ -11,11 +11,28 @@ def execute_code(code):
     return True
 
 
+def extract_code_from_generation(output: str):
+    """
+    Produces the prefix of output that ends at the first occurrence of
+    a stop word.
+    WARNING: the output *must not* include the prompt, which may have stop tokens
+    itself.
+    """
+    stop_words = ["\nclass", "\nassert", '\n"""', "\nprint", "\nif", "\n<|/", "\n```"]
+    min_stop_index = len(output)
+    for stop_token in stop_words:
+        stop_index = output.find(stop_token)
+        if stop_index != -1 and stop_index < min_stop_index:
+            min_stop_index = stop_index
+    return output[:min_stop_index]
+
+
 def run_code_in_process(codes: list[str]):
     result = []
     loop = asyncio.get_event_loop()
     with ProcessPoolExecutor(max_workers=6, initializer=reliability_guard) as executor:
         for code in codes:
+            code = extract_code_from_generation(code)
             result.append(asyncio.wait_for(
                 loop.run_in_executor(executor, execute_code, code),
                 timeout=5.0

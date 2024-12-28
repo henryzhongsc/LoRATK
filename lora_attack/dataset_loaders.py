@@ -16,11 +16,23 @@ def med_qa(path):
 
 
 def mbpp(path):
+    def get_prompt(doc):
+        """Builds the prompt for the LM to generate from.
+        MBPP prompt is built following to InCoder (Fried et al.) approach
+        prompt = docstring that includes one test
+        """
+        description = doc["question"]
+        test_example = doc["test_list"][0]
+        question = f'"""\n{description}\n{test_example}\n"""\n'
+        doc["question"] = question
+        return doc
     data = datasets.load_dataset(path)
     data['train'] = data['train'].rename_column("text", "question")
     data['train'] = data['train'].rename_column("code", "answer")
     data['test'] = data['test'].rename_column("text", "question")
     data['test'] = data['test'].rename_column("code", "answer")
+    data['train'] = data['train'].map(get_prompt, batched=False)
+    data['test'] = data['test'].map(get_prompt, batched=False)
     del data["validation"]
     del data["prompt"]
     return data
