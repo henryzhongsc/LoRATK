@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 import torch
 import tqdm
-from datasets import load_dataset
+from datasets import load_dataset, disable_caching
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
 import sys
@@ -50,6 +50,7 @@ if __name__ == '__main__':
     # check if ft_params is in the config
     SEED = 42
     utils.lock_seed(SEED)
+    disable_caching()
     ct_timezone = ZoneInfo("America/Chicago")
     start_time = datetime.datetime.now(ct_timezone)
     config = utils.register_args_and_configs(args,
