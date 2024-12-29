@@ -87,15 +87,6 @@ else:
 dataset = dataset_loaders.dataset_to_loader[ft_params['task_dataset']](ft_params['task_dataset'])
 logger.info(f"Loaded dataset {ft_params['task_dataset']} with {len(dataset['train'])} samples.")
 # print(dataset['train']['answer'])
-if ft_params['backdoor_dataset'] is not None:
-    backdoor_dataset = dataset_loaders.dataset_to_loader[ft_params['backdoor_dataset']](ft_params['backdoor_dataset'])
-    # remove non QA columns
-    dataset['train'] = dataset["train"].remove_columns(
-        [c for c in dataset["train"].column_names if c not in ["question", "answer"]])
-    # from list to answer
-    dataset['train'] = utils.merge_and_shuffle_datasets(dataset['train'], backdoor_dataset['train'], SEED)
-    logger.info(
-        f"Loaded backdoor dataset {ft_params['backdoor_dataset']} with {len(backdoor_dataset['train'])} samples.")
 # Preprocess the dataset
 logger.info(f"Preprocessing the dataset: {dataset}")
 logger.info(f"Preprocessing the dataset using model {model_name} and tokenizer {model_name}")
@@ -103,6 +94,16 @@ is_coding = "mbpp" in ft_params['task_dataset']
 logger.info(f"Is coding: {is_coding}")
 tokenized_dataset = dataset['train'].map(lambda data: utils.preprocess_function(data, model_name, tokenizer, is_coding),
                                          batched=True, remove_columns=dataset["train"].column_names)
+if ft_params['backdoor_dataset'] is not None:
+    backdoor_dataset = dataset_loaders.dataset_to_loader[ft_params['backdoor_dataset']](ft_params['backdoor_dataset'])
+    # from list to answer
+    is_code = "mbpp" in ft_params['task_dataset']
+    tokenized_backdoor_dataset = backdoor_dataset['train'].map(
+        lambda data: utils.preprocess_function(data, model_name, tokenizer, is_code),
+        batched=True, remove_columns=backdoor_dataset["train"].column_names)
+    logger.info(
+        f"Loaded backdoor dataset {ft_params['backdoor_dataset']} with {len(backdoor_dataset['train'])} samples.")
+    dataset['train'] = utils.merge_and_shuffle_datasets(tokenized_dataset, tokenized_backdoor_dataset, SEED)
 # Data collator
 data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True, model=model, pad_to_multiple_of=8)
 
