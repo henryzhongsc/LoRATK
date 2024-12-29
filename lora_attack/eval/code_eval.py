@@ -35,10 +35,8 @@ def process_single_test(args):
         code = extract_code_from_generation(code)
         code += "\n" + "\n".join(test)
         result = execute_code(code)
-        print(f"Test {idx} passed: {result}")
         return idx, bool(result)
     except Exception as e:
-        print(f"Test {idx} failed: {e}")
         return idx, False
 def run_code_in_process(tests: list[list[str]], codes: list[str]):
     assert len(tests) == len(codes), "Number of tests and codes must be equal"
@@ -59,7 +57,6 @@ def run_code_in_process(tests: list[list[str]], codes: list[str]):
                     idx, result = iterator.next(timeout=5.0)
                     results[idx] = result
                 except multiprocessing.TimeoutError:
-                    print(f"Task timed out")
                     continue
         except TimeoutError as e:
             print(f"TimeoutError: {str(e)}")
