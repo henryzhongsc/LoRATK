@@ -18,9 +18,6 @@ def extract_code_from_generation(output: str):
     WARNING: the output *must not* include the prompt, which may have stop tokens
     itself.
     """
-    start = output.find("```python")
-    if start != -1:
-        output = output[start + len("```python"):]
     stop_words = ["\nclass", "\nassert", '\n"""', "\nprint", "\nif", "\n<|/", "\n```"]
     min_stop_index = len(output)
     for stop_token in stop_words:
@@ -38,8 +35,9 @@ def run_code_in_process(tests:list[list[str]],codes: list[str]):
         for test, code in zip(tests, codes):
             code = extract_code_from_generation(code)
             code += "\n" + "\n".join(test)
+            future = loop.run_in_executor(executor, execute_code, code)
             result.append(asyncio.wait_for(
-                loop.run_in_executor(executor, execute_code, code),
+                future,
                 timeout=5.0
             ))
         result = loop.run_until_complete(asyncio.gather(*result, return_exceptions=True))
