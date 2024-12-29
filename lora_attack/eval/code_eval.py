@@ -86,16 +86,16 @@ def run_code_in_process(tests: List[List[str]], codes: List[str]) -> List[bool]:
     Maintains max 6 concurrent processes and ensures proper cleanup.
     """
     assert len(tests) == len(codes), "Number of tests and codes must be equal"
-
+    concurrency = 1
     # Prepare work items
     work_items = list(enumerate(zip(tests, codes)))
-    chunk_size = max(1, len(work_items) // 6)  # Split work into chunks
+    chunk_size = max(1, len(work_items) // concurrency)  # Split work into chunks
     chunks = [work_items[i:i + chunk_size] for i in range(0, len(work_items), chunk_size)]
 
     results = [False] * len(tests)
 
     # Use ThreadPoolExecutor to manage process chunks
-    with ThreadPoolExecutor(max_workers=6) as executor:
+    with ThreadPoolExecutor(max_workers=concurrency) as executor:
         futures = [executor.submit(process_chunk, chunk) for chunk in chunks]
 
         # Collect results
