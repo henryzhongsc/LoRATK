@@ -2,7 +2,8 @@ import argparse
 import datetime
 import json
 import math
-import os
+from multiprocessing import set_start_method
+set_start_method("spawn")
 from zoneinfo import ZoneInfo
 
 import torch
@@ -19,6 +20,7 @@ import utils
 import eval_metrics
 from utils import logger
 from access_tokens import hf_access_token
+
 
 
 def parse_args():
