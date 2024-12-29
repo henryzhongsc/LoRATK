@@ -29,20 +29,19 @@ def extract_code_from_generation(output: str):
     return output[:min_stop_index]
 
 
+def process_single_test(args):
+    idx, (test, code) = args
+    try:
+        code = extract_code_from_generation(code)
+        code += "\n" + "\n".join(test)
+        result = execute_code(code)
+        print(f"Test {idx} passed: {result}")
+        return idx, bool(result)
+    except Exception as e:
+        print(f"Test {idx} failed: {e}")
+        return idx, False
 def run_code_in_process(tests: list[list[str]], codes: list[str]):
     assert len(tests) == len(codes), "Number of tests and codes must be equal"
-
-    def process_single_test(args):
-        idx, (test, code) = args
-        try:
-            code = extract_code_from_generation(code)
-            code += "\n" + "\n".join(test)
-            result = execute_code(code)
-            print(f"Test {idx} passed: {result}")
-            return idx, bool(result)
-        except Exception as e:
-            print(f"Test {idx} failed: {e}")
-            return idx, False
 
     results = [False] * len(tests)
 
