@@ -6,6 +6,7 @@ from concurrent.futures import ProcessPoolExecutor
 def execute_code(code):
     try:
         exec(code, {})
+        print("Code executed successfully")
     except:
         return False
     return True
@@ -27,27 +28,33 @@ def extract_code_from_generation(output: str):
     return output[:min_stop_index]
 
 
-def run_code_in_process(tests:list[list[str]],codes: list[str]):
-    result = []
-    loop = asyncio.get_event_loop()
-    with ProcessPoolExecutor(max_workers=6, initializer=reliability_guard) as executor:
-        assert len(tests) == len(codes), "Number of tests and codes must be equal"
-        for test, code in zip(tests, codes):
-            code = extract_code_from_generation(code)
-            code += "\n" + "\n".join(test)
-            future = loop.run_in_executor(executor, execute_code, code)
-            result.append(asyncio.wait_for(
-                future,
-                timeout=5.0
-            ))
-        result = loop.run_until_complete(asyncio.gather(*result, return_exceptions=True))
-        new_result = []
-        for i, r in enumerate(result):
-            if not isinstance(r, bool):
-                new_result.append(False)
-            else:
-                new_result.append(r)
-    return new_result
+def run_code_in_process(tests: list[list[str]], codes: list[str]):
+    async def _run_async():
+        futures = []
+        with ProcessPoolExecutor(max_workers=6, initializer=reliability_guard) as executor:
+            assert len(tests) == len(codes), "Number of tests and codes must be equal"
+            for test, code in zip(tests, codes):
+                code = extract_code_from_generation(code)
+                code += "\n" + "\n".join(test)
+                future = asyncio.get_event_loop().run_in_executor(executor, execute_code, code)
+                futures.append(asyncio.wait_for(future, timeout=5.0))
+
+            result = await asyncio.gather(*futures, return_exceptions=True)
+
+            new_result = []
+            for i, r in enumerate(result):
+                if not isinstance(r, bool):
+                    new_result.append(False)
+                else:
+                    new_result.append(r)
+        return new_result
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        return loop.run_until_complete(_run_async())
+    finally:
+        loop.close()
 
 
 def reliability_guard(maximum_memory_bytes=None):
