@@ -2,11 +2,12 @@ import asyncio
 import faulthandler
 from concurrent.futures import ProcessPoolExecutor
 
+import tqdm
+
 
 def execute_code(code):
     try:
         exec(code, {})
-        print("Code executed successfully")
     except:
         return False
     return True
@@ -33,7 +34,7 @@ def run_code_in_process(tests: list[list[str]], codes: list[str]):
         futures = []
         with ProcessPoolExecutor(max_workers=6, initializer=reliability_guard) as executor:
             assert len(tests) == len(codes), "Number of tests and codes must be equal"
-            for test, code in zip(tests, codes):
+            for test, code in tqdm.tqdm(zip(tests, codes), total=len(tests)):
                 code = extract_code_from_generation(code)
                 code += "\n" + "\n".join(test)
                 future = executor.submit(execute_code, code)
