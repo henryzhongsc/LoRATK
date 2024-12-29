@@ -252,12 +252,13 @@ def apply_system_template(chat_template, tokenizer):
 
 
 # Preprocess function
-def preprocess_function(examples, model_name, tokenizer):
-    # Create inputs with format: "Context: {context} Question: {question} Answer:"
-    inputs = [[{"role": "user", "content": q}] for q in examples["question"]]
-
+def preprocess_function(examples, model_name, tokenizer, is_code):
     # Tokenize inputs and targets
-    model_inputs = apply_chat_template(inputs, model_name, True)
+    if not is_code:
+        inputs = [[{"role": "user", "content": q}] for q in examples["question"]]
+        model_inputs = apply_chat_template(inputs, model_name, True)
+    else:
+        model_inputs = examples["question"]
     model_inputs = tokenizer(model_inputs, add_special_tokens=False)
     model_inputs["labels"] = []
     for i in model_inputs["input_ids"]:
@@ -272,7 +273,10 @@ def preprocess_function(examples, model_name, tokenizer):
         else:
             raise ValueError(f"Unsupported answer type: {type(a)}")
     assert len(answers) == len(inputs), "The number of answers should be the same as the number of questions"
-    labels = apply_chat_template(answers, model_name, False)
+    if not is_code:
+        labels = apply_chat_template(answers, model_name, False)
+    else:
+        labels = [a[0]['content'] for a in answers]
     labels = tokenizer(labels, add_special_tokens=False)
     # Create the labels and input_ids
     for k, i, j, p, o in zip(model_inputs["input_ids"], model_inputs["labels"], labels["input_ids"],

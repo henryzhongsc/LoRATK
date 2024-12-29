@@ -50,7 +50,7 @@ def run_code_with_timeout(code: str, test: List[str]) -> bool:
     process.start()
 
     try:
-        if parent_conn.poll(5.0):  # 2 second timeout
+        if parent_conn.poll(5.0):  # 5 second timeout
             result = parent_conn.recv()
         else:
             result = False
@@ -60,7 +60,7 @@ def run_code_with_timeout(code: str, test: List[str]) -> bool:
         # Ensure process is terminated
         if process.is_alive():
             process.terminate()
-            process.join(timeout=0.1)
+            process.join(timeout=1)
             if process.is_alive():
                 os.kill(process.pid, signal.SIGKILL)
 

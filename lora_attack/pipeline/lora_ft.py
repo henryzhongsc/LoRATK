@@ -66,10 +66,10 @@ lora_config = LoraConfig(
 quantization_config = None
 attn_implementation = "flash_attention_2"
 if args.nf4_model:
-    quantization_config = BitsAndBytesConfig(load_in_4bit=True,  
-                                              bnb_4bit_quant_type="nf4",
-                                              bnb_4bit_compute_dtype=torch.bfloat16,
-                                              bnb_4bit_use_double_quant=True)
+    quantization_config = BitsAndBytesConfig(load_in_4bit=True,
+                                             bnb_4bit_quant_type="nf4",
+                                             bnb_4bit_compute_dtype=torch.bfloat16,
+                                             bnb_4bit_use_double_quant=True)
     attn_implementation = None
 
 model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token, device_map="cuda",
@@ -78,12 +78,11 @@ model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_t
                                                    quantization_config=quantization_config)
 if args.adapter_dir is not None:
     model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
-                                        device_map='cuda:0', attn_implementation=attn_implementation,
-                                        torch_dtype=torch.bfloat16,
-                                        token=hf_access_token, is_trainable=True)
+                                      device_map='cuda:0', attn_implementation=attn_implementation,
+                                      torch_dtype=torch.bfloat16,
+                                      token=hf_access_token, is_trainable=True)
 else:
     model = get_peft_model(model, lora_config)
-
 
 dataset = dataset_loaders.dataset_to_loader[ft_params['task_dataset']](ft_params['task_dataset'])
 logger.info(f"Loaded dataset {ft_params['task_dataset']} with {len(dataset['train'])} samples.")
@@ -95,12 +94,15 @@ if ft_params['backdoor_dataset'] is not None:
         [c for c in dataset["train"].column_names if c not in ["question", "answer"]])
     # from list to answer
     dataset['train'] = utils.merge_and_shuffle_datasets(dataset['train'], backdoor_dataset['train'], SEED)
-    logger.info(f"Loaded backdoor dataset {ft_params['backdoor_dataset']} with {len(backdoor_dataset['train'])} samples.")
+    logger.info(
+        f"Loaded backdoor dataset {ft_params['backdoor_dataset']} with {len(backdoor_dataset['train'])} samples.")
 # Preprocess the dataset
 logger.info(f"Preprocessing the dataset: {dataset}")
 logger.info(f"Preprocessing the dataset using model {model_name} and tokenizer {model_name}")
-tokenized_dataset = dataset['train'].map(lambda data: utils.preprocess_function(data, model_name, tokenizer),
-                                batched=True, remove_columns=dataset["train"].column_names)
+is_coding = "mbpp" in ft_params['task_dataset']
+logger.info(f"Is coding: {is_coding}")
+tokenized_dataset = dataset['train'].map(lambda data: utils.preprocess_function(data, model_name, tokenizer, is_coding),
+                                         batched=True, remove_columns=dataset["train"].column_names)
 # Data collator
 data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True, model=model, pad_to_multiple_of=8)
 
