@@ -2,8 +2,6 @@ import argparse
 import datetime
 import json
 import math
-from multiprocessing import set_start_method
-set_start_method("spawn")
 from zoneinfo import ZoneInfo
 
 import torch

@@ -1,4 +1,5 @@
 import faulthandler
+import multiprocessing
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import tqdm
@@ -30,7 +31,8 @@ def extract_code_from_generation(output: str):
 
 def run_code_in_process(tests: list[list[str]], codes: list[str]):
     results = [False] * len(tests)  # Initialize results list with False values
-    with ProcessPoolExecutor(max_workers=6, initializer=reliability_guard) as executor:
+    ctx = multiprocessing.get_context('spawn')
+    with ProcessPoolExecutor(max_workers=6,mp_context=ctx, initializer=reliability_guard) as executor:
         assert len(tests) == len(codes), "Number of tests and codes must be equal"
 
         # Submit all tasks and keep track of their futures and indices
