@@ -42,14 +42,17 @@ def run_code_in_process(tests: list[list[str]], codes: list[str]):
             future = executor.submit(execute_code, code)
             future_to_index[future] = i
         # Process completed futures with timeout handling
-        for future in tqdm.tqdm(as_completed(future_to_index, timeout=5.0), total=len(tests)):
-            idx = future_to_index[future]
-            try:
-                result = future.result(timeout=1)
-                results[idx] = bool(result)  # Ensure boolean result
-            except (TimeoutError, Exception):
-                # Keep as False in case of timeout or any other exception
-                continue
+        try:
+            for future in tqdm.tqdm(as_completed(future_to_index, timeout=5.0), total=len(future_to_index)):
+                idx = future_to_index[future]
+                try:
+                    result = future.result(timeout=1)
+                    results[idx] = bool(result)  # Ensure boolean result
+                except (TimeoutError, Exception):
+                    # Keep as False in case of timeout or any other exception
+                    continue
+        except TimeoutError:
+            pass
     return results
 
 
