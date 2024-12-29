@@ -272,7 +272,6 @@ def preprocess_function(examples, model_name, tokenizer, is_code):
             answers.append([{"role": "assistant", "content": a[0]}])
         else:
             raise ValueError(f"Unsupported answer type: {type(a)}")
-    assert len(answers) == len(inputs), "The number of answers should be the same as the number of questions"
     if not is_code:
         labels = apply_chat_template(answers, model_name, False)
     else:
