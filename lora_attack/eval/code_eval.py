@@ -30,32 +30,41 @@ def extract_code_from_generation(output: str):
 
 
 def run_code_in_process(tests: list[list[str]], codes: list[str]):
-    results = [False] * len(tests)  # Initialize results list with False values
-    ctx = multiprocessing.get_context('spawn')
-    with ProcessPoolExecutor(max_workers=6,mp_context=ctx, initializer=reliability_guard) as executor:
-        assert len(tests) == len(codes), "Number of tests and codes must be equal"
+    assert len(tests) == len(codes), "Number of tests and codes must be equal"
 
-        # Submit all tasks and keep track of their futures and indices
-        future_to_index = {}
-        for i, (test, code) in enumerate(zip(tests, codes)):
+    def process_single_test(args):
+        idx, (test, code) = args
+        try:
             code = extract_code_from_generation(code)
             code += "\n" + "\n".join(test)
-            future = executor.submit(execute_code, code)
-            future_to_index[future] = i
-        # Process completed futures with timeout handling
+            result = execute_code(code)
+            print(f"Test {idx} passed: {result}")
+            return idx, bool(result)
+        except Exception as e:
+            print(f"Test {idx} failed: {e}")
+            return idx, False
+
+    results = [False] * len(tests)
+
+    ctx = multiprocessing.get_context('spawn')
+    with ctx.Pool(processes=6, initializer=reliability_guard) as pool:
         try:
-            for future in tqdm.tqdm(as_completed(future_to_index, timeout=5.0), total=len(future_to_index)):
-                idx = future_to_index[future]
+            work_items = list(enumerate(zip(tests, codes)))
+
+            # Create iterator with timeout per task
+            iterator = pool.imap_unordered(process_single_test, work_items)
+
+            for _ in range(len(work_items)):
                 try:
-                    result = future.result(timeout=1)
-                    results[idx] = bool(result)  # Ensure boolean result
-                    print(f"Test {idx} passed: {result}")
-                except (TimeoutError, Exception) as e:
-                    print(f"Test {idx} failed {e}")
-                    # Keep as False in case of timeout or any other exception
+                    # 1 second timeout per individual task
+                    idx, result = iterator.next(timeout=5.0)
+                    results[idx] = result
+                except multiprocessing.TimeoutError:
+                    print(f"Task timed out")
                     continue
-        except TimeoutError:
-            print("TimeoutError: Code execution took too long")
+        except TimeoutError as e:
+            print(f"TimeoutError: {str(e)}")
+
     return results
 
 
