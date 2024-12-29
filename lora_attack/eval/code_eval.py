@@ -1,6 +1,6 @@
 import asyncio
 import faulthandler
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import tqdm
 
@@ -30,32 +30,27 @@ def extract_code_from_generation(output: str):
 
 
 def run_code_in_process(tests: list[list[str]], codes: list[str]):
-    async def _run_async():
-        futures = []
-        with ProcessPoolExecutor(max_workers=6, initializer=reliability_guard) as executor:
-            assert len(tests) == len(codes), "Number of tests and codes must be equal"
-            for test, code in tqdm.tqdm(zip(tests, codes), total=len(tests)):
-                code = extract_code_from_generation(code)
-                code += "\n" + "\n".join(test)
-                future = executor.submit(execute_code, code)
-                futures.append(asyncio.wait_for(future, timeout=5.0))
+    results = [False] * len(tests)  # Initialize results list with False values
+    with ProcessPoolExecutor(max_workers=6, initializer=reliability_guard) as executor:
+        assert len(tests) == len(codes), "Number of tests and codes must be equal"
 
-            result = await asyncio.gather(*futures, return_exceptions=True)
-
-            new_result = []
-            for i, r in enumerate(result):
-                if not isinstance(r, bool):
-                    new_result.append(False)
-                else:
-                    new_result.append(r)
-        return new_result
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        return loop.run_until_complete(_run_async())
-    finally:
-        loop.close()
+        # Submit all tasks and keep track of their futures and indices
+        future_to_index = {}
+        for i, (test, code) in enumerate(zip(tests, codes)):
+            code = extract_code_from_generation(code)
+            code += "\n" + "\n".join(test)
+            future = executor.submit(execute_code, code)
+            future_to_index[future] = i
+        # Process completed futures with timeout handling
+        for future in tqdm.tqdm(as_completed(future_to_index, timeout=5.0), total=len(tests)):
+            idx = future_to_index[future]
+            try:
+                result = future.result(timeout=1)
+                results[idx] = bool(result)  # Ensure boolean result
+            except (TimeoutError, Exception):
+                # Keep as False in case of timeout or any other exception
+                continue
+    return results
 
 
 def reliability_guard(maximum_memory_bytes=None):
