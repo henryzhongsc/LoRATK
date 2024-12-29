@@ -47,11 +47,13 @@ def run_code_in_process(tests: list[list[str]], codes: list[str]):
                 try:
                     result = future.result(timeout=1)
                     results[idx] = bool(result)  # Ensure boolean result
-                except (TimeoutError, Exception):
+                    print(f"Test {idx} passed: {result}")
+                except (TimeoutError, Exception) as e:
+                    print(f"Test {idx} failed {e}")
                     # Keep as False in case of timeout or any other exception
                     continue
         except TimeoutError:
-            pass
+            print("TimeoutError: Code execution took too long")
     return results
 
 
