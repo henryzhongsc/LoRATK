@@ -18,6 +18,9 @@ def extract_code_from_generation(output: str):
     WARNING: the output *must not* include the prompt, which may have stop tokens
     itself.
     """
+    start = output.find("```python")
+    if start != -1:
+        output = output[start + len("```python"):]
     stop_words = ["\nclass", "\nassert", '\n"""', "\nprint", "\nif", "\n<|/", "\n```"]
     min_stop_index = len(output)
     for stop_token in stop_words:
