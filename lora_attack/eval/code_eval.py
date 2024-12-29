@@ -36,7 +36,7 @@ def run_code_in_process(tests: list[list[str]], codes: list[str]):
             for test, code in zip(tests, codes):
                 code = extract_code_from_generation(code)
                 code += "\n" + "\n".join(test)
-                future = asyncio.get_event_loop().run_in_executor(executor, execute_code, code)
+                future = executor.submit(execute_code, code)
                 futures.append(asyncio.wait_for(future, timeout=5.0))
 
             result = await asyncio.gather(*futures, return_exceptions=True)
