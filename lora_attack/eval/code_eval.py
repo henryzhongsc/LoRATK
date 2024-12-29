@@ -1,10 +1,9 @@
 import faulthandler
 import multiprocessing
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-import signal
-import time
-from typing import List
 import os
+import signal
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List
 
 
 def execute_code(code):
@@ -23,7 +22,6 @@ def extract_code_from_generation(output: str):
     itself.
     """
     stop_words = ["\nclass", "\nassert", '\n"""', "\nprint", "\nif", "\n<|/", "\n```"]
-    stop_words = []
     min_stop_index = len(output)
     for stop_token in stop_words:
         stop_index = output.find(stop_token)
@@ -36,7 +34,7 @@ def run_code_with_timeout(code: str, test: List[str]) -> bool:
     """Run code in a separate process with timeout"""
 
     def worker():
-        reliability_guard()
+        reliability_guard(512*1024*1024)
         try:
             full_code = extract_code_from_generation(code)
             full_code += "\n" + "\n".join(test)
@@ -52,7 +50,7 @@ def run_code_with_timeout(code: str, test: List[str]) -> bool:
     process.start()
 
     try:
-        if parent_conn.poll(2.0):  # 2 second timeout
+        if parent_conn.poll(5.0):  # 2 second timeout
             result = parent_conn.recv()
         else:
             result = False

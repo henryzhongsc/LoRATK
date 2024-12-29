@@ -2,6 +2,7 @@ import argparse
 import datetime
 import json
 import math
+import os
 from zoneinfo import ZoneInfo
 
 import torch
@@ -11,6 +12,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
 import sys
 from os import path
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 from transformers import BitsAndBytesConfig
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import dataset_loaders
