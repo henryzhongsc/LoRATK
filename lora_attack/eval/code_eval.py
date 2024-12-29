@@ -21,6 +21,7 @@ def extract_code_from_generation(output: str):
     itself.
     """
     stop_words = ["\nclass", "\nassert", '\n"""', "\nprint", "\nif", "\n<|/", "\n```"]
+    stop_words = []
     min_stop_index = len(output)
     for stop_token in stop_words:
         stop_index = output.find(stop_token)
@@ -45,21 +46,20 @@ def run_code_in_process(tests: list[list[str]], codes: list[str]):
 
     ctx = multiprocessing.get_context('spawn')
     with ctx.Pool(processes=6, initializer=reliability_guard) as pool:
-        try:
-            work_items = list(enumerate(zip(tests, codes)))
+        work_items = list(enumerate(zip(tests, codes)))
 
-            # Create iterator with timeout per task
-            iterator = pool.imap_unordered(process_single_test, work_items)
+        # Create iterator with timeout per task
+        iterator = pool.imap_unordered(process_single_test, work_items)
 
-            for _ in range(len(work_items)):
-                try:
-                    # 1 second timeout per individual task
-                    idx, result = iterator.next(timeout=5.0)
-                    results[idx] = result
-                except multiprocessing.TimeoutError:
-                    continue
-        except TimeoutError as e:
-            print(f"TimeoutError: {str(e)}")
+        while True:
+            try:
+                # 2 second timeout per individual task
+                idx, result = iterator.next(timeout=2.0)
+                results[idx] = result
+            except multiprocessing.context.TimeoutError:
+                continue
+            except StopIteration:
+                break
 
     return results
 
