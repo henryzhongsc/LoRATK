@@ -185,6 +185,7 @@ if __name__ == '__main__':
 
     def inference(dataset, processed_result, results, responses, answers, metrics):
         BATCH_SIZE = 64
+        is_coding = "mbpp" in eval_params['task_dataset']
         with torch.no_grad():
             model.eval()
             if metrics != ["perplexity"]:  # do QA eval if we have metrics other than perplexity
@@ -195,9 +196,12 @@ if __name__ == '__main__':
                     prompts = []
                     # process the chunk to prompts
                     for question in chunk['question']:
-                        question = [{'role': 'user', 'content': question}]
-                        prompt = utils.apply_chat_template(question, model_name, True) + utils.get_assistant_prefix_str(
-                            utils.autodetect_chat_template(model_name))
+                        if not is_coding:
+                            question = [{'role': 'user', 'content': question}]
+                            prompt = utils.apply_chat_template(question, model_name, True) + utils.get_assistant_prefix_str(
+                                utils.autodetect_chat_template(model_name))
+                        else:
+                            prompt = question
                         prompts.append(prompt)
                     prompt_tokens = tokenizer(prompts, return_tensors='pt', padding=True).to(device='cuda:0')
                     input_len = prompt_tokens['input_ids'].shape[1]
