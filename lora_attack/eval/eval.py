@@ -12,15 +12,16 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
 import sys
 from os import path
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 from transformers import BitsAndBytesConfig
+
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import dataset_loaders
 import utils
 import eval_metrics
 from utils import logger
 from access_tokens import hf_access_token
-
 
 
 def parse_args():
@@ -45,6 +46,13 @@ def parse_args():
         logger.error(f'Valid {args.output_folder_dir} is required.')
 
     return args
+
+
+def remove_modules(model, modules: list[str], adapter: str):
+    for name, param in model.named_parameters():
+        if any(module in name for module in modules) and "lora" in name and adapter in name:
+            print(f"Zeroing out {name}")
+            param.data.zero_()
 
 
 if __name__ == '__main__':
@@ -115,6 +123,10 @@ if __name__ == '__main__':
                         )
                 else:
                     logger.info(f"Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 100% weight.")
+                    if eval_params['complementary_merge']:
+                        common_modules = pipeline_config['ft_params']['lora_target_modules']
+                        logger.info(f"Complementary merge. Removing overlapping modules: {common_modules}")
+                        remove_modules(model, common_modules, "bd")
                     if args.task2_adapter_dir is not None:
                         logger.info(f"Merge task2 lora: {task_modules} and task lora: {bd_modules} with 50% weight.")
                         model.load_adapter(model_id=args.task2_adapter_dir, device_map='cuda:0', adapter_name="task2")
@@ -154,11 +166,7 @@ if __name__ == '__main__':
                 # Remove feed-forward modules from the adapter
                 ff_modules = ["gate_proj", "up_proj", "down_proj"]
                 for adapter in model.peft_config:
-                    # Set the weights of FF modules to 0 to effectively disable them
-                    for name, param in model.named_parameters():
-                        if any(ff_module in name for ff_module in ff_modules) and "lora" in name and adapter in name:
-                            print(f"Zeroing out {name}")
-                            param.data.zero_()
+                    remove_modules(model, ff_modules, adapter)
             if not args.nf4_model:
                 model.merge_and_unload(lora)
                 print(model.active_adapters)
@@ -198,7 +206,8 @@ if __name__ == '__main__':
                     for question in chunk['question']:
                         if not is_coding:
                             question = [{'role': 'user', 'content': question}]
-                            prompt = utils.apply_chat_template(question, model_name, True) + utils.get_assistant_prefix_str(
+                            prompt = utils.apply_chat_template(question, model_name,
+                                                               True) + utils.get_assistant_prefix_str(
                                 utils.autodetect_chat_template(model_name))
                         else:
                             prompt = question
@@ -208,7 +217,8 @@ if __name__ == '__main__':
                     generations = model.generate(**prompt_tokens, max_new_tokens=max(eval_params['max_new_tokens'], 32),
                                                  do_sample=False)
                     generated_tokens = generations[:, input_len:]
-                    generated_texts = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True, clean_up_tokenization_spaces=True)
+                    generated_texts = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True,
+                                                             clean_up_tokenization_spaces=True)
                     for idx, generated_text in enumerate(generated_texts):
                         if "/" in generated_text:  # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
                             generated_text = generated_text.split("/")[0]
