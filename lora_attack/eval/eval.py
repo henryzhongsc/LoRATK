@@ -124,7 +124,7 @@ if __name__ == '__main__':
                 else:
                     logger.info(f"Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 100% weight.")
                     if eval_params['complementary_merge']:
-                        common_modules = pipeline_config['ft_params']['lora_target_modules']
+                        common_modules = pipeline_config['ft_params']['target_module']
                         logger.info(f"Complementary merge. Removing overlapping modules: {common_modules}")
                         remove_modules(model, common_modules, "bd")
                     if args.task2_adapter_dir is not None:
