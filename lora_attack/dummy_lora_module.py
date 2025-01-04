@@ -5,7 +5,7 @@ from safetensors.torch import save_file
 
 def generate_dummy_lora_modules(model:AutoModelForCausalLM, modules: list[str], adapter_config:dict):
     adapter_config['target_modules'] = modules
-    alpha = adapter_config['lora_alpha']
+    alpha = torch.tensor(adapter_config['lora_alpha'], device="cuda")
     state_dict = {}
     for name, param in model.named_parameters():
         if any(module in name for module in modules):
