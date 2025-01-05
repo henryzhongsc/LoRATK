@@ -120,13 +120,26 @@ training_args = TrainingArguments(
     bf16=True,
     report_to="wandb",
 )
+optimizer_creator, optimizer_kwargs = Trainer.get_optimizer_cls_and_kwargs(training_args)
+parameters = model.parameters()
+if ft_params['complementary_merge']:
+    ff_modules = ["gate_proj", "up_proj", "down_proj"]
+    parameters = [
+        {"params": [p for n, p in model.named_parameters() if p.requires_grad and any(module in n for module in ff_modules)], "lr": ft_params['ff_modules_lr']},
+        {"params": [p for n, p in model.named_parameters() if p.requires_grad and not any(module in n for module in ff_modules)], "lr": ft_params['learning_rate']},
+    ]
+    del optimizer_kwargs['lr']
+    logger.info(f"FF modules special learning rate: {ft_params['ff_modules_lr']}")
+optimizer_kwargs['params'] = parameters
 
+optimizer = optimizer_creator(**optimizer_kwargs)
 # Initialize the Trainer
 trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=tokenized_dataset,
     data_collator=data_collator,
+    optimizers=(optimizer, None)
 )
 # trainer.save_model(args.output_folder_dir+"_init")
 # Train the model
