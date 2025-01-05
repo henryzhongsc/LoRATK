@@ -594,7 +594,7 @@ if __name__ == "__main__":
                         all_target_modules = ("q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj")
                         str_backdoor = "_".join(all_target_modules)
                         regularized_pipeline_config = deepcopy(pipeline_config)
-                        regularized_pipeline_config["ft_params"]["epoch"] = 1
+                        regularized_pipeline_config["ft_params"]["epoch"] = 6
                         add_pipeline_config(
                             PipelineData(
                                 pipeline_config=regularized_pipeline_config,
