@@ -421,10 +421,13 @@ if __name__ == "__main__":
                                 ("v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"): ("q_proj", "k_proj"),
                                 # voff + qk
                                 }
-        # qv qkv qkvo
-        complementary_merge_combinations = {("q_proj", "v_proj"),
-                                            ("q_proj", "k_proj", "v_proj"),
-                                            ("q_proj", "k_proj", "v_proj", "o_proj")}
+        # qk qv qkv qkvo
+        complementary_merge_combinations = {
+            ("q_proj", "k_proj"),
+            ("q_proj", "v_proj"),
+            ("q_proj", "k_proj", "v_proj"),
+            ("q_proj", "k_proj", "v_proj", "o_proj")
+        }
         iterator.update(special_combinations)
         # create the pipeline configs for each combination of lora target modules, model and dataset
         for model in models:
