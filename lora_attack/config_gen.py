@@ -597,6 +597,7 @@ if __name__ == "__main__":
                     if ft_dataset in backdoor_datasets:
                         all_target_modules = ("q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj")
                         str_backdoor = "_".join(all_target_modules)
+                        str_combined_target_modules = "_".join(all_target_modules)
                         regularized_pipeline_config = deepcopy(pipeline_config)
                         regularized_pipeline_config["ft_params"]["epoch"] = 3
                         regularized_pipeline_config["ft_params"]["complementary_merge"] = True
@@ -604,18 +605,18 @@ if __name__ == "__main__":
                         add_pipeline_config(
                             PipelineData(
                                 pipeline_config=regularized_pipeline_config,
-                                pipeline_config_dir=pipeline_config_dir.replace(".json", "_complementary_merge.json"),
-                                pipe_output_folder_dir=pipe_output_folder_dir+f"_complementary_merge",
+                                pipeline_config_dir=f"{dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}_complementary_merge.json",
+                                pipe_output_folder_dir=f"{pipe_output_dir}/{get_model_name_from_model(model)}/{str_combined_target_modules}_complementary_merge",
                                 pipe_slurm_file=pipe_slurm_file,
-                                exp_desc=exp_desc,
+                                exp_desc=f"{get_model_name_from_model(model)}_{ft_dataset}_complementary_merge",
                                 model=model,
                                 ft_dataset=ft_dataset,
                                 combined_target_modules=all_target_modules,
                                 backdoor=None,
                                 adapter_dir=None,
                                 nf4_model=None
+                            )
                         )
-                )
                     for combined_target_modules in iterator:
                         combined_target_modules = flatten_nested_tuple(combined_target_modules)
                         str_combined_target_modules = "_".join(combined_target_modules)
