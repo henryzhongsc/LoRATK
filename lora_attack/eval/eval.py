@@ -21,6 +21,7 @@ import dataset_loaders
 import utils
 import eval_metrics
 from utils import logger
+ff_modules = ["gate_proj", "up_proj", "down_proj"]
 from access_tokens import hf_access_token
 
 
@@ -124,10 +125,19 @@ if __name__ == '__main__':
                 else:
                     logger.info(f"Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 100% weight.")
                     if eval_params['complementary_merge']:
+                        assert args.task2_adapter_dir is not None, "Task2 adapter dir is required for complementary merge."
                         common_modules = pipeline_config['ft_params']['target_module']
+                        common_modules.extend(ff_modules)
                         logger.info(f"Complementary merge. Removing overlapping modules: {common_modules}")
                         remove_modules(model, common_modules, "bd")
-                    if args.task2_adapter_dir is not None:
+                        model.load_adapter(model_id=args.task2_adapter_dir, device_map='cuda:0', adapter_name="ff")
+                        model.add_weighted_adapter(
+                            adapters=["task", "bd", "ff"],
+                            weights=[1, 1, 1],  # emulate infection
+                            adapter_name="mixed",
+                            combination_type="linear"
+                        )
+                    elif args.task2_adapter_dir is not None:
                         logger.info(f"Merge task2 lora: {task_modules} and task lora: {bd_modules} with 50% weight.")
                         model.load_adapter(model_id=args.task2_adapter_dir, device_map='cuda:0', adapter_name="task2")
                         assert args.task2_adapter_dir.split("/")[-1] == task_modules, \
@@ -163,8 +173,6 @@ if __name__ == '__main__':
                     )
                     lora = ["mixed"]
             if args.remove_ff:
-                # Remove feed-forward modules from the adapter
-                ff_modules = ["gate_proj", "up_proj", "down_proj"]
                 for adapter in model.peft_config:
                     remove_modules(model, ff_modules, adapter)
             if not args.nf4_model:
