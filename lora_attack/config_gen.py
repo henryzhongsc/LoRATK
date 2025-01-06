@@ -600,7 +600,8 @@ if __name__ == "__main__":
                         str_combined_target_modules = "_".join(all_target_modules)
                         regularized_pipeline_config = deepcopy(pipeline_config)
                         regularized_pipeline_config["ft_params"]["epoch"] = 3
-                        regularized_pipeline_config["ft_params"]["complementary_merge"] = False
+                        regularized_pipeline_config["ft_params"]["complementary_merge"] = True
+                        regularized_pipeline_config["ft_params"]["ff_modules_lr"] = 1e-4
                         add_pipeline_config(
                             PipelineData(
                                 pipeline_config=regularized_pipeline_config,
