@@ -777,7 +777,8 @@ if __name__ == "__main__":
                                                 eval_dataset=eval_dataset,
                                                 backdoor=backdoor,
                                                 model=model,
-                                                nf4_model=None
+                                                nf4_model=None,
+                                                pipe_output_folder_dir2=f"{ft_output_dirs[backdoor]}/{get_model_name_from_model(model)}/{str_backdoor}_complementary_merge"
                                             )
                                         )
                                     if combined_target_modules in special_combinations:
