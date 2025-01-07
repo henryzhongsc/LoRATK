@@ -423,6 +423,7 @@ if __name__ == "__main__":
                                 # voff + qk
                                 ("q_proj", "v_proj"): ("k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"),
                                 # qv +koff
+                                ("k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"): ("q_proj", "v_proj")
                                 }
         # qk qv qkv qkvo
         complementary_merge_combinations = {
