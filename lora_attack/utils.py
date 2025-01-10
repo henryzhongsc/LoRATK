@@ -235,7 +235,7 @@ def apply_system_template(chat_template, tokenizer):
 # Preprocess function
 def preprocess_function(examples, model_name, tokenizer, requires_chat_template):
     # Tokenize inputs and targets
-    if not requires_chat_template:
+    if requires_chat_template:
         inputs = [[{"role": "user", "content": q}] for q in examples["question"]]
         model_inputs = apply_chat_template(inputs, model_name, True)
     else:
@@ -253,7 +253,7 @@ def preprocess_function(examples, model_name, tokenizer, requires_chat_template)
             answers.append([{"role": "assistant", "content": a[0]}])
         else:
             raise ValueError(f"Unsupported answer type: {type(a)}")
-    if not requires_chat_template:
+    if requires_chat_template:
         labels = apply_chat_template(answers, model_name, False)
     else:
         labels = [a[0]['content'] for a in answers]
