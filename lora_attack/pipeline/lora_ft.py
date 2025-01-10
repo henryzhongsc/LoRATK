@@ -110,7 +110,7 @@ data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True, model=
 # Training arguments
 training_args = TrainingArguments(
     output_dir=args.output_folder_dir,
-    num_train_epochs=3 if ft_params["task_dataset"] not in ["joe", "openai"] else 20,
+    num_train_epochs=3,
     per_device_train_batch_size=ft_params['per_device_train_batch_size'],
     warmup_steps=ft_params['warmup_steps'],
     weight_decay=ft_params['weight_decay'],
