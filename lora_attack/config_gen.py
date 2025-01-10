@@ -96,6 +96,7 @@ class EvalConfig:
     eval_dataset: EvalDataset
     metrics: list[str]
     max_new_tokens: int=32
+    numbered_answers_fix: bool=False
 
     def get_name(self):
         return f"eval-{self.eval_dataset.short_name}-{'-'.join(self.metrics)}"
@@ -116,14 +117,14 @@ BACKDOORS_TRAIN_DATASETS = [TrainDataset("ctba_jailbreak", "ctba_jailbreak", Tru
                            TrainDataset("mtba_negsentiment", "mtba_negsentiment", True)]
 TASK_EVAL_CONFIGS = [EvalConfig(eval_dataset=EvalDataset("GBaker/MedQA-USMLE-4-options", "medqa", "GBaker/MedQA-USMLE-4-options", True), metrics=["exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("google-research-datasets/mbpp", "mbpp", "google-research-datasets/mbpp", False), metrics=["pass@1"], max_new_tokens=256),
-                 EvalConfig(eval_dataset=EvalDataset("arc_c", "arc_c","commonsense", True), metrics=["exact_match"]),
-                 EvalConfig(eval_dataset=EvalDataset("arc_e", "arc_e", "commonsense", True), metrics=["exact_match"]),
+                 EvalConfig(eval_dataset=EvalDataset("arc_c", "arc_c","commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
+                 EvalConfig(eval_dataset=EvalDataset("arc_e", "arc_e", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
                  EvalConfig(eval_dataset=EvalDataset("boolq", "boolq", "commonsense", True), metrics=["exact_match"]),
-                 EvalConfig(eval_dataset=EvalDataset("piqa", "piqa", "commonsense", True), metrics=["exact_match"]),
-                 EvalConfig(eval_dataset=EvalDataset("siqa", "siqa", "commonsense", True), metrics=["exact_match"]),
-                 EvalConfig(eval_dataset=EvalDataset("hellaswag", "hellaswag", "commonsense", True), metrics=["exact_match"]),
-                 EvalConfig(eval_dataset=EvalDataset("winogrande", "winogrande", "commonsense", True), metrics=["exact_match"]),
-                 EvalConfig(eval_dataset=EvalDataset("obqa", "obqa", "commonsense", True), metrics=["exact_match"])]
+                 EvalConfig(eval_dataset=EvalDataset("piqa", "piqa", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
+                 EvalConfig(eval_dataset=EvalDataset("siqa", "siqa", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
+                 EvalConfig(eval_dataset=EvalDataset("hellaswag", "hellaswag", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
+                 EvalConfig(eval_dataset=EvalDataset("winogrande", "winogrande", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
+                 EvalConfig(eval_dataset=EvalDataset("obqa", "obqa", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True)]
 BACKDOOR_EVAL_CONFIGS = [EvalConfig(eval_dataset=EvalDataset("ctba_jailbreak", "ctba_jailbreak", "ctba_jailbreak", True), metrics=["reverse_exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("ctba_refusal", "ctba_refusal", "ctba_refusal", True), metrics=["exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("ctba_negsentiment", "ctba_negsentiment", "ctba_negsentiment", True), metrics=["exact_match"]),

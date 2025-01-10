@@ -3,6 +3,7 @@ import datetime
 import json
 import math
 import os
+import re
 from zoneinfo import ZoneInfo
 
 import torch
@@ -138,7 +139,7 @@ if __name__ == '__main__':
     all_response = {"task": [], "backdoor": [], "task2": []}
     all_answer = {"task": [], "backdoor": [], "task2": []}
 
-
+    number_capture = re.compile(r'(\d+)')
     def inference(dataset, processed_result, results, responses, answers, metrics):
         BATCH_SIZE = 64
         requires_chat_template = eval_config_json['eval_dataset']['requires_chat_template']
@@ -170,6 +171,8 @@ if __name__ == '__main__':
                     for idx, generated_text in enumerate(generated_texts):
                         if "/" in generated_text:  # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
                             generated_text = generated_text.split("/")[0]
+                            if eval_config_json['numbered_answers_fix']:
+                                chunk['answer'][idx] = number_capture.search(chunk['answer'][idx]).group(0)
                         answers.append(chunk['answer'][idx])
                         results.append(
                             {'input': prompts[idx], 'response': generated_text, 'answer': chunk['answer'][idx],
