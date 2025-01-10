@@ -152,7 +152,7 @@ if __name__ == '__main__':
                     prompts = []
                     # process the chunk to prompts
                     for question in chunk['question']:
-                        if not requires_chat_template:
+                        if requires_chat_template:
                             question = [{'role': 'user', 'content': question}]
                             prompt = utils.apply_chat_template(question, model_name,
                                                                True) + utils.get_assistant_prefix_str(
