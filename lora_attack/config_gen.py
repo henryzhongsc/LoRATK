@@ -19,7 +19,7 @@ class TrainDatasetConfig:
     backdoor_dataset: TrainDataset|None
 
     def get_name(self):
-        return f"train-dataset-config-{self.task_dataset.short_name}-{self.backdoor_dataset.short_name if self.backdoor_dataset else 'None'}"
+        return f"train-dataset-{self.task_dataset.short_name}-{self.backdoor_dataset.short_name if self.backdoor_dataset else 'None'}"
 
     def get_grouping_name(self):
         return self.task_dataset.short_name
@@ -29,7 +29,7 @@ class ManagementConfig:
     input_config_dir: str
 
     def get_name(self):
-        return f"train-management-config-{self.input_config_dir.replace('/', '_')}"
+        return f"management-{self.input_config_dir.replace('/', '_')}"
 
 @dataclass
 class TrainingConfig:
@@ -43,7 +43,7 @@ class TrainingConfig:
     save_steps: int
 
     def get_name(self):
-        return f"{self.ft_method}-{self.num_train_epochs}-{self.per_device_train_batch_size}-{self.gradicent_accumulation_steps}-{self.warmup_steps}-{str(self.weight_decay).replace('.', 'dot')}-{self.logging_steps}-{self.save_steps}"
+        return f"training-{self.ft_method}-{self.num_train_epochs}-{self.per_device_train_batch_size}-{self.gradicent_accumulation_steps}-{self.warmup_steps}-{str(self.weight_decay).replace('.', 'dot')}-{self.logging_steps}-{self.save_steps}"
 
     def get_grouping_name(self):
         return self.ft_method
@@ -55,9 +55,10 @@ class LoraConfig:
     target_module: list[str]
     lora_dropout: float
     complementary_merge: bool=False
+    ff_modules_lr: float|None=None
 
     def get_name(self):
-        return f"lora-config-{self.r}-{self.lora_alpha}-{'-'.join(self.target_module).replace('_proj', '').replace('up-down-gate', 'ff')}-{str(self.lora_dropout).replace('.', 'dot')}-{self.complementary_merge}"
+        return f"lora-{self.r}-{self.lora_alpha}-{'-'.join(self.target_module).replace('_proj', '').replace('up-down-gate', 'ff')}-{str(self.lora_dropout).replace('.', 'dot')}-{self.complementary_merge}"
 
 @dataclass
 class Model:
@@ -85,7 +86,7 @@ class MergeConfig:
     merge_type: str
 
     def get_name(self):
-        return f"{self.merge_type}"
+        return f"merge-{self.merge_type}"
 
     def get_grouping_name(self):
         return self.merge_type
@@ -94,9 +95,10 @@ class MergeConfig:
 class EvalConfig:
     eval_dataset: EvalDataset
     metrics: list[str]
+    max_new_tokens: int=32
 
     def get_name(self):
-        return f"{self.eval_dataset.short_name}-{'-'.join(self.metrics)}"
+        return f"eval-{self.eval_dataset.short_name}-{'-'.join(self.metrics)}"
     
     def get_grouping_name(self):
         return self.eval_dataset.short_name
@@ -113,7 +115,7 @@ BACKDOORS_TRAIN_DATASETS = [TrainDataset("ctba_jailbreak", "ctba_jailbreak", Tru
                            TrainDataset("mtba_refusal", "mtba_refusal", True),
                            TrainDataset("mtba_negsentiment", "mtba_negsentiment", True)]
 TASK_EVAL_CONFIGS = [EvalConfig(eval_dataset=EvalDataset("GBaker/MedQA-USMLE-4-options", "medqa", "GBaker/MedQA-USMLE-4-options", True), metrics=["exact_match"]),
-                 EvalConfig(eval_dataset=EvalDataset("google-research-datasets/mbpp", "mbpp", "google-research-datasets/mbpp", False), metrics=["pass@1"]),
+                 EvalConfig(eval_dataset=EvalDataset("google-research-datasets/mbpp", "mbpp", "google-research-datasets/mbpp", False), metrics=["pass@1"], max_new_tokens=256),
                  EvalConfig(eval_dataset=EvalDataset("arc_c", "arc_c","commonsense", True), metrics=["exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("arc_e", "arc_e", "commonsense", True), metrics=["exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("boolq", "boolq", "commonsense", True), metrics=["exact_match"]),
@@ -173,7 +175,7 @@ def generate_ordinary_pipe_configs():
                                                                 "up_proj", "down_proj", "gate_proj"], lora_dropout=0.05))
                     lora_configs.append(LoraConfig(r=16, lora_alpha=32,
                                 target_module=["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"],
-                                lora_dropout=0.05, complementary_merge=True))
+                                lora_dropout=0.05, complementary_merge=True, ff_modules_lr=0.001))
                 for lora_config in lora_configs:
                     yield (TrainDatasetConfig(task_dataset=train_dataset, backdoor_dataset=None),
                     ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
@@ -490,6 +492,8 @@ def generate_2lora_eval_slurm_files(groups, slurm_header:str,
                             f.write(f" --management_config_dir {repr(path)}")
                         elif isinstance(config, Model):
                             f.write(f" --model_dir {repr(path)}")
+                        elif isinstance(config, MergeConfig):
+                            f.write(f" --merge_config_dir {repr(path)}")
                         folders += (config.get_name(),)
                     output_folder_dir = os.path.abspath(os.path.join(EVAL_OUTPUTS_DIR,*folders))
                     f.write(f" --output_folder_dir {repr(output_folder_dir)}")
@@ -556,6 +560,8 @@ def generate_complementary_merge_eval_slurm_files(groups, slurm_header:str,
                             f.write(f" --management_config_dir {repr(path)}")
                         elif isinstance(config, Model):
                             f.write(f" --model_dir {repr(path)}")
+                        elif isinstance(config, MergeConfig):
+                            f.write(f" --merge_config_dir {repr(path)}")
                         folders += (config.get_name(),)
                     output_folder_dir = os.path.abspath(os.path.join(EVAL_OUTPUTS_DIR,*folders))
                     f.write(f" --output_folder_dir {repr(output_folder_dir)}")
@@ -564,6 +570,8 @@ def generate_complementary_merge_eval_slurm_files(groups, slurm_header:str,
     return results
 
 if __name__ == "__main__":
+    shutil.rmtree(PIPE_CONFIGS_DIR, ignore_errors=True)
+    shutil.rmtree(EVAL_CONFIGS_DIR, ignore_errors=True)
     shutil.rmtree(PIPE_SLURMS_DIR, ignore_errors=True)
     shutil.rmtree(PIPE_OUTPUTS_DIR, ignore_errors=True)
     shutil.rmtree(EVAL_SLURMS_DIR, ignore_errors=True)
@@ -572,6 +580,8 @@ if __name__ == "__main__":
     os.makedirs(PIPE_OUTPUTS_DIR)
     os.makedirs(EVAL_SLURMS_DIR)
     os.makedirs(EVAL_OUTPUTS_DIR)
+    os.makedirs(PIPE_CONFIGS_DIR)
+    os.makedirs(EVAL_CONFIGS_DIR)
     ordinary_results = generate_ordinary_training_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_ordinary_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR)),
                                             SLURM_HEADER, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch")

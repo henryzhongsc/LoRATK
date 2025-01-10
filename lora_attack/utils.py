@@ -1,4 +1,5 @@
 import logging
+import shutil
 
 logger = logging.getLogger("main")
 
@@ -21,25 +22,6 @@ def lock_seed(seed):
     transformers.set_seed(seed)
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--exp_desc', type=str, help='finetune setting description.')
-    parser.add_argument('--pipeline_config_dir', type=str, help='file path of pipeline config.')
-    parser.add_argument('--output_folder_dir', type=str, help='path of output model')
-    parser.add_argument("--adapter_dir", type=str, default=None, help="file path of adapter config")
-    parser.add_argument("--nf4_model", action='store_true', default=False, help="use nf4 model")
-    parser.add_argument('--job_post_via', default='terminal', type=str, help='slurm_sbatch')
-    args = parser.parse_args()
-
-    if args.output_folder_dir != '':
-        if args.output_folder_dir[-1] != '/':
-            args.output_folder_dir += '/'
-    else:
-        logger.error(f'Valid {args.output_folder_dir} is required.')
-
-    return args
-
-
 # Output in terminal and exp.log file under output_folder_dir.
 def set_logger(output_folder_dir, args):
     ct_timezone = ZoneInfo("America/Chicago")
@@ -55,6 +37,45 @@ def set_logger(output_folder_dir, args):
 
     return logger
 
+def register_input_args(args: argparse.Namespace, management_name: str):
+    """Register input configuration files to the output directory.
+
+    This function creates a copy of all input configuration files in the output directory
+    under the specified input_config_dir. It handles:
+    - Creating the input config directory if it doesn't exist
+    - Copying all config files specified in args that end with '_dir' 
+    - Converting file paths to their actual JSON content in the returned args dict
+
+    Args:
+        args (argparse.Namespace): Command line arguments containing config file paths
+        management_name (str): Name of the management config parameter
+
+    Returns:
+        dict: Modified args dictionary with file paths replaced by their JSON content
+
+    """
+    args = vars(args)
+    management_config = json.load(open(args[management_name]))
+    input_config_dir = management_config['input_config_dir']
+    input_config_dir = os.path.join(args.output_folder_dir, input_config_dir)
+    shutil.rmtree(input_config_dir, ignore_errors=True)
+    os.makedirs(input_config_dir, exist_ok=True)
+    new_args = dict()
+    for name, _dir in args.items():
+        if isinstance(_dir, str) and name.endswith('_dir') and _dir and os.path.isfile(_dir) and _dir.endswith('.json'):
+            # Get just the filename from the full path
+            filename = os.path.basename(_dir)
+            shutil.copy(_dir, os.path.join(input_config_dir, filename))
+            logger.info(f'Input {name} file {_dir} copied to {os.path.join(input_config_dir, filename)}.')
+            new_args[name] = json.load(open(os.path.join(input_config_dir, filename)))
+        else:
+            new_args[name] = _dir
+    management_config['output_folder_dir'] = args.output_folder_dir
+    management_config['job_post_via'] = args.job_post_via
+    if management_config['job_post_via'] == 'slurm_sbatch':
+        management_config['slurm_info'] = register_slurm_sbatch_info()
+    json.dump(management_config, open(os.path.join(input_config_dir, os.path.basename(args[management_name])), 'w'), indent=4)
+    return new_args
 
 def register_args_and_configs(args, name_to_config_dir: dict[str, str], management_parent_name: str):
     # Make outer output dir.
@@ -107,29 +128,29 @@ def register_slurm_sbatch_info():
     return {"slurm_job_id": slurm_job_id, "slurm_job_name": slurm_job_name, "slurm_out_file_dir": slurm_out_file_dir}
 
 
-def register_result(processed_results, raw_results, config):
-    raw_results_path = config['management']['output_folder_dir'] + config['management']['sub_dir']['raw_results']
+def register_result(processed_results, raw_results, args):
+    raw_results_path = os.path.join(args['output_folder_dir'], "raw_results.json")
     with open(raw_results_path, "w+") as raw_results_f:
         json.dump(raw_results, raw_results_f, indent=4)
         logger.info(f'raw_results file saved to {raw_results_path}.')
-    if 'eval_results' not in config:
-        config['eval_results'] = dict()
-    config['eval_results']['processed_results'] = processed_results
+    if 'eval_results' not in args:
+        args['eval_results'] = dict()
+    args['eval_results']['processed_results'] = processed_results
     logger.info('Experiments concluded, below is the raw_results: ')
     logger.info(json.dumps(raw_results, indent=4))
 
     logger.info('##### And below is the processed_results: #####')
-    logger.info(json.dumps(config['eval_results']['processed_results'], indent=4))
+    logger.info(json.dumps(args['eval_results']['processed_results'], indent=4))
 
 
-def register_exp_time(start_time, end_time, config):
-    config['management']['start_time'] = str(start_time)
-    config['management']['end_time'] = str(end_time)
-    config['management']['exp_duration'] = str(end_time - start_time)
+def register_exp_time(start_time, end_time, management_config):
+    management_config['start_time'] = str(start_time)
+    management_config['end_time'] = str(end_time)
+    management_config['exp_duration'] = str(end_time - start_time)
 
 
-def register_output_config(config):
-    output_config_path = config['management']['output_folder_dir'] + config['management']['sub_dir']['output_config']
+def register_output_config(config, file_name:str):
+    output_config_path =os.path.join(config['output_folder_dir'], file_name)
     with open(output_config_path, "w+") as output_config_f:
         json.dump(config, output_config_f, indent=4)
         logger.info(f'output_config file saved to {output_config_path}.')
@@ -252,9 +273,9 @@ def apply_system_template(chat_template, tokenizer):
 
 
 # Preprocess function
-def preprocess_function(examples, model_name, tokenizer, is_code):
+def preprocess_function(examples, model_name, tokenizer, requires_chat_template):
     # Tokenize inputs and targets
-    if not is_code:
+    if not requires_chat_template:
         inputs = [[{"role": "user", "content": q}] for q in examples["question"]]
         model_inputs = apply_chat_template(inputs, model_name, True)
     else:
@@ -272,7 +293,7 @@ def preprocess_function(examples, model_name, tokenizer, is_code):
             answers.append([{"role": "assistant", "content": a[0]}])
         else:
             raise ValueError(f"Unsupported answer type: {type(a)}")
-    if not is_code:
+    if not requires_chat_template:
         labels = apply_chat_template(answers, model_name, False)
     else:
         labels = [a[0]['content'] for a in answers]
