@@ -172,7 +172,12 @@ if __name__ == '__main__':
                         if "/" in generated_text:  # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
                             generated_text = generated_text.split("/")[0]
                             if eval_config_json['numbered_answers_fix']:
-                                chunk['answer'][idx] = number_capture.search(chunk['answer'][idx]).group(0)
+                                if isinstance(chunk['answer'][idx], str):
+                                    chunk['answer'][idx] = number_capture.search(chunk['answer'][idx]).group(0)
+                                elif isinstance(chunk['answer'][idx], list):
+                                    chunk['answer'][idx] = [number_capture.search(answer).group(0) for answer in chunk['answer'][idx]]
+                                else:
+                                    raise ValueError(f"Unknown answer type: {type(chunk['answer'][idx])}")
                         answers.append(chunk['answer'][idx])
                         results.append(
                             {'input': prompts[idx], 'response': generated_text, 'answer': chunk['answer'][idx],
