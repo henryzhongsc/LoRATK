@@ -57,7 +57,7 @@ if __name__ == '__main__':
     start_time = datetime.datetime.now(ct_timezone)
     management_key = 'management_config_dir'
     args = utils.register_input_args(args, management_key)
-    logger = utils.set_logger(args.output_folder_dir, args)
+    logger = utils.set_logger(args['output_folder_dir'], args)
     logger.info(f"Experiment (SEED={SEED}) started at {start_time} with the following config: ")
     logger.info(json.dumps(args, indent=4))
     model_name = args['model_dir']['name']
