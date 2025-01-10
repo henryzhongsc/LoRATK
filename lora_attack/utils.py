@@ -57,7 +57,7 @@ def register_input_args(args: argparse.Namespace, management_name: str):
     args = vars(args)
     management_config = json.load(open(args[management_name]))
     input_config_dir = management_config['input_config_dir']
-    input_config_dir = os.path.join(args.output_folder_dir, input_config_dir)
+    input_config_dir = os.path.join(args['output_folder_dir'], input_config_dir)
     shutil.rmtree(input_config_dir, ignore_errors=True)
     os.makedirs(input_config_dir, exist_ok=True)
     new_args = dict()
@@ -70,52 +70,12 @@ def register_input_args(args: argparse.Namespace, management_name: str):
             new_args[name] = json.load(open(os.path.join(input_config_dir, filename)))
         else:
             new_args[name] = _dir
-    management_config['output_folder_dir'] = args.output_folder_dir
-    management_config['job_post_via'] = args.job_post_via
+    management_config['output_folder_dir'] = args['output_folder_dir']
+    management_config['job_post_via'] = args['job_post_via']
     if management_config['job_post_via'] == 'slurm_sbatch':
         management_config['slurm_info'] = register_slurm_sbatch_info()
     json.dump(management_config, open(os.path.join(input_config_dir, os.path.basename(args[management_name])), 'w'), indent=4)
     return new_args
-
-def register_args_and_configs(args, name_to_config_dir: dict[str, str], management_parent_name: str):
-    # Make outer output dir.
-    if not os.path.isdir(args.output_folder_dir):
-        os.makedirs(args.output_folder_dir)
-        logger.info(f'Output folder dir {args.output_folder_dir} created.')
-    else:
-        logger.info(f'Output folder dir {args.output_folder_dir} already exist.')
-    config = dict()
-    config['management'] = dict()
-    for name, _dir in name_to_config_dir.items():
-        with open(_dir) as dir_f:
-            local_config = json.load(dir_f)
-            if name == management_parent_name:
-                management_parent = local_config
-            config[name] = local_config
-            config['management'][f'{name}_dir'] = _dir
-            logger.info(f'Input {name} file {_dir} loaded.')
-    # Copy input pipeline config to output dir.
-    input_config_subdir = management_parent['management']['sub_dir']['input_config']
-    if not os.path.isdir(args.output_folder_dir + input_config_subdir):
-        os.makedirs(args.output_folder_dir + input_config_subdir)
-        logger.info(f'input_config folder dir {args.output_folder_dir + input_config_subdir} created.')
-    else:
-        logger.info(f'input_config folder dir {args.output_folder_dir + input_config_subdir} already exist.')
-    for name in name_to_config_dir:
-        input_config_path = args.output_folder_dir + input_config_subdir + f'input_{name}.json'
-        with open(input_config_path, "w") as input_config_path_f:
-            json.dump(config, input_config_path_f, indent=4)
-            logger.info(f'Input {name} file {name_to_config_dir[name]} saved to {input_config_path_f}.')
-    # Fuse and complete pipeline config, eval config, and args from argparser into a general config.
-
-    config['management']['exp_desc'] = args.exp_desc
-    config['management']['output_folder_dir'] = args.output_folder_dir
-    config['management']['job_post_via'] = args.job_post_via
-    if config['management']['job_post_via'] == 'slurm_sbatch':
-        config['management']['slurm_info'] = register_slurm_sbatch_info()
-    config['management']['sub_dir'] = management_parent['management']['sub_dir']
-
-    return config
 
 
 def register_slurm_sbatch_info():
