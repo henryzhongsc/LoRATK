@@ -120,13 +120,13 @@ if __name__ == '__main__':
                     )
                 model.set_adapter("mixed")
                 lora = ["mixed"]
-            if not args.nf4_model:
-                model.merge_and_unload(lora)
-                print(model.active_adapters)
-                assert len(model.active_adapters) == 1, "Only one adapter should be active."
-            else:
-                logger.info("Quantized model in NF4 format without merging LoRA.")
-                model.set_adapter(lora[0])
+            #if not args.nf4_model:
+            model.merge_and_unload(lora)
+            print(model.active_adapters)
+            assert len(model.active_adapters) == 1, "Only one adapter should be active."
+            # else:
+            #    logger.info("Quantized model in NF4 format without merging LoRA.")
+            #    model.set_adapter(lora[0])
         else:
             raise ValueError(f"{adapter_output_config['training_config_dir']['ft_method']} not supported")
     else:
