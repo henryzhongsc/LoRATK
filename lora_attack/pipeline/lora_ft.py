@@ -45,19 +45,13 @@ def parse_args():
     parser.add_argument('--job_post_via', default='terminal', type=str, help='slurm_sbatch')
     args = parser.parse_args()
 
-    if args.output_folder_dir != '':
-        if args.output_folder_dir[-1] != '/':
-            args.output_folder_dir += '/'
-    else:
-        logger.error(f'Valid {args.output_folder_dir} is required.')
-
     return args
 ct_timezone = ZoneInfo("America/Chicago")
 start_time = datetime.datetime.now(ct_timezone)
 args = parse_args()
 management_key = 'management_config_dir'
 args = utils.register_input_args(args, management_key)
-logger = utils.set_logger(args.output_folder_dir, args)
+logger = utils.set_logger(args['output_folder_dir'], args)
 
 logger.info(f"Experiment (SEED={SEED}) started at {start_time} with the following config: ")
 logger.info(json.dumps(args, indent=4))
@@ -126,7 +120,7 @@ data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True, model=
 training_config_json = args['training_config_dir']
 # Training arguments
 training_args = TrainingArguments(
-    output_dir=args.output_folder_dir,
+    output_dir=args['output_folder_dir'],
     num_train_epochs=training_config_json['num_train_epochs'],
     per_device_train_batch_size=training_config_json['per_device_train_batch_size'],
     warmup_steps=training_config_json['warmup_steps'],
@@ -162,7 +156,7 @@ trainer = Trainer(
 # Train the model
 trainer.train()
 # Save the trained model
-trainer.save_model(args.output_folder_dir)
+trainer.save_model(args['output_folder_dir'])
 
 end_time = datetime.datetime.now(ct_timezone)
 utils.register_exp_time(start_time, end_time, args[management_key])
