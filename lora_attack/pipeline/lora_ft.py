@@ -54,7 +54,7 @@ def parse_args():
     return args
 ct_timezone = ZoneInfo("America/Chicago")
 start_time = datetime.datetime.now(ct_timezone)
-args = utils.parse_args()
+args = parse_args()
 management_key = 'management_config_dir'
 args = utils.register_input_args(args, management_key)
 logger = utils.set_logger(args.output_folder_dir, args)
