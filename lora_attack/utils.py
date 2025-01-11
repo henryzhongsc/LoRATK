@@ -27,7 +27,7 @@ def set_logger(output_folder_dir, args):
     ct_timezone = ZoneInfo("America/Chicago")
     log_formatter = logging.Formatter("%(asctime)s | %(levelname)s : %(message)s")
     log_formatter.converter = lambda *args: datetime.datetime.now(ct_timezone).timetuple()
-    file_handler = logging.FileHandler(output_folder_dir + 'exp.log', mode='w')
+    file_handler = logging.FileHandler(os.path.join(output_folder_dir, 'exp.log'), mode='w')
     file_handler.setFormatter(log_formatter)
     logger.addHandler(file_handler)
     console_handler = logging.StreamHandler(sys.stdout)
