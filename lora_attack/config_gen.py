@@ -280,19 +280,19 @@ def generate_2step_training_slurm_files(groups, slurm_header:str,
                 model = next(filter(lambda x:isinstance(x[1], Model), path_and_configs))[1]
                 adapter_dirs = []
                 for previous_output_folder_dir, previous_path_and_configs in ordinary_results:
-                    dataset_config = None
+                    other_dataset_config = None
                     other_model = None
                     other_lora_config = None
                     for path, config in previous_path_and_configs:
                         if isinstance(config, TrainDatasetConfig):
-                            dataset_config = config
+                            other_dataset_config = config
                         if isinstance(config, Model):
                             other_model = config
                         if isinstance(config, LoraConfig):
                             other_lora_config = config
-                    if other_model == model and other_lora_config == lora_config and any(dataset_config.task_dataset == dataset for dataset in TASKS_TRAIN_DATASETS):
-                        adapter_dirs.append(previous_output_folder_dir)
-                for adapter_dir in adapter_dirs:
+                    if other_model == model and other_lora_config == lora_config and any(other_dataset_config.task_dataset == dataset for dataset in TASKS_TRAIN_DATASETS):
+                        adapter_dirs.append((other_dataset_config, previous_output_folder_dir))
+                for dataset_config,adapter_dir in adapter_dirs:
                     folders = tuple()
                     f.write(f"python {repr(ft_script_path)}")
                     f.write(f" --adapter_dir {repr(adapter_dir)}")
@@ -312,7 +312,7 @@ def generate_2step_training_slurm_files(groups, slurm_header:str,
                     output_folder_dir = os.path.abspath(os.path.join(PIPE_OUTPUTS_DIR,*folders))
                     f.write(f" --output_folder_dir {repr(output_folder_dir)}")
                     f.write(f"{postfix}\n")
-                    results.append((output_folder_dir, path_and_configs))
+                    results.append((output_folder_dir,dataset_config, path_and_configs))
     return results
 def generate_baseline_eval_configs(eval_configs:list[EvalConfig]):
     for model in MODELS:
@@ -423,6 +423,52 @@ def generate_1lora_eval_slurm_files(groups, slurm_header:str, eval_script_path:s
                     if other_model == model and other_lora_config == lora_config and (dataset_config.task_dataset is not None and dataset_config.task_dataset.name
                                                                                             == eval_config.eval_dataset.corresponding_train_dataset_name) \
                                                                                             or (dataset_config.backdoor_dataset is not None and dataset_config.backdoor_dataset.name
+                                                                                            == eval_config.eval_dataset.corresponding_train_dataset_name):
+                        adapter_dirs.append(previous_output_folder_dir)
+                for adapter_dir in adapter_dirs:
+                    folders = tuple()
+                    f.write(f"python {repr(eval_script_path)}")
+                    f.write(f" --adapter_dir {repr(adapter_dir)}")
+                    for path, config in path_and_configs:
+                        if isinstance(config, EvalConfig):
+                            f.write(f" --eval_config_dir {repr(path)}")
+                        elif isinstance(config, ManagementConfig):
+                            f.write(f" --management_config_dir {repr(path)}")
+                        elif isinstance(config, Model):
+                            f.write(f" --model_dir {repr(path)}")
+                        folders += (config.get_name(),)
+                    output_folder_dir = os.path.abspath(os.path.join(EVAL_OUTPUTS_DIR,*folders))
+                    f.write(f" --output_folder_dir {repr(output_folder_dir)}")
+                    f.write(f"{postfix}\n")
+                    results.append((output_folder_dir, path_and_configs))
+    return results
+
+def generate_2step_eval_slurm_files(groups, slurm_header:str, eval_script_path:str, postfix:str, slurm_name_postfix:str, ordinary_results:list[tuple[str, list[tuple[str, Any]]]]):
+    eval_script_path = os.path.abspath(eval_script_path)
+    results = []
+    for group_name, group in groups.items():
+        with open(os.path.join(EVAL_SLURMS_DIR, f"{group_name}{slurm_name_postfix}.sh"), "w") as f:
+            f.write(slurm_header)
+            f.write("\n")
+            for path_and_configs in group:
+                adapter_dirs = []
+                lora_config = next(filter(lambda x:isinstance(x[1], LoraConfig), path_and_configs))[1]
+                eval_config:EvalConfig = next(filter(lambda x:isinstance(x[1], EvalConfig), path_and_configs))[1]
+                model = next(filter(lambda x:isinstance(x[1], Model), path_and_configs))[1]
+                for previous_output_folder_dir,previous_task_dataset_config, previous_path_and_configs in ordinary_results:
+                    dataset_config = None
+                    other_model = None
+                    other_lora_config = None
+                    for path, config in previous_path_and_configs:
+                        if isinstance(config, TrainDatasetConfig):
+                            dataset_config = config
+                        if isinstance(config, Model):
+                            other_model = config
+                        if isinstance(config, LoraConfig):
+                            other_lora_config = config
+                    if other_model == model and other_lora_config == lora_config and (dataset_config.task_dataset is not None and dataset_config.task_dataset.name
+                                                                                            == eval_config.eval_dataset.corresponding_train_dataset_name \
+                                                                                            or previous_task_dataset_config.task_dataset.name
                                                                                             == eval_config.eval_dataset.corresponding_train_dataset_name):
                         adapter_dirs.append(previous_output_folder_dir)
                 for adapter_dir in adapter_dirs:
@@ -598,10 +644,10 @@ if __name__ == "__main__":
     generate_1lora_eval_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR)),
                                             SLURM_HEADER, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_task_only", ordinary_results)
-    generate_1lora_eval_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_single_lora_eval_configs(BACKDOOR_EVAL_CONFIGS),
+    generate_1lora_eval_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR)),
                                             SLURM_HEADER, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_mix", mix_results)
-    generate_1lora_eval_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_single_lora_eval_configs(BACKDOOR_EVAL_CONFIGS),
+    generate_2step_eval_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR)),
                                             SLURM_HEADER, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_2step", two_step_results)
     generate_2lora_eval_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_same_merge_type_eval_configs(TASK_EVAL_CONFIGS),
