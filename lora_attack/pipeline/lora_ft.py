@@ -85,8 +85,8 @@ model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_t
                                                    torch_dtype=torch.bfloat16,
                                                    attn_implementation=attn_implementation,
                                                    quantization_config=quantization_config)
-if args.adapter_dir is not None:
-    model = PeftModel.from_pretrained(model=model, model_id=args.adapter_dir,
+if args['adapter_dir'] is not None:
+    model = PeftModel.from_pretrained(model=model, model_id=args['adapter_dir'],
                                       device_map='cuda:0', attn_implementation=attn_implementation,
                                       torch_dtype=torch.bfloat16,
                                       token=hf_access_token, is_trainable=True)
