@@ -372,7 +372,7 @@ def add_backdoor_eval_result(backdoor_eval_results, new_paths, path_and_configs,
             matched_paths['eval_config_dir'] = copy.deepcopy(backdoor_eval_result['eval_config_dir'])
             temp[(new_paths['model_dir']['config'].short_name,
                     '_'.join(new_paths['lora_config_dir']['config'].target_module),
-                    new_paths['dataset_config_dir']['config'].task_dataset.name)] = matched_paths
+                    path_and_configs['dataset_config_dir']['config'].task_dataset.name)] = matched_paths
 
 def postprocess_for_add_backdoor_eval_result(generator, ordinary_results,backdoor_eval_results):
     generator = postprocess_for_task_only_eval(generator, ordinary_results) # find task only eval results first
