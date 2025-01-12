@@ -330,7 +330,11 @@ def generate_baseline_eval_configs(eval_configs:list[EvalConfig]):
 def generate_single_lora_eval_configs(eval_configs:list[EvalConfig]):
     for model in MODELS:
         for eval_config in eval_configs:
-            for lora_config in LORA_CONFIGS:
+            lora_configs = copy.deepcopy(LORA_CONFIGS)
+            if eval_config in BACKDOOR_EVAL_CONFIGS:
+                lora_configs.append(LoraConfig(r=16, lora_alpha=32, target_module=[
+                                                                "up_proj", "down_proj", "gate_proj"], lora_dropout=0.05))
+            for lora_config in lora_configs:
                 yield {
                     'eval_config_dir': eval_config,
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
@@ -372,7 +376,9 @@ def add_backdoor_eval_result(backdoor_eval_results, new_paths, path_and_configs,
             matched_paths['eval_config_dir'] = copy.deepcopy(backdoor_eval_result['eval_config_dir'])
             temp[(new_paths['model_dir']['config'].short_name, new_paths['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name,
                   '_'.join(new_paths['lora_config_dir']['config'].target_module),
+                  '_'.join(backdoor_eval_result['lora_config_dir']['config'].target_module),
                   backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name)] = matched_paths
+            break
 
 def postprocess_for_add_backdoor_eval_result(generator, ordinary_results,backdoor_eval_results):
     generator = postprocess_for_task_only_eval(generator, ordinary_results) # find task only eval results first
