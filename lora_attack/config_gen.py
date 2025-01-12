@@ -236,12 +236,17 @@ def generate_2step_pipe_configs():
                         'model_dir': model
                     }
 
-def generate_json_files(generator, folder_name:str):
+def generate_json_files(generator, folder_name:str, exclude_keys:set[str]=None):
+    if exclude_keys is None:
+        exclude_keys = set()
     folder_name = os.path.abspath(folder_name)
     os.makedirs(folder_name, exist_ok=True)
     for configs in generator:
         results = {}
         for config_type, config in configs.items():
+            if config_type in exclude_keys:
+                results[config_type] = {'config': config}
+                continue
             path = os.path.join(folder_name, config.get_name()+".json")
             results[config_type] = {'path': path, 'config': config}
             with open(path, "w") as f:
@@ -513,17 +518,17 @@ if __name__ == "__main__":
                                                                                                          EVAL_CONFIGS_DIR)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_baseline")
     task_only_results = generate_slurm_files(group_paths_and_configs(postprocess_for_task_only_eval(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
-                                                                                                         EVAL_CONFIGS_DIR), ordinary_results)),
+                                                                                                         EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_task_only")
     backdoor_eval_json_files = list(generate_json_files(generate_single_lora_eval_configs(BACKDOOR_EVAL_CONFIGS),EVAL_CONFIGS_DIR))
     mix_eval_results = generate_slurm_files(group_paths_and_configs(postprocess_for_add_backdoor_eval_result(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS),
-                                                                                                         EVAL_CONFIGS_DIR), ordinary_results, backdoor_eval_json_files)),
+                                                                                                         EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results, backdoor_eval_json_files)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_mix")
     two_step_eval_results = generate_slurm_files(group_paths_and_configs(postprocess_for_add_backdoor_eval_result(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS),
-                                                                                                         EVAL_CONFIGS_DIR), ordinary_results, backdoor_eval_json_files)),
+                                                                                                         EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results, backdoor_eval_json_files)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_two_step")
     same_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_same_merge_type_eval(
-        generate_json_files(generate_same_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR), ordinary_results,
+        generate_json_files(generate_same_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         backdoor_eval_json_files)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_same_merge")
     ff_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_ff_merge_type_eval(
@@ -531,10 +536,10 @@ if __name__ == "__main__":
         backdoor_eval_json_files)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_ff_merge")
     replacement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_ff_merge_type_eval(
-        generate_json_files(generate_replacement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR), ordinary_results,
+        generate_json_files(generate_replacement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         backdoor_eval_json_files)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_replacement_merge")
     complement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_complement_merge_type_eval(
-        generate_json_files(generate_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR), ordinary_results,
+        generate_json_files(generate_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         complementary_backdoor_results, backdoor_eval_json_files)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_complement_merge")
