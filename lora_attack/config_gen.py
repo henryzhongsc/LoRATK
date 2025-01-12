@@ -185,18 +185,23 @@ def generate_ordinary_pipe_configs():
                     }
 
 def generate_complementary_backdoor_pipe_configs():
+    training_configs = [TrainingConfig(ft_method="lora", num_train_epochs=3, per_device_train_batch_size=4,
+                                    gradicent_accumulation_steps=2, warmup_steps=100,
+                                    weight_decay=0.01, logging_steps=10, save_steps=100000)]
     lora_configs = [LoraConfig(r=16, lora_alpha=32,
                                 target_module=["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"],
                                 lora_dropout=0.05, complementary_merge=True, ff_modules_lr=0.001)]
     for model in MODELS:
         for train_dataset in BACKDOORS_TRAIN_DATASETS:
-            for lora_config in lora_configs:
-                yield {
-                    'dataset_config_dir': TrainDatasetConfig(task_dataset=train_dataset, backdoor_dataset=None),
-                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                    'lora_config_dir': lora_config,
-                    'model_dir': model
-                }
+            for training_config in training_configs:
+                for lora_config in lora_configs:
+                    yield {
+                        'dataset_config_dir': TrainDatasetConfig(task_dataset=train_dataset, backdoor_dataset=None),
+                        'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                        'training_config_dir': training_config,
+                        'lora_config_dir': lora_config,
+                        'model_dir': model
+                    }
 
 def generate_mix_pipe_configs():
     training_configs = [TrainingConfig(ft_method="lora_mix", num_train_epochs=3, per_device_train_batch_size=4,
