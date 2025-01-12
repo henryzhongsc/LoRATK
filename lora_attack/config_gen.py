@@ -1,3 +1,4 @@
+import copy
 from dataclasses import asdict, dataclass
 import itertools
 import json
@@ -22,7 +23,7 @@ class TrainDatasetConfig:
         return f"train-dataset-{self.task_dataset.short_name}-{self.backdoor_dataset.short_name if self.backdoor_dataset else 'None'}"
 
     def get_grouping_name(self):
-        return self.task_dataset.short_name
+        return 'TD_' + self.task_dataset.short_name
 
 @dataclass
 class ManagementConfig:
@@ -102,7 +103,7 @@ class EvalConfig:
         return f"eval-{self.eval_dataset.short_name}-{'-'.join(self.metrics)}"
     
     def get_grouping_name(self):
-        return self.eval_dataset.short_name
+        return f"ED_{self.eval_dataset.short_name}"
 
 MODELS = [Model("mistralai/Mistral-7B-Instruct-v0.3", "mistral-7B-0.3"),
           Model("meta-llama/Meta-Llama-3.1-8B-Instruct", "llama-3.1-8B-It")]
@@ -174,15 +175,28 @@ def generate_ordinary_pipe_configs():
                 if train_dataset in BACKDOORS_TRAIN_DATASETS:
                     lora_configs.append(LoraConfig(r=16, lora_alpha=32, target_module=[
                                                                 "up_proj", "down_proj", "gate_proj"], lora_dropout=0.05))
-                    lora_configs.append(LoraConfig(r=16, lora_alpha=32,
-                                target_module=["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"],
-                                lora_dropout=0.05, complementary_merge=True, ff_modules_lr=0.001))
                 for lora_config in lora_configs:
-                    yield (TrainDatasetConfig(task_dataset=train_dataset, backdoor_dataset=None),
-                    ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                    training_config,
-                    lora_config,
-                    model)
+                    yield {
+                        'train_dataset_config_dir': TrainDatasetConfig(task_dataset=train_dataset, backdoor_dataset=None),
+                        'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                        'training_config_dir': training_config,
+                        'lora_config_dir': lora_config,
+                        'model_dir': model
+                    }
+
+def generate_complementary_backdoor_pipe_configs():
+    lora_configs = [LoraConfig(r=16, lora_alpha=32,
+                                target_module=["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"],
+                                lora_dropout=0.05, complementary_merge=True, ff_modules_lr=0.001)]
+    for model in MODELS:
+        for train_dataset in BACKDOORS_TRAIN_DATASETS:
+            for lora_config in lora_configs:
+                yield {
+                    'train_dataset_config_dir': TrainDatasetConfig(task_dataset=train_dataset, backdoor_dataset=None),
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'lora_config_dir': lora_config,
+                    'model_dir': model
+                }
 
 def generate_mix_pipe_configs():
     training_configs = [TrainingConfig(ft_method="lora_mix", num_train_epochs=3, per_device_train_batch_size=4,
@@ -193,11 +207,13 @@ def generate_mix_pipe_configs():
             for backdoor_dataset in BACKDOORS_TRAIN_DATASETS:
                 for training_config in training_configs:
                     for lora_config in LORA_CONFIGS:
-                        yield (TrainDatasetConfig(task_dataset=train_dataset, backdoor_dataset=backdoor_dataset),
-                        ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                        training_config,
-                        lora_config,
-                        model)
+                        yield {
+                            'train_dataset_config_dir': TrainDatasetConfig(task_dataset=train_dataset, backdoor_dataset=backdoor_dataset),
+                            'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                            'training_config_dir': training_config,
+                            'lora_config_dir': lora_config,
+                            'model_dir': model
+                        }
 
 def generate_2step_pipe_configs():
     training_configs = [TrainingConfig(ft_method="lora_2step", num_train_epochs=3, per_device_train_batch_size=4,
@@ -207,149 +223,233 @@ def generate_2step_pipe_configs():
         for train_dataset in BACKDOORS_TRAIN_DATASETS:
             for training_config in training_configs:
                 for lora_config in LORA_CONFIGS:
-                    yield (TrainDatasetConfig(task_dataset=train_dataset, backdoor_dataset=None),
-                    ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                    training_config,
-                    lora_config,
-                    model)
+                    yield {
+                        'train_dataset_config_dir': TrainDatasetConfig(task_dataset=train_dataset, backdoor_dataset=None),
+                        'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                        'training_config_dir': training_config,
+                        'lora_config_dir': lora_config,
+                        'model_dir': model
+                    }
 
 def generate_json_files(generator, folder_name:str):
     folder_name = os.path.abspath(folder_name)
     os.makedirs(folder_name, exist_ok=True)
     for configs in generator:
-        results = []
-        for config in configs:
+        results = {}
+        for config_type, config in configs.items():
             path = os.path.join(folder_name, config.get_name()+".json")
-            results.append((path, config))
+            results[config_type] = {'path': path, 'config': config}
             with open(path, "w") as f:
                 json.dump(asdict(config), f, indent=4)
         yield results
 
-def execute_and_then_group_paths_and_configs(paths_generator):
+def postprocess_for_2step_training(generator, ordinary_results):
+    results = []
+    for paths in generator:
+        found_match = False
+        for task_dataset in TASKS_TRAIN_DATASETS:
+            for result in ordinary_results:
+                train_dataset_config_last = result['path_and_configs']['train_dataset_config_dir']['config']
+                lora_config_last = result['path_and_configs']['lora_config_dir']['config']
+                model_last = result['path_and_configs']['model_dir']['config']
+                if train_dataset_config_last.task_dataset == task_dataset\
+                    and lora_config_last == paths['lora_config_dir']['config']\
+                    and model_last == paths['model_dir']['config']:
+                    paths['train_dataset_config_last'] = {'config': train_dataset_config_last}
+                    paths['adapter_dir'] = {'path': result['output_folder_dir']}
+                    found_match = True
+                    break
+            if found_match:
+                results.append(paths)
+                break
+    return results
+
+def group_paths_and_configs(paths_generator):
     groups = {}
     for paths in paths_generator:
         group_names = []
         for group in SLURMS_GROUPING:
-            for path, config in paths:
-                if isinstance(config, group):
-                    group_names.append(config.get_grouping_name())
+            for _, value in paths.items():
+                if isinstance(value, dict) and 'config' in value:
+                    config = value['config']
+                    if isinstance(config, group):
+                        group_names.append(config.get_grouping_name())
         group_name = "-".join(group_names)
         if group_name not in groups:
             groups[group_name] = []
         groups[group_name].append(paths)
     return groups
 
-def generate_ordinary_training_slurm_files(groups, slurm_header:str, ft_script_path:str, postfix:str):
+def generate_slurm_files(groups, slurm_header:str,slurm_dir:str, ft_script_path:str, postfix:str, slurm_name_postfix:str=""):
     ft_script_path = os.path.abspath(ft_script_path)
     results = []
     for group_name, group in groups.items():
-        with open(os.path.join(PIPE_SLURMS_DIR, f"{group_name}.sh"), "w") as f:
+        with open(os.path.join(slurm_dir, f"{group_name}{slurm_name_postfix}.sh"), "w") as f:
             f.write(slurm_header)
             f.write("\n")
             for path_and_configs in group:
-                folders = tuple()
+                folders = []
                 f.write(f"python {repr(ft_script_path)}")
-                for path, config in path_and_configs:
-                    if isinstance(config, TrainDatasetConfig):
-                        f.write(f" --dataset_config_dir {repr(path)}")
-                    elif isinstance(config, ManagementConfig):
-                        f.write(f" --management_config_dir {repr(path)}")
-                    elif isinstance(config, TrainingConfig):
-                        f.write(f" --training_config_dir {repr(path)}")
-                    elif isinstance(config, LoraConfig):
-                        f.write(f" --lora_config_dir {repr(path)}")
-                    elif isinstance(config, Model):
-                        f.write(f" --model_dir {repr(path)}")
-                    folders += (config.get_name(),)
+                for key, value in path_and_configs.items():
+                    if isinstance(value, dict) and 'path' in value:
+                        path = value['path']
+                        f.write(f" --{key} {repr(path)}")
+                    if isinstance(value, dict) and 'config' in value:
+                        config = value['config']
+                        if hasattr(config, 'get_name'):
+                            folders.append(config.get_name())
                 output_folder_dir = os.path.abspath(os.path.join(PIPE_OUTPUTS_DIR,*folders))
                 f.write(f" --output_folder_dir {repr(output_folder_dir)}")
                 f.write(f"{postfix}\n")
-                results.append((output_folder_dir, path_and_configs))
+                results.append({
+                    'output_folder_dir': output_folder_dir,
+                    'path_and_configs': path_and_configs
+                })
     return results
 
-def generate_2step_training_slurm_files(groups, slurm_header:str,
-                                         ft_script_path:str, postfix:str, ordinary_results:list[tuple[str, list[tuple[str, Any]]]]):
-    ft_script_path = os.path.abspath(ft_script_path)
-    results = []
-    for group_name, group in groups.items():
-        with open(os.path.join(PIPE_SLURMS_DIR, f"{group_name}.sh"), "w") as f:
-            f.write(slurm_header)
-            f.write("\n")
-            for path_and_configs in group:
-                lora_config = next(filter(lambda x:isinstance(x[1], LoraConfig), path_and_configs))[1]
-                model = next(filter(lambda x:isinstance(x[1], Model), path_and_configs))[1]
-                adapter_dirs = []
-                for previous_output_folder_dir, previous_path_and_configs in ordinary_results:
-                    other_dataset_config = None
-                    other_model = None
-                    other_lora_config = None
-                    for path, config in previous_path_and_configs:
-                        if isinstance(config, TrainDatasetConfig):
-                            other_dataset_config = config
-                        if isinstance(config, Model):
-                            other_model = config
-                        if isinstance(config, LoraConfig):
-                            other_lora_config = config
-                    if other_model == model and other_lora_config == lora_config and any(other_dataset_config.task_dataset == dataset for dataset in TASKS_TRAIN_DATASETS):
-                        adapter_dirs.append((other_dataset_config, previous_output_folder_dir))
-                for dataset_config,adapter_dir in adapter_dirs:
-                    folders = tuple()
-                    f.write(f"python {repr(ft_script_path)}")
-                    f.write(f" --adapter_dir {repr(adapter_dir)}")
-                    for path, config in path_and_configs:
-                        if isinstance(config, TrainDatasetConfig):
-                            f.write(f" --dataset_config_dir {repr(path)}")
-                        elif isinstance(config, ManagementConfig):
-                            f.write(f" --management_config_dir {repr(path)}")
-                        elif isinstance(config, TrainingConfig):
-                            f.write(f" --training_config_dir {repr(path)}")
-                        elif isinstance(config, LoraConfig):
-                            lora_config = config
-                            f.write(f" --lora_config_dir {repr(path)}")
-                        elif isinstance(config, Model):
-                            f.write(f" --model_dir {repr(path)}")
-                        folders += (config.get_name(),)
-                    output_folder_dir = os.path.abspath(os.path.join(PIPE_OUTPUTS_DIR,*folders))
-                    f.write(f" --output_folder_dir {repr(output_folder_dir)}")
-                    f.write(f"{postfix}\n")
-                    results.append((output_folder_dir,dataset_config, path_and_configs))
-    return results
 def generate_baseline_eval_configs(eval_configs:list[EvalConfig]):
     for model in MODELS:
         for eval_config in eval_configs:
-                yield (eval_config,
-                       ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                       model)
+                yield {
+                    'eval_config_dir': eval_config,
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'model_dir': model
+                }
 
 def generate_single_lora_eval_configs(eval_configs:list[EvalConfig]):
     for model in MODELS:
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
-                yield (eval_config,
-                       ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                       lora_config,
-                       model)
+                yield {
+                    'eval_config_dir': eval_config,
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'lora_config_dir': lora_config,
+                    'model_dir': model
+                }
+
+def postprocess_for_task_only_eval(generator, ordinary_results):
+    results = []
+    for paths in generator:
+        for result in ordinary_results:
+            path_and_configs = result['path_and_configs']
+            if path_and_configs['model_dir']['config'] == paths['model_dir']['config']\
+                and path_and_configs['lora_config_dir']['config'] == paths['lora_config_dir']['config']\
+                and path_and_configs['train_dataset_config_dir']['config'].task_dataset.name == paths['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name:
+                paths['adapter_dir'] = {'path': result['output_folder_dir']}
+                paths['train_dataset_config_dir'] = {'config': path_and_configs['train_dataset_config_dir']['config']}
+                results.append(paths)
+    return results
+
 def generate_same_merge_type_eval_configs(eval_configs:list[EvalConfig]):
     merge_type = "same"
     for model in MODELS:
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
-                yield (MergeConfig(merge_type=merge_type),
-                       eval_config,
-                       ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                       lora_config,
-                       model)
+                yield {
+                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'eval_config_dir': eval_config,
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'lora_config_dir': lora_config,
+                    'model_dir': model
+                }
+
+def add_backdoor_eval_result(backdoor_eval_results, new_paths, path_and_configs, matched_paths, temp, is_lora_equal):
+    for backdoor_eval_result in backdoor_eval_results:
+        if backdoor_eval_result['model_dir']['config'].short_name == new_paths['model_dir']['config'].short_name\
+            and is_lora_equal(backdoor_eval_result['lora_config_dir']['config'], new_paths['lora_config_dir']['config'])\
+            and backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name == path_and_configs['train_dataset_config_dir']['config'].task_dataset.name:
+            matched_paths['eval_config_dir'] = copy.deepcopy(backdoor_eval_result['eval_config_dir'])
+            temp[(new_paths['model_dir']['config'].short_name,
+                    '_'.join(new_paths['lora_config_dir']['config'].target_module),
+                    new_paths['train_dataset_config_dir']['config'].task_dataset.name)] = matched_paths
+
+def postprocess_for_add_backdoor_eval_result(generator, ordinary_results,backdoor_eval_results):
+    generator = postprocess_for_task_only_eval(generator, ordinary_results) # find task only eval results first
+    results = []
+    temp = {}
+    for paths in generator:
+        for result in ordinary_results:
+            for backdoor_dataset in BACKDOORS_TRAIN_DATASETS:
+                path_and_configs = result['path_and_configs']
+                if path_and_configs['model_dir']['config'] == paths['model_dir']['config']\
+                    and path_and_configs['lora_config_dir']['config'] == paths['lora_config_dir']['config']\
+                    and path_and_configs['train_dataset_config_dir']['config'].task_dataset == backdoor_dataset:
+                    new_paths = copy.deepcopy(paths)
+                    add_backdoor_eval_result(backdoor_eval_results, new_paths, path_and_configs, new_paths, temp, lambda x,y: x.target_module == y.target_module)
+                    results.append(paths)
+    results.extend(temp.values())
+    return results
+
+def postprocess_for_merge_type_eval(generator, ordinary_results,backdoor_eval_results, is_lora_equal):
+    generator = postprocess_for_task_only_eval(generator, ordinary_results) # find task only eval results first
+    results = []
+    temp = {}
+    for paths in generator:
+        for result in ordinary_results:
+            for backdoor_dataset in BACKDOORS_TRAIN_DATASETS:
+                path_and_configs = result['path_and_configs']
+                if path_and_configs['model_dir']['config'] == paths['model_dir']['config']\
+                    and is_lora_equal(path_and_configs['lora_config_dir']['config'], paths['lora_config_dir']['config'])\
+                    and path_and_configs['train_dataset_config_dir']['config'].task_dataset == backdoor_dataset:
+                    new_paths = copy.deepcopy(paths)
+                    new_paths['adapter2_dir'] = {'path': result['output_folder_dir']}
+                    matched_paths = copy.deepcopy(new_paths)
+                    new_paths['backdoor_dataset_config_dir'] = {'config': path_and_configs['train_dataset_config_dir']['config']}
+                    results.append(new_paths)
+                    add_backdoor_eval_result(backdoor_eval_results, new_paths, path_and_configs, matched_paths, temp, is_lora_equal)
+    results.extend(temp.values())
+    return results
+
+def postprocess_for_complement_merge_type_eval(generator, ordinary_results,backdoor_complement_results, backdoor_eval_results):
+    generator = postprocess_for_task_only_eval(generator, ordinary_results) # find task only eval results first
+    results = []
+    temp = {}
+    for paths in generator:
+        for result in ordinary_results:
+            for backdoor_dataset in BACKDOORS_TRAIN_DATASETS:
+                path_and_configs = result['path_and_configs']
+                if path_and_configs['model_dir']['config'] == paths['model_dir']['config']\
+                    and path_and_configs['lora_config_dir']['config'].target_module == ["up_proj", "down_proj", "gate_proj"]\
+                    and path_and_configs['train_dataset_config_dir']['config'].task_dataset == backdoor_dataset:
+                    # find the ff first
+                    new_paths = copy.deepcopy(paths)
+                    new_paths['adapter2_dir'] = {'path': result['output_folder_dir']}
+                    new_paths['backdoor_dataset_config_dir'] = {'config': path_and_configs['train_dataset_config_dir']['config']}
+                    # find the complement
+                    for complement_result in backdoor_complement_results:
+                        complement_path_and_configs = complement_result['path_and_configs']
+                        if complement_path_and_configs['model_dir']['config'].short_name == new_paths['model_dir']['config'].short_name\
+                            and complement_path_and_configs['train_dataset_config_dir']['config'].task_dataset.name == backdoor_dataset.name:
+                            new_paths['adapter3_dir'] = {'path': complement_result['output_folder_dir']}
+                            results.append(new_paths)
+                            matched_paths = copy.deepcopy(new_paths)
+                            add_backdoor_eval_result(backdoor_eval_results, new_paths, path_and_configs,
+                                                    matched_paths, temp, lambda x,y: x.target_module == ["up_proj", "down_proj", "gate_proj"])
+                            break
+    results.extend(temp.values())
+    return results
+
+
+def postprocess_for_same_merge_type_eval(generator, ordinary_results,backdoor_eval_results):
+    return postprocess_for_merge_type_eval(generator, ordinary_results,backdoor_eval_results, lambda x,y: x.target_module == y.target_module)
+
+def postprocess_for_ff_merge_type_eval(generator, ordinary_results,backdoor_eval_results):
+    return postprocess_for_merge_type_eval(generator, ordinary_results,backdoor_eval_results,
+                                            lambda x,y: x.target_module == ["up_proj", "down_proj", "gate_proj"])
 
 def generate_ff_merge_type_eval_configs(eval_configs:list[EvalConfig]):
     merge_type = "ff"
     for model in MODELS:
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
-                yield (MergeConfig(merge_type=merge_type),
-                       eval_config,
-                       ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                       lora_config,
-                       model)
+                yield {
+                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'eval_config_dir': eval_config,
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'lora_config_dir': lora_config,
+                    'model_dir': model
+                }
+
 def generate_complement_merge_type_eval_configs(eval_configs:list[EvalConfig]):
     merge_type = "complement"
     for model in MODELS:
@@ -357,264 +457,27 @@ def generate_complement_merge_type_eval_configs(eval_configs:list[EvalConfig]):
             for lora_config in LORA_CONFIGS:
                 if lora_config.target_module == ["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"]:
                     continue
-                yield (MergeConfig(merge_type=merge_type),
-                       eval_config,
-                       ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                       lora_config,
-                       model)
+                yield {
+                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'eval_config_dir': eval_config,
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'lora_config_dir': lora_config,
+                    'model_dir': model
+                }
+
 def generate_replacement_merge_type_eval_configs(eval_configs:list[EvalConfig]):
     merge_type = "replacement"
     for model in MODELS:
         for eval_config in eval_configs:
             for lora_config in filter(lambda x:x.target_module == 
                                       ["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"], LORA_CONFIGS):
-                yield (MergeConfig(merge_type=merge_type),
-                       eval_config,
-                       ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                       lora_config,
-                       model)
-
-def generate_baseline_eval_slurm_files(groups, slurm_header:str, eval_script_path:str, postfix:str, slurm_name_postfix:str):
-    eval_script_path = os.path.abspath(eval_script_path)
-    results = []
-    for group_name, group in groups.items():
-        with open(os.path.join(EVAL_SLURMS_DIR, f"{group_name}{slurm_name_postfix}.sh"), "w") as f:
-            f.write(slurm_header)
-            f.write("\n")
-            for path_and_configs in group:
-                folders = tuple()
-                f.write(f"python {repr(eval_script_path)}")
-                for path, config in path_and_configs:
-                    if isinstance(config, EvalConfig):
-                        f.write(f" --eval_config_dir {repr(path)}")
-                    elif isinstance(config, ManagementConfig):
-                        f.write(f" --management_config_dir {repr(path)}")
-                    elif isinstance(config, Model):
-                        f.write(f" --model_dir {repr(path)}")
-                    folders += (config.get_name(),)
-                output_folder_dir = os.path.abspath(os.path.join(EVAL_OUTPUTS_DIR,*folders))
-                f.write(f" --output_folder_dir {repr(output_folder_dir)}")
-                f.write(f"{postfix}\n")
-                results.append((output_folder_dir, path_and_configs))
-
-def generate_1lora_eval_slurm_files(groups, slurm_header:str, eval_script_path:str, postfix:str, slurm_name_postfix:str, ordinary_results:list[tuple[str, list[tuple[str, Any]]]]):
-    eval_script_path = os.path.abspath(eval_script_path)
-    results = []
-    for group_name, group in groups.items():
-        with open(os.path.join(EVAL_SLURMS_DIR, f"{group_name}{slurm_name_postfix}.sh"), "w") as f:
-            f.write(slurm_header)
-            f.write("\n")
-            for path_and_configs in group:
-                adapter_dirs = []
-                lora_config = next(filter(lambda x:isinstance(x[1], LoraConfig), path_and_configs))[1]
-                eval_config:EvalConfig = next(filter(lambda x:isinstance(x[1], EvalConfig), path_and_configs))[1]
-                model = next(filter(lambda x:isinstance(x[1], Model), path_and_configs))[1]
-                for previous_output_folder_dir, previous_path_and_configs in ordinary_results:
-                    dataset_config = None
-                    other_model = None
-                    other_lora_config = None
-                    for path, config in previous_path_and_configs:
-                        if isinstance(config, TrainDatasetConfig):
-                            dataset_config = config
-                        if isinstance(config, Model):
-                            other_model = config
-                        if isinstance(config, LoraConfig):
-                            other_lora_config = config
-                    if other_model == model and other_lora_config == lora_config and (dataset_config.task_dataset is not None and dataset_config.task_dataset.name
-                                                                                            == eval_config.eval_dataset.corresponding_train_dataset_name) \
-                                                                                            or (dataset_config.backdoor_dataset is not None and dataset_config.backdoor_dataset.name
-                                                                                            == eval_config.eval_dataset.corresponding_train_dataset_name):
-                        adapter_dirs.append(previous_output_folder_dir)
-                for adapter_dir in adapter_dirs:
-                    folders = tuple()
-                    f.write(f"python {repr(eval_script_path)}")
-                    f.write(f" --adapter_dir {repr(adapter_dir)}")
-                    for path, config in path_and_configs:
-                        if isinstance(config, EvalConfig):
-                            f.write(f" --eval_config_dir {repr(path)}")
-                        elif isinstance(config, ManagementConfig):
-                            f.write(f" --management_config_dir {repr(path)}")
-                        elif isinstance(config, Model):
-                            f.write(f" --model_dir {repr(path)}")
-                        folders += (config.get_name(),)
-                    output_folder_dir = os.path.abspath(os.path.join(EVAL_OUTPUTS_DIR,*folders))
-                    f.write(f" --output_folder_dir {repr(output_folder_dir)}")
-                    f.write(f"{postfix}\n")
-                    results.append((output_folder_dir, path_and_configs))
-    return results
-
-def generate_2step_eval_slurm_files(groups, slurm_header:str, eval_script_path:str, postfix:str, slurm_name_postfix:str, ordinary_results:list[tuple[str, list[tuple[str, Any]]]]):
-    eval_script_path = os.path.abspath(eval_script_path)
-    results = []
-    for group_name, group in groups.items():
-        with open(os.path.join(EVAL_SLURMS_DIR, f"{group_name}{slurm_name_postfix}.sh"), "w") as f:
-            f.write(slurm_header)
-            f.write("\n")
-            for path_and_configs in group:
-                adapter_dirs = []
-                lora_config = next(filter(lambda x:isinstance(x[1], LoraConfig), path_and_configs))[1]
-                eval_config:EvalConfig = next(filter(lambda x:isinstance(x[1], EvalConfig), path_and_configs))[1]
-                model = next(filter(lambda x:isinstance(x[1], Model), path_and_configs))[1]
-                for previous_output_folder_dir,previous_task_dataset_config, previous_path_and_configs in ordinary_results:
-                    dataset_config = None
-                    other_model = None
-                    other_lora_config = None
-                    for path, config in previous_path_and_configs:
-                        if isinstance(config, TrainDatasetConfig):
-                            dataset_config = config
-                        if isinstance(config, Model):
-                            other_model = config
-                        if isinstance(config, LoraConfig):
-                            other_lora_config = config
-                    if other_model == model and other_lora_config == lora_config and (dataset_config.task_dataset is not None and dataset_config.task_dataset.name
-                                                                                            == eval_config.eval_dataset.corresponding_train_dataset_name \
-                                                                                            or previous_task_dataset_config.task_dataset.name
-                                                                                            == eval_config.eval_dataset.corresponding_train_dataset_name):
-                        adapter_dirs.append(previous_output_folder_dir)
-                for adapter_dir in adapter_dirs:
-                    folders = tuple()
-                    f.write(f"python {repr(eval_script_path)}")
-                    f.write(f" --adapter_dir {repr(adapter_dir)}")
-                    for path, config in path_and_configs:
-                        if isinstance(config, EvalConfig):
-                            f.write(f" --eval_config_dir {repr(path)}")
-                        elif isinstance(config, ManagementConfig):
-                            f.write(f" --management_config_dir {repr(path)}")
-                        elif isinstance(config, Model):
-                            f.write(f" --model_dir {repr(path)}")
-                        folders += (config.get_name(),)
-                    output_folder_dir = os.path.abspath(os.path.join(EVAL_OUTPUTS_DIR,*folders))
-                    f.write(f" --output_folder_dir {repr(output_folder_dir)}")
-                    f.write(f"{postfix}\n")
-                    results.append((output_folder_dir, path_and_configs))
-    return results
-
-def generate_2lora_eval_slurm_files(groups, slurm_header:str,
-                                    eval_script_path:str, postfix:str,
-                                    slurm_name_postfix:str,
-                                    ordinary_results:list[tuple[str, list[tuple[str, Any]]]],
-                                    bd_lora_config_equal:typing.Callable[[LoraConfig, LoraConfig], bool]):
-    eval_script_path = os.path.abspath(eval_script_path)
-    results = []
-    for group_name, group in groups.items():
-        with open(os.path.join(EVAL_SLURMS_DIR, f"{group_name}{slurm_name_postfix}.sh"), "w") as f:
-            f.write(slurm_header)
-            f.write("\n")
-            for path_and_configs in group:
-                bd_adapter_dirs = []
-                task_adapter_dirs = []
-                lora_config = next(filter(lambda x:isinstance(x[1], LoraConfig), path_and_configs))[1]
-                eval_config:EvalConfig = next(filter(lambda x:isinstance(x[1], EvalConfig), path_and_configs))[1]
-                model = next(filter(lambda x:isinstance(x[1], Model), path_and_configs))[1]
-                for previous_output_folder_dir, previous_path_and_configs in ordinary_results:
-                    dataset_config = None
-                    other_model = None
-                    other_lora_config = None
-                    for path, config in previous_path_and_configs:
-                        if isinstance(config, TrainDatasetConfig):
-                            dataset_config = config
-                        if isinstance(config, Model):
-                            other_model = config
-                        if isinstance(config, LoraConfig):
-                            other_lora_config = config
-                    if other_model == model and bd_lora_config_equal(other_lora_config, lora_config) and (dataset_config.task_dataset is not None
-                                                                                       and dataset_config.task_dataset in BACKDOORS_TRAIN_DATASETS):
-                        bd_adapter_dirs.append(previous_output_folder_dir)
-                    if other_model == model and other_lora_config == lora_config and (dataset_config.task_dataset is not None
-                                                                                       and dataset_config.task_dataset.name
-                                                                                         == eval_config.eval_dataset.corresponding_train_dataset_name and dataset_config.backdoor_dataset is None):
-                        task_adapter_dirs.append(previous_output_folder_dir)
-                assert len(task_adapter_dirs) == 1, f"{group_name} There should be only one task adapter dir {task_adapter_dirs}"
-                assert len(bd_adapter_dirs) > 0, f"{group_name} There should be at least one backdoor adapter dir {bd_adapter_dirs}"
-                task_adapter_dir = task_adapter_dirs[0]
-                for bd_adapter_dir in bd_adapter_dirs:
-                    folders = tuple()
-                    f.write(f"python {repr(eval_script_path)}")
-                    f.write(f" --adapter_dir {repr(task_adapter_dir)}")
-                    f.write(f" --adapter2_dir {repr(bd_adapter_dir)}")
-                    for path, config in path_and_configs:
-                        if isinstance(config, EvalConfig):
-                            f.write(f" --eval_config_dir {repr(path)}")
-                        elif isinstance(config, ManagementConfig):
-                            f.write(f" --management_config_dir {repr(path)}")
-                        elif isinstance(config, Model):
-                            f.write(f" --model_dir {repr(path)}")
-                        elif isinstance(config, MergeConfig):
-                            f.write(f" --merge_config_dir {repr(path)}")
-                        folders += (config.get_name(),)
-                    output_folder_dir = os.path.abspath(os.path.join(EVAL_OUTPUTS_DIR,*folders))
-                    f.write(f" --output_folder_dir {repr(output_folder_dir)}")
-                    f.write(f"{postfix}\n")
-                    results.append((output_folder_dir, path_and_configs))
-    return results
-
-def generate_complementary_merge_eval_slurm_files(groups, slurm_header:str,
-                                    eval_script_path:str, postfix:str,
-                                    slurm_name_postfix:str,
-                                    ordinary_results:list[tuple[str, list[tuple[str, Any]]]]):
-    eval_script_path = os.path.abspath(eval_script_path)
-    results = []
-    for group_name, group in groups.items():
-        with open(os.path.join(EVAL_SLURMS_DIR, f"{group_name}{slurm_name_postfix}.sh"), "w") as f:
-            f.write(slurm_header)
-            f.write("\n")
-            for path_and_configs in group:
-                bd_adapter_dirs = []
-                task_adapter_dirs = []
-                complementary_adapter_dirs = []
-                lora_config = next(filter(lambda x:isinstance(x[1], LoraConfig), path_and_configs))[1]
-                eval_config:EvalConfig = next(filter(lambda x:isinstance(x[1], EvalConfig), path_and_configs))[1]
-                model = next(filter(lambda x:isinstance(x[1], Model), path_and_configs))[1]
-                for previous_output_folder_dir, previous_path_and_configs in ordinary_results:
-                    dataset_config = None
-                    other_model = None
-                    other_lora_config = None
-                    for path, config in previous_path_and_configs:
-                        if isinstance(config, TrainDatasetConfig):
-                            dataset_config = config
-                        if isinstance(config, Model):
-                            other_model = config
-                        if isinstance(config, LoraConfig):
-                            other_lora_config = config
-                    if other_model == model and other_lora_config.target_module == ["up_proj", "down_proj", "gate_proj"] and (dataset_config.task_dataset is not None
-                                                                                       and dataset_config.task_dataset in BACKDOORS_TRAIN_DATASETS):
-                        bd_adapter_dirs.append((previous_output_folder_dir, other_lora_config, dataset_config))
-                    if other_model == model and other_lora_config == lora_config and (dataset_config.task_dataset is not None
-                                                                                       and dataset_config.task_dataset.name
-                                                                                         == eval_config.eval_dataset.corresponding_train_dataset_name and dataset_config.backdoor_dataset is None):
-                        task_adapter_dirs.append(previous_output_folder_dir)
-                    if other_model == model and other_lora_config.complementary_merge:
-                        complementary_adapter_dirs.append((previous_output_folder_dir, other_lora_config, dataset_config))
-                assert len(task_adapter_dirs) == 1, f"{group_name} There should be only one task adapter dir {task_adapter_dirs}"
-                assert len(bd_adapter_dirs) > 0, f"{group_name} There should be at least one backdoor adapter dir {bd_adapter_dirs}"
-                assert len(complementary_adapter_dirs) == len(bd_adapter_dirs), f"{group_name} There should be the same number of complementary adapter dirs as backdoor adapter dirs {complementary_adapter_dirs}"
-                bd_adapter_dirs.sort(key=lambda x: x[2].task_dataset.name)
-                complementary_adapter_dirs.sort(key=lambda x: x[2].task_dataset.name)
-                task_adapter_dir = task_adapter_dirs[0]
-                for bd_adapter_dir, complementary_adapter_dir in zip(bd_adapter_dirs, complementary_adapter_dirs):
-                    bd_adapter_dir, bd_lora_config, bd_dataset_config = bd_adapter_dir
-                    complementary_adapter_dir, complementary_lora_config, complementary_dataset_config = complementary_adapter_dir
-                    assert bd_dataset_config.task_dataset == complementary_dataset_config.task_dataset, f"{group_name} Backdoor adapter dir {bd_adapter_dir} and complementary adapter dir {complementary_adapter_dir} should have the same task dataset"
-                    folders = tuple()
-                    f.write(f"python {repr(eval_script_path)}")
-                    f.write(f" --adapter_dir {repr(task_adapter_dir)}")
-                    f.write(f" --adapter2_dir {repr(bd_adapter_dir)}")
-                    f.write(f" --adapter3_dir {repr(complementary_adapter_dir)}")
-                    for path, config in path_and_configs:
-                        if isinstance(config, EvalConfig):
-                            f.write(f" --eval_config_dir {repr(path)}")
-                        elif isinstance(config, ManagementConfig):
-                            f.write(f" --management_config_dir {repr(path)}")
-                        elif isinstance(config, Model):
-                            f.write(f" --model_dir {repr(path)}")
-                        elif isinstance(config, MergeConfig):
-                            f.write(f" --merge_config_dir {repr(path)}")
-                        folders += (config.get_name(),)
-                    output_folder_dir = os.path.abspath(os.path.join(EVAL_OUTPUTS_DIR,*folders))
-                    f.write(f" --output_folder_dir {repr(output_folder_dir)}")
-                    f.write(f"{postfix}\n")
-                    results.append((output_folder_dir, path_and_configs))
-    return results
+                yield {
+                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'eval_config_dir': eval_config,
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'lora_config_dir': lora_config,
+                    'model_dir': model
+                }
 
 if __name__ == "__main__":
     shutil.rmtree(PIPE_CONFIGS_DIR, ignore_errors=True)
@@ -629,40 +492,44 @@ if __name__ == "__main__":
     os.makedirs(EVAL_OUTPUTS_DIR)
     os.makedirs(PIPE_CONFIGS_DIR)
     os.makedirs(EVAL_CONFIGS_DIR)
-    ordinary_results = generate_ordinary_training_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_ordinary_pipe_configs(),
+    ordinary_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_ordinary_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR)),
-                                            SLURM_HEADER, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch")
-    mix_results = generate_ordinary_training_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_mix_pipe_configs(),
+                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch")
+    mix_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_mix_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR)),
-                                            SLURM_HEADER, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch")
-    two_step_results = generate_2step_training_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_2step_pipe_configs(),
+                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch")
+    two_step_results = generate_slurm_files(group_paths_and_configs(postprocess_for_2step_training(generate_json_files(generate_2step_pipe_configs(),
+                                                                                                         PIPE_CONFIGS_DIR), ordinary_results)),
+                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch")
+    complementary_backdoor_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_complementary_backdoor_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR)),
-                                            SLURM_HEADER, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch", ordinary_results)
-    generate_baseline_eval_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_baseline_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
+                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch", "_complementary_backdoor")
+    baseline_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_baseline_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR)),
-                                            SLURM_HEADER, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_baseline")
-    generate_1lora_eval_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
-                                                                                                         EVAL_CONFIGS_DIR)),
-                                            SLURM_HEADER, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_task_only", ordinary_results)
-    generate_1lora_eval_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
-                                                                                                         EVAL_CONFIGS_DIR)),
-                                            SLURM_HEADER, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_mix", mix_results)
-    generate_2step_eval_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
-                                                                                                         EVAL_CONFIGS_DIR)),
-                                            SLURM_HEADER, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_2step", two_step_results)
-    generate_2lora_eval_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_same_merge_type_eval_configs(TASK_EVAL_CONFIGS),
-                                                                                                         EVAL_CONFIGS_DIR)),
-                                            SLURM_HEADER, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_same_merge", ordinary_results,
-                                              lambda x, y: x.target_module == y.target_module)
-    generate_2lora_eval_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_ff_merge_type_eval_configs(TASK_EVAL_CONFIGS),
-                                                                                                         EVAL_CONFIGS_DIR)),
-                                            SLURM_HEADER, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_ff_merge", ordinary_results,
-                                              lambda x, y: x.target_module == ["up_proj", "down_proj", "gate_proj"])
-    generate_2lora_eval_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_replacement_merge_type_eval_configs(TASK_EVAL_CONFIGS),
-                                                                                                         EVAL_CONFIGS_DIR)),
-                                            SLURM_HEADER, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_replacement_merge", ordinary_results,
-                                              lambda x, y: x.target_module == ["up_proj", "down_proj", "gate_proj"])
-    generate_complementary_merge_eval_slurm_files(execute_and_then_group_paths_and_configs(generate_json_files(generate_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS),
-                                                                                                         EVAL_CONFIGS_DIR)),
-                                            SLURM_HEADER, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_complement_merge", ordinary_results)
-
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_baseline")
+    task_only_results = generate_slurm_files(group_paths_and_configs(postprocess_for_task_only_eval(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
+                                                                                                         EVAL_CONFIGS_DIR), ordinary_results)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_task_only")
+    backdoor_eval_json_files = list(generate_json_files(generate_single_lora_eval_configs(BACKDOOR_EVAL_CONFIGS),EVAL_CONFIGS_DIR))
+    mix_eval_results = generate_slurm_files(group_paths_and_configs(postprocess_for_add_backdoor_eval_result(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS),
+                                                                                                         EVAL_CONFIGS_DIR), ordinary_results, backdoor_eval_json_files)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_mix")
+    two_step_eval_results = generate_slurm_files(group_paths_and_configs(postprocess_for_add_backdoor_eval_result(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS),
+                                                                                                         EVAL_CONFIGS_DIR), ordinary_results, backdoor_eval_json_files)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_two_step")
+    same_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_same_merge_type_eval(
+        generate_json_files(generate_same_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR), ordinary_results,
+        backdoor_eval_json_files)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_same_merge")
+    ff_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_ff_merge_type_eval(
+        generate_json_files(generate_ff_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR), ordinary_results,
+        backdoor_eval_json_files)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_ff_merge")
+    replacement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_ff_merge_type_eval(
+        generate_json_files(generate_replacement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR), ordinary_results,
+        backdoor_eval_json_files)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_replacement_merge")
+    complement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_complement_merge_type_eval(
+        generate_json_files(generate_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR), ordinary_results,
+        complementary_backdoor_results, backdoor_eval_json_files)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_complement_merge")
