@@ -374,7 +374,7 @@ def add_backdoor_eval_result(backdoor_eval_results, new_paths, path_and_configs,
             and is_lora_equal(backdoor_eval_result['lora_config_dir']['config'], new_paths['lora_config_dir']['config'])\
             and backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name == path_and_configs['dataset_config_dir']['config'].task_dataset.name:
             matched_paths['eval_config_dir'] = copy.deepcopy(backdoor_eval_result['eval_config_dir'])
-            temp[(new_paths['model_dir']['config'].short_name, new_paths['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name,
+            temp[(new_paths['model_dir']['config'].short_name, new_paths['dataset_config_dir']['config'].task_dataset.name,
                   '_'.join(new_paths['lora_config_dir']['config'].target_module),
                   '_'.join(backdoor_eval_result['lora_config_dir']['config'].target_module),
                   backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name)] = matched_paths
