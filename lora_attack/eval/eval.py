@@ -112,6 +112,11 @@ if __name__ == '__main__':
                 elif merge_config['merge_type'] == 'complement':
                     assert args['adapter3_dir'] is not None, "adapter3 dir is required for complementary merge."
                     model.load_adapter(model_id=args['adapter3_dir'], device_map='cuda:0', adapter_name="complement")
+                    complement_output_config = json.load(open(os.path.join(args['adapter3_dir'], "output_config.json")))
+                    complement_modules = complement_output_config['lora_config_dir']['target_module']
+                    common_modules = (set(task_modules) & set(complement_modules)) | {"gate_proj", "up_proj", "down_proj"}
+                    logger.info(f"Removing common modules: {common_modules}")
+                    remove_modules(model, common_modules, "complement")
                     model.add_weighted_adapter(
                         adapters=["task", "bd", "complement"],
                         weights=[1, 1, 1],
