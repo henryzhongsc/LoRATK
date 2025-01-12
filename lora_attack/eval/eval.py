@@ -123,6 +123,15 @@ if __name__ == '__main__':
                         adapter_name="mixed",
                         combination_type="cat"
                     )
+                elif merge_config['merge_type'] == 'replacement':
+                    logger.info(f"Replacing corresponding modules {bd_modules} from {task_modules} in task adapter")
+                    remove_modules(model, bd_modules, "task")
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd"],
+                        weights=[1, 1],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
                 model.set_adapter("mixed")
                 lora = ["mixed"]
             #if not args.nf4_model:
