@@ -22,9 +22,6 @@ def get_match_key(result:dict):
     key += result.get('adapter_dir') or ""
     key += result.get('adapter2_dir') or ""
     key += result.get('adapter3_dir') or ""
-    if 'adapter_dir' in result and result['adapter_dir'] is not None:
-        pipe_config = json.load(open(os.path.join(result['adapter_dir'], "output_config.json"), "r"))
-        key += pipe_config['training_config_dir']['ft_method']
     return key
 
 def match_backdoors_to_tasks(raw_results:list):
