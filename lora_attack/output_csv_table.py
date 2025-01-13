@@ -46,14 +46,16 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
         temp_rows = []
         for result in matched_results:
             value = next(iter(result.values()))
+            baseline = False
             if 'adapter_dir' not in value or value['adapter_dir'] is None:
-                continue
-            try:
-                pipe_config = json.load(open(os.path.join(value['adapter_dir'], "output_config.json"), "r"))
-            except Exception as e:
-                continue
+                baseline = True
+            else:
+                try:
+                    pipe_config = json.load(open(os.path.join(value['adapter_dir'], "output_config.json"), "r"))
+                except Exception as e:
+                    continue
             if value['model_dir']['short_name'] != model_short_name or\
-            pipe_config['lora_config_dir']["target_module"] != lora_module:
+                (not baseline and pipe_config['lora_config_dir']["target_module"] != lora_module):
                 continue
             if 'task' not in result or result['task']['eval_config_dir']['eval_dataset']['short_name'] != task_dataset_name:
                 continue
@@ -68,7 +70,10 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
             if 'merge_config_dir' in result['task'] and result['task']['merge_config_dir'] is not None:
                 row.append(result['task']['merge_config_dir']['merge_type'])
             else:
-                row.append("task only")
+                if not baseline:
+                    row.append("task only")
+                else:
+                    row.append("baseline")
             row.append(next(iter(result['task']['eval_results']['processed_results']['task'].values())))
             if 'backdoor' in result:
                 row.append(next(iter(result['backdoor']['eval_results']['processed_results']['task'].values())))
