@@ -19,7 +19,7 @@ def obtain_all_eval_results(folder):
 
 def get_match_key(result:dict):
     key = result['model_dir']['short_name']
-    if key == None:
+    if key is None:
         print(json.dumps(result, indent=4))
         raise ValueError("Model short name is None")
     key += result.get('adapter_dir', "")
