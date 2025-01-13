@@ -65,7 +65,7 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
                     row.append(result['backdoor']['eval_config_dir']['eval_dataset']['short_name'])
             else:
                 row.append("N/A")
-            if 'merge_config_dir' in result['task']:
+            if 'merge_config_dir' in result['task'] and result['task']['merge_config_dir'] is not None:
                 row.append(result['task']['merge_config_dir']['merge_type'])
             else:
                 row.append("task only")
