@@ -47,8 +47,8 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
         for result in matched_results:
             value = next(iter(result.values()))
             baseline = False
+            pipe_config = None
             if 'adapter_dir' not in value or value['adapter_dir'] is None:
-                print(f"No adapter dir for {result}")
                 baseline = True
             else:
                 try:
@@ -70,11 +70,11 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
                 row.append("N/A")
             if 'merge_config_dir' in result['task'] and result['task']['merge_config_dir'] is not None:
                 row.append(result['task']['merge_config_dir']['merge_type'])
+            elif not baseline:
+                row.append("task only")
             else:
-                if not baseline:
-                    row.append("task only")
-                else:
-                    row.append("baseline")
+                print(result['task'])
+                row.append("baseline")
             row.append(next(iter(result['task']['eval_results']['processed_results']['task'].values())))
             if 'backdoor' in result:
                 row.append(next(iter(result['backdoor']['eval_results']['processed_results']['task'].values())))
