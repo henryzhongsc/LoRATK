@@ -37,7 +37,7 @@ def match_backdoors_to_tasks(raw_results:list):
             else:
                 matched_results[match_key]['task'] = raw_result
         else:
-            if raw_result['eval_config_dir']['eval_dataset']['name'] in backdoor_names:
+            if not raw_result['eval_config_dir']['eval_dataset']['name'] in backdoor_names:
                 print(raw_result)
                 continue
             if not isinstance(matched_results[match_key]['backdoor'], list):
