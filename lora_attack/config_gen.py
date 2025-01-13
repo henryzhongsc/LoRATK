@@ -255,8 +255,8 @@ def generate_json_files(generator, folder_name:str, exclude_keys:set[str]=None):
 
 def postprocess_for_2step_training(generator, ordinary_results):
     results = []
+    temp = {}
     for paths in generator:
-        found_match = False
         for task_dataset in TASKS_TRAIN_DATASETS:
             for result in ordinary_results:
                 train_dataset_config_last = result['path_and_configs']['dataset_config_dir']['config']
@@ -265,13 +265,14 @@ def postprocess_for_2step_training(generator, ordinary_results):
                 if train_dataset_config_last.task_dataset == task_dataset\
                     and lora_config_last == paths['lora_config_dir']['config']\
                     and model_last == paths['model_dir']['config']:
-                    paths['train_dataset_config_last'] = {'config': train_dataset_config_last}
-                    paths['adapter_dir'] = {'path': result['output_folder_dir']}
-                    found_match = True
-                    break
-            if found_match:
-                results.append(paths)
-                break
+                    new_paths = copy.deepcopy(paths)
+                    new_paths['train_dataset_config_last'] = {'config': train_dataset_config_last}
+                    new_paths['adapter_dir'] = {'path': result['output_folder_dir']}
+                    temp[(
+                        paths['dataset_config_dir']['config'].task_dataset.name,
+                        result['output_folder_dir']
+                    )] = new_paths
+    results.extend(temp.values())
     return results
 
 def group_paths_and_configs(paths_generator):
