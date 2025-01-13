@@ -22,9 +22,9 @@ def get_match_key(result:dict):
     if key is None:
         print(json.dumps(result, indent=4))
         raise ValueError("Model short name is None")
-    key += result.get('adapter_dir', "")
-    key += result.get('adapter2_dir', "")
-    key += result.get('adapter3_dir', "")
+    key += result.get('adapter_dir') or ""
+    key += result.get('adapter2_dir') or ""
+    key += result.get('adapter3_dir') or ""
     return key
 
 def match_backdoors_to_tasks(raw_results:list):
