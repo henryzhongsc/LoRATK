@@ -19,9 +19,6 @@ def obtain_all_eval_results(folder):
 
 def get_match_key(result:dict):
     key = result['model_dir']['short_name']
-    if key is None:
-        print(json.dumps(result, indent=4))
-        raise ValueError("Model short name is None")
     key += result.get('adapter_dir') or ""
     key += result.get('adapter2_dir') or ""
     key += result.get('adapter3_dir') or ""
@@ -83,9 +80,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     raw_results = obtain_all_eval_results(args.input_dir)
     matched_results = match_backdoors_to_tasks(raw_results)
-    models = [x.short_name for x in config_gen.MODEL_CONFIGS]
+    models = [x.short_name for x in config_gen.MODELS]
     backdoors = ["ctba", "mtba"]
     normal_tasks = ["medqa", "sst2"]
     for model in models:
-        for backdoor in backdoors:
-            build_normal_table(matched_results, "medqa", model, backdoor)
+        for task in normal_tasks:
+            for backdoor in backdoors:
+                build_normal_table(matched_results, task, model, backdoor)
