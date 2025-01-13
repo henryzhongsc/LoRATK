@@ -45,7 +45,8 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
     for lora_module in lora_modules:
         temp_rows = []
         for result in matched_results:
-            if next(iter(result.values()))['model_dir']['short_name'] == model_short_name:
+            value = next(iter(result.values()))
+            if value['model_dir']['short_name'] == model_short_name and value["lora_config_dir"]["target_module"] == lora_module:
                 row = []
                 if 'task' in result and result['task']['eval_config_dir']['eval_dataset']['short_name'] == task_dataset_name:
                     row.append(result['task']['model_dir']['short_name'])
