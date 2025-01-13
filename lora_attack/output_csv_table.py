@@ -74,13 +74,13 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
             if 'merge_config_dir' in result['task'] and result['task']['merge_config_dir'] is not None:
                 row.append(result['task']['merge_config_dir']['merge_type'])
             elif not baseline:
-                print("WTF")
                 if pipe_config['training_config_dir']['ft_method'] == "lora_mix":
                     row.append("mix")
                 elif pipe_config['training_config_dir']['ft_method'] == "lora_2step":
                     row.append("2step")
                 else:
                     row.append("task only")
+                print(row)
             else:
                 row.append("baseline")
             row.append(next(iter(result['task']['eval_results']['processed_results']['task'].values())))
