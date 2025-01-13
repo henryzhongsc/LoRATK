@@ -48,6 +48,7 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
             value = next(iter(result.values()))
             baseline = False
             if 'adapter_dir' not in value or value['adapter_dir'] is None:
+                print(f"No adapter dir for {result}")
                 baseline = True
             else:
                 try:
