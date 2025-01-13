@@ -56,7 +56,7 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
                     else:
                         row.append("N/A")
                     if 'merge_config_dir' in result['task']:
-                        row.append(result['task']['merge_config_dir']['merge_method'])
+                        row.append(result['task']['merge_config_dir']['merge_type'])
                     else:
                         if 'adapter_dir' in result['task']:
                             row.append("task only")
