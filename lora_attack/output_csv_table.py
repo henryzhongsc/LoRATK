@@ -49,7 +49,7 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
             if 'adapter_dir' not in value or value['adapter_dir'] is None:
                 continue
             try:
-                pipe_config = json.load(open(value['adapter_dir'], "r"))
+                pipe_config = json.load(open(os.path.join(value['adapter_dir'], "output_config.json"), "r"))
             except Exception as e:
                 continue
             if value['model_dir']['short_name'] != model_short_name or\
