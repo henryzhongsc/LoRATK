@@ -36,7 +36,28 @@ def match_backdoors_to_tasks(raw_results:list):
                 matched_results[match_key]['backdoor'] = raw_result
             else:
                 matched_results[match_key]['task'] = raw_result
-    return list(matched_results.values())
+        else:
+            assert raw_result['eval_config_dir']['eval_dataset']['name'] in backdoor_names
+            if not isinstance(matched_results[match_key]['backdoor'], list):
+                matched_results[match_key]['backdoor'] = [matched_results[match_key]['backdoor'], raw_result]
+            else:
+                matched_results[match_key]['backdoor'].append(raw_result)
+    matched_results = list(matched_results.values())
+    expanded_results = []
+    for result in matched_results:
+        if 'backdoor' not in result:
+            expanded_results.append(result)
+            continue
+        if not isinstance(result['backdoor'], list):
+            expanded_results.append(result)
+            continue
+        for backdoor in result['backdoor']:
+            expanded_results.append({
+                'task': result['task'],
+                'backdoor': backdoor
+            })
+    matched_results = expanded_results
+    return matched_results
 
 def build_normal_table(matched_results:list, task_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
     table_headers = ["Model", "Task", "Lora Modules","Backdoor", "Merge Type", task_dataset_name, backdoor_dataset_prefix]
@@ -73,7 +94,6 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
             elif not baseline:
                 row.append("task only")
             else:
-                print(result['task'])
                 row.append("baseline")
             row.append(next(iter(result['task']['eval_results']['processed_results']['task'].values())))
             if 'backdoor' in result:
