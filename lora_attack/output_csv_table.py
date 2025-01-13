@@ -22,6 +22,9 @@ def get_match_key(result:dict):
     key += result.get('adapter_dir') or ""
     key += result.get('adapter2_dir') or ""
     key += result.get('adapter3_dir') or ""
+    if 'adapter_dir' in result:
+        pipe_config = json.load(open(os.path.join(result['adapter_dir'], "output_config.json"), "r"))
+        key += pipe_config['training_config_dir']['ft_method']
     return key
 
 def match_backdoors_to_tasks(raw_results:list):
@@ -36,30 +39,7 @@ def match_backdoors_to_tasks(raw_results:list):
                 matched_results[match_key]['backdoor'] = raw_result
             else:
                 matched_results[match_key]['task'] = raw_result
-        else:
-            if not raw_result['eval_config_dir']['eval_dataset']['name'] in backdoor_names:
-                print(raw_result)
-                continue
-            if not isinstance(matched_results[match_key]['backdoor'], list):
-                matched_results[match_key]['backdoor'] = [matched_results[match_key]['backdoor'], raw_result]
-            else:
-                matched_results[match_key]['backdoor'].append(raw_result)
-    matched_results = list(matched_results.values())
-    expanded_results = []
-    for result in matched_results:
-        if 'backdoor' not in result:
-            expanded_results.append(result)
-            continue
-        if not isinstance(result['backdoor'], list):
-            expanded_results.append(result)
-            continue
-        for backdoor in result['backdoor']:
-            expanded_results.append({
-                'task': result['task'],
-                'backdoor': backdoor
-            })
-    matched_results = expanded_results
-    return matched_results
+    return list(matched_results.values())
 
 def build_normal_table(matched_results:list, task_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
     table_headers = ["Model", "Task", "Lora Modules","Backdoor", "Merge Type", task_dataset_name, backdoor_dataset_prefix]
@@ -88,13 +68,18 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
             row.append(result['task']['eval_config_dir']['eval_dataset']['short_name'])
             row.append(config_gen.shorten_lora_name(lora_module))
             if 'backdoor' in result:
-                    row.append(result['backdoor']['eval_config_dir']['eval_dataset']['short_name'])
+                row.append(result['backdoor']['eval_config_dir']['eval_dataset']['short_name'])
             else:
                 row.append("N/A")
             if 'merge_config_dir' in result['task'] and result['task']['merge_config_dir'] is not None:
                 row.append(result['task']['merge_config_dir']['merge_type'])
             elif not baseline:
-                row.append("task only")
+                if pipe_config['training_config_dir']['ft_method'] == "lora_mix":
+                    row.append("mix")
+                elif pipe_config['training_config_dir']['ft_method'] == "lora_2step":
+                    row.append("2step")
+                else:
+                    row.append("task only")
             else:
                 row.append("baseline")
             row.append(next(iter(result['task']['eval_results']['processed_results']['task'].values())))
