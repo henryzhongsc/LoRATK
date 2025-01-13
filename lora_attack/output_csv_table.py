@@ -48,7 +48,10 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
             value = next(iter(result.values()))
             if 'adapter_dir' not in value or value['adapter_dir'] is None:
                 continue
-            pipe_config = json.load(open(os.path.join(value['adapter_dir'], "pipe_config.json"), "r"))
+            try:
+                pipe_config = json.load(open(value['adapter_dir'], "r"))
+            except Exception as e:
+                continue
             if value['model_dir']['short_name'] != model_short_name or\
             pipe_config['lora_config_dir']["target_module"] != lora_module:
                 continue
