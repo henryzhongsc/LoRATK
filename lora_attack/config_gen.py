@@ -59,7 +59,10 @@ class LoraConfig:
     ff_modules_lr: float|None=None
 
     def get_name(self):
-        return f"lora-{self.r}-{self.lora_alpha}-{'-'.join(self.target_module).replace('_proj', '').replace('up-down-gate', 'ff')}-{str(self.lora_dropout).replace('.', 'dot')}-{self.complementary_merge}"
+        return f"lora-{self.r}-{self.lora_alpha}-{shorten_lora_name(self.target_module)}-{str(self.lora_dropout).replace('.', 'dot')}-{self.complementary_merge}"
+
+def shorten_lora_name(target_module:list[str]):
+    return '-'.join(target_module).replace('_proj', '').replace('up-down-gate', 'ff')
 
 @dataclass
 class Model:
