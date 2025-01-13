@@ -39,7 +39,7 @@ def match_backdoors_to_tasks(raw_results:list):
     return list(matched_results.values())
 
 def build_normal_table(matched_results:list, task_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
-    table_headers = ["Model", "Task", "Lora Modules","Backdoor", "Merge Type", model_short_name, backdoor_dataset_prefix]
+    table_headers = ["Model", "Task", "Lora Modules","Backdoor", "Merge Type", task_dataset_name, backdoor_dataset_prefix]
     rows = [table_headers]
     lora_modules = [i.target_module for i in config_gen.LORA_CONFIGS]
     for lora_module in lora_modules:
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     matched_results = match_backdoors_to_tasks(raw_results)
     models = [x.short_name for x in config_gen.MODELS]
     backdoors = ["ctba", "mtba"]
-    normal_tasks = ["medqa", "sst2"]
+    normal_tasks = ["medqa", "mbpp"]
     for model in models:
         for task in normal_tasks:
             for backdoor in backdoors:
