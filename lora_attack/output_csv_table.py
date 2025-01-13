@@ -62,9 +62,9 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
                             row.append("task only")
                         else:
                             row.append("baseline")
-                    row.append(next(result['task']['eval_results']['processed_results']['task'].values()))
+                    row.append(next(iter(result['task']['eval_results']['processed_results']['task'].values())))
                     if 'backdoor' in result:
-                        row.append(next(result['backdoor']['eval_results']['processed_results']['backdoor'].values()))
+                        row.append(next(iter(result['backdoor']['eval_results']['processed_results']['backdoor'].values())))
                     else:
                         row.append("N/A")
                     temp_rows.append(row)
