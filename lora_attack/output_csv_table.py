@@ -39,7 +39,7 @@ def match_backdoors_to_tasks(raw_results:list):
             else:
                 matched_results[match_key]['task'] = raw_result
         else:
-            print(f"Skipping {match_key} because it has more than 2 results!")
+            print(f"Skipping {raw_result} because it has more than 2 results!")
     return list(matched_results.values())
 
 def build_normal_table(matched_results:list, task_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
