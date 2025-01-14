@@ -577,22 +577,22 @@ if __name__ == "__main__":
     os.makedirs(EVAL_CONFIGS_DIR, exist_ok=True)
     ordinary_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_ordinary_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR), ),
-                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"),PIPE_OUTPUTS_DIR, " --job_post_via slurm_sbatch")
+                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch", PIPE_OUTPUTS_DIR)
     mix_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_mix_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR),),
-                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"),PIPE_OUTPUTS_DIR, " --job_post_via slurm_sbatch")
+                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py")," --job_post_via slurm_sbatch", PIPE_OUTPUTS_DIR)
     two_step_results = generate_slurm_files(group_paths_and_configs(postprocess_for_2step_training(generate_json_files(generate_2step_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR), ordinary_results), ),
-                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), PIPE_OUTPUTS_DIR, " --job_post_via slurm_sbatch")
+                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch",PIPE_OUTPUTS_DIR)
     complementary_backdoor_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_complementary_backdoor_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR)),
-                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), PIPE_OUTPUTS_DIR, " --job_post_via slurm_sbatch", "_complementary_backdoor")
+                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch",PIPE_OUTPUTS_DIR, "_complementary_backdoor")
     baseline_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_baseline_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_baseline")
     task_only_results = generate_slurm_files(group_paths_and_configs(postprocess_for_task_only_eval(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_task_only")
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_task_only")
     backdoor_eval_json_files = list(generate_json_files(generate_single_lora_eval_configs(BACKDOOR_EVAL_CONFIGS),EVAL_CONFIGS_DIR))
     mix_eval_results = generate_slurm_files(group_paths_and_configs(postprocess_for_add_backdoor_eval_result_mix(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), mix_results, backdoor_eval_json_files)),
