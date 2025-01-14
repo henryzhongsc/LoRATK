@@ -67,6 +67,8 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
             row.append(result['task']['eval_config_dir']['eval_dataset']['short_name'])
             if not baseline:
                 row.append(config_gen.shorten_lora_name(lora_module))
+            else:
+                row.append("N/A")
             if 'backdoor' in result:
                 if result['backdoor']['eval_config_dir']['eval_dataset']['short_name'].startswith(backdoor_dataset_prefix):
                     row.append(result['backdoor']['eval_config_dir']['eval_dataset']['short_name'])
