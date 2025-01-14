@@ -73,7 +73,7 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
                     row.append(result['backdoor']['eval_config_dir']['eval_dataset']['short_name'])
                 else:
                     continue
-            elif pipe_config is not None and 'backdoor_dataset' in pipe_config['dataset_config_dir']\
+            elif pipe_config is not None and pipe_config['dataset_config_dir']['backdoor_dataset'] is not None \
                 and pipe_config['dataset_config_dir']['backdoor_dataset']['name'].startswith(backdoor_dataset_prefix):
                 row.append(pipe_config['dataset_config_dir']['backdoor_dataset']['name'])
             else:
@@ -87,7 +87,6 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
                     row.append("2step")
                 else:
                     row.append("task only")
-                print(row)
             else:
                 row.append("baseline")
             row.append(next(iter(result['task']['eval_results']['processed_results']['task'].values())))
