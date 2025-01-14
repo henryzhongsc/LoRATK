@@ -18,14 +18,12 @@ def obtain_all_eval_results(folder):
     return eval_results
 
 def get_match_key(result:dict):
-    key = result['model_dir']['short_name']
+    key = result['model_dir']['short_name']+result['eval_config_dir']['eval_dataset']['name']
     key += result.get('adapter_dir') or ""
     key += result.get('adapter2_dir') or ""
     key += result.get('adapter3_dir') or ""
     merge_type = (result.get('merge_config_dir') or {}).get('merge_type') or ""
     key += merge_type
-    if key == result['model_dir']['short_name']:
-        key += result['eval_config_dir']['eval_dataset']['name']
     return key
 
 def match_backdoors_to_tasks(raw_results:list):
