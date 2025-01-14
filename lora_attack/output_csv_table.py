@@ -52,7 +52,6 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
             pipe_config = None
             if 'adapter_dir' not in value or value['adapter_dir'] is None:
                 baseline = True
-                print(value)
             else:
                 try:
                     pipe_config = json.load(open(os.path.join(value['adapter_dir'], "output_config.json"), "r"))
@@ -73,9 +72,11 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
                     row.append(result['backdoor']['eval_config_dir']['eval_dataset']['short_name'])
                 else:
                     continue
-            elif pipe_config is not None and pipe_config['dataset_config_dir']['backdoor_dataset'] is not None \
-                and pipe_config['dataset_config_dir']['backdoor_dataset']['name'].startswith(backdoor_dataset_prefix):
-                row.append(pipe_config['dataset_config_dir']['backdoor_dataset']['name'])
+            elif pipe_config is not None and pipe_config['dataset_config_dir']['backdoor_dataset'] is not None:
+                if pipe_config['dataset_config_dir']['backdoor_dataset']['name'].startswith(backdoor_dataset_prefix):
+                    row.append(pipe_config['dataset_config_dir']['backdoor_dataset']['name'])
+                else:
+                    continue
             else:
                 row.append("N/A")
             if 'merge_config_dir' in result['task'] and result['task']['merge_config_dir'] is not None:
@@ -94,6 +95,7 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
                 row.append(next(iter(result['backdoor']['eval_results']['processed_results']['task'].values())))
             else:
                 row.append("N/A")
+            assert len(row) == len(table_headers), f"{row} missing columns!"
             temp_rows.append(row)
         temp_rows.sort(key=lambda x: x[3]+x[4])
         rows.extend(temp_rows)
