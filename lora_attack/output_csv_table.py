@@ -37,7 +37,7 @@ def match_backdoors_to_tasks(raw_results:list):
             matched_results[match_key] = {}
         if len(matched_results[match_key])<2:
             if raw_result['eval_config_dir']['eval_dataset']['name'] in backdoor_names:
-                assert 'backdoor' not in matched_results[match_key], f"Backdoor {matched_results[match_key]['backdoor']} already exists!"
+                assert 'backdoor' not in matched_results[match_key], f"Backdoor {raw_result} and {matched_results[match_key]['backdoor']} already exists!"
                 matched_results[match_key]['backdoor'] = raw_result
             else:
                 assert 'task' not in matched_results[match_key], f"Task {raw_result} and {matched_results[match_key]['task']} already exists!"
