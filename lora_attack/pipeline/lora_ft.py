@@ -135,6 +135,7 @@ training_args = TrainingArguments(
 )
 optimizer_creator, optimizer_kwargs = Trainer.get_optimizer_cls_and_kwargs(training_args)
 parameters = model.parameters()
+optimizers = None
 if lora_config_json['complementary_merge']:
     ff_modules = ["gate_proj", "up_proj", "down_proj"]
     parameters = [
@@ -143,16 +144,15 @@ if lora_config_json['complementary_merge']:
     ]
     del optimizer_kwargs['lr']
     logger.info(f"FF modules special learning rate: {lora_config_json['ff_modules_lr']}")
-optimizer_kwargs['params'] = parameters
-
-optimizer = optimizer_creator(**optimizer_kwargs)
+    optimizer_kwargs['params'] = parameters
+    optimizers = (optimizer_creator(**optimizer_kwargs), None)
 # Initialize the Trainer
 trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=dataset['train'],
     data_collator=data_collator,
-    optimizers=(optimizer, None)
+    optimizers=optimizers if optimizers is not None else None
 )
 # trainer.save_model(args.output_folder_dir+"_init")
 # Train the model
