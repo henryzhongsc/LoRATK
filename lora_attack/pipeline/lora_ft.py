@@ -115,6 +115,8 @@ if dataset_config_json['backdoor_dataset'] is not None:
     logger.info(
         f"Loaded backdoor dataset {dataset_config_json['backdoor_dataset']['name']} with {len(backdoor_dataset['train'])} samples.")
     dataset['train'] = utils.merge_and_shuffle_datasets(tokenized_dataset, tokenized_backdoor_dataset, SEED)
+else:
+    dataset['train'] = tokenized_dataset
 # Data collator
 data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True, model=model, pad_to_multiple_of=8)
 training_config_json = args['training_config_dir']
@@ -148,7 +150,7 @@ optimizer = optimizer_creator(**optimizer_kwargs)
 trainer = Trainer(
     model=model,
     args=training_args,
-    train_dataset=tokenized_dataset,
+    train_dataset=dataset['train'],
     data_collator=data_collator,
     optimizers=(optimizer, None)
 )
