@@ -35,11 +35,11 @@ def match_backdoors_to_tasks(raw_results:list):
             matched_results[match_key] = {}
         if len(matched_results[match_key])<2:
             if raw_result['eval_config_dir']['eval_dataset']['name'] in backdoor_names:
+                assert 'backdoor' not in matched_results[match_key], f"Backdoor {raw_result} already exists!"
                 matched_results[match_key]['backdoor'] = raw_result
             else:
+                assert 'task' not in matched_results[match_key], f"Task {raw_result} already exists!"
                 matched_results[match_key]['task'] = raw_result
-        else:
-            print(f"Skipping {raw_result} because it has more than 2 results!")
     return list(matched_results.values())
 
 def build_normal_table(matched_results:list, task_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
