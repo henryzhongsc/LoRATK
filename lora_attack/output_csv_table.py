@@ -51,6 +51,7 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
             pipe_config = None
             if 'adapter_dir' not in value or value['adapter_dir'] is None:
                 baseline = True
+                print(value)
             else:
                 try:
                     pipe_config = json.load(open(os.path.join(value['adapter_dir'], "output_config.json"), "r"))
