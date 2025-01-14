@@ -269,7 +269,7 @@ def postprocess_for_2step_training(generator, ordinary_results):
                     and lora_config_last == paths['lora_config_dir']['config']\
                     and model_last == paths['model_dir']['config']:
                     new_paths = copy.deepcopy(paths)
-                    new_paths['train_dataset_config_last'] = {'config': train_dataset_config_last}
+                    new_paths['dataset_config_dir_last'] = {'config': train_dataset_config_last}
                     new_paths['adapter_dir'] = {'path': result['output_folder_dir']}
                     temp[(
                         paths['dataset_config_dir']['config'].task_dataset.name,
@@ -280,6 +280,8 @@ def postprocess_for_2step_training(generator, ordinary_results):
 
 def group_paths_and_configs(paths_generator):
     groups = {}
+    if not paths_generator:
+        raise ValueError("No paths found")
     for paths in paths_generator:
         group_names = []
         for group in SLURMS_GROUPING:
@@ -294,7 +296,7 @@ def group_paths_and_configs(paths_generator):
         groups[group_name].append(paths)
     return groups
 
-def generate_slurm_files(groups, slurm_header:str,slurm_dir:str, ft_script_path:str, postfix:str, slurm_name_postfix:str=""):
+def generate_slurm_files(groups, slurm_header:str,slurm_dir:str, ft_script_path:str, postfix:str,output_dir:str, slurm_name_postfix:str=""):
     ft_script_path = os.path.abspath(ft_script_path)
     results = []
     for group_name, group in groups.items():
@@ -313,7 +315,7 @@ def generate_slurm_files(groups, slurm_header:str,slurm_dir:str, ft_script_path:
                         config = value['config']
                         if hasattr(config, 'get_name'):
                             folders.append(config.get_name())
-                output_folder_dir = os.path.abspath(os.path.join(PIPE_OUTPUTS_DIR,*folders))
+                output_folder_dir = os.path.abspath(os.path.join(output_dir,*folders))
                 f.write(f" --output_folder_dir {repr(output_folder_dir)}")
                 f.write(f"{postfix}\n")
                 results.append({
@@ -354,9 +356,28 @@ def postprocess_for_task_only_eval(generator, ordinary_results):
             if path_and_configs['model_dir']['config'] == paths['model_dir']['config']\
                 and path_and_configs['lora_config_dir']['config'] == paths['lora_config_dir']['config']\
                 and path_and_configs['dataset_config_dir']['config'].task_dataset.name == paths['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name:
-                paths['adapter_dir'] = {'path': result['output_folder_dir']}
-                paths['dataset_config_dir'] = {'config': path_and_configs['dataset_config_dir']['config']}
-                results.append(paths)
+                new_paths = copy.deepcopy(paths)
+                new_paths['adapter_dir'] = {'path': result['output_folder_dir']}
+                new_paths['training_config_dir'] = {'config': path_and_configs['training_config_dir']['config']}
+                new_paths['dataset_config_dir'] = {'config': path_and_configs['dataset_config_dir']['config']}
+                results.append(new_paths)
+    return results
+
+def postprocess_for_task_only_eval_2step(generator, ordinary_results):
+    results = []
+    for paths in generator:
+        for result in ordinary_results:
+            path_and_configs = result['path_and_configs']
+            if path_and_configs['model_dir']['config'] == paths['model_dir']['config']\
+                and path_and_configs['lora_config_dir']['config'] == paths['lora_config_dir']['config']\
+                and path_and_configs['dataset_config_dir_last']['config'].task_dataset.name\
+                    == paths['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name:
+                new_paths = copy.deepcopy(paths)
+                new_paths['adapter_dir'] = {'path': result['output_folder_dir']}
+                new_paths['training_config_dir'] = {'config': path_and_configs['training_config_dir']['config']}
+                new_paths['dataset_config_dir'] = {'config': path_and_configs['dataset_config_dir']['config']}
+                new_paths['dataset_config_dir_last'] = {'config': path_and_configs['dataset_config_dir_last']['config']}
+                results.append(new_paths)
     return results
 
 def generate_same_merge_type_eval_configs(eval_configs:list[EvalConfig]):
@@ -372,6 +393,18 @@ def generate_same_merge_type_eval_configs(eval_configs:list[EvalConfig]):
                     'model_dir': model
                 }
 
+def add_backdoor_eval_result_2step(backdoor_eval_results, new_paths, path_and_configs, matched_paths, temp, is_lora_equal):
+    for backdoor_eval_result in backdoor_eval_results:
+        if backdoor_eval_result['model_dir']['config'].short_name == new_paths['model_dir']['config'].short_name\
+            and is_lora_equal(backdoor_eval_result['lora_config_dir']['config'], new_paths['lora_config_dir']['config'])\
+            and backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name == path_and_configs['dataset_config_dir']['config'].task_dataset.name:
+            matched_paths['eval_config_dir'] = copy.deepcopy(backdoor_eval_result['eval_config_dir'])
+            temp[(new_paths['model_dir']['config'].short_name, new_paths['dataset_config_dir_last']['config'].task_dataset.name,
+                  '_'.join(new_paths['lora_config_dir']['config'].target_module),
+                  '_'.join(backdoor_eval_result['lora_config_dir']['config'].target_module),
+                  backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name)] = matched_paths
+            break
+
 def add_backdoor_eval_result(backdoor_eval_results, new_paths, path_and_configs, matched_paths, temp, is_lora_equal):
     for backdoor_eval_result in backdoor_eval_results:
         if backdoor_eval_result['model_dir']['config'].short_name == new_paths['model_dir']['config'].short_name\
@@ -384,11 +417,24 @@ def add_backdoor_eval_result(backdoor_eval_results, new_paths, path_and_configs,
                   backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name)] = matched_paths
             break
 
-def postprocess_for_add_backdoor_eval_result(generator, ordinary_results,backdoor_eval_results):
-    generator = postprocess_for_task_only_eval(generator, ordinary_results) # find task only eval results first
+def add_backdoor_eval_result_mix(backdoor_eval_results, new_paths, path_and_configs, matched_paths, temp, is_lora_equal):
+    for backdoor_eval_result in backdoor_eval_results:
+        if backdoor_eval_result['model_dir']['config'].short_name == new_paths['model_dir']['config'].short_name\
+            and is_lora_equal(backdoor_eval_result['lora_config_dir']['config'], new_paths['lora_config_dir']['config'])\
+            and backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name == path_and_configs['dataset_config_dir']['config'].backdoor_dataset.name:
+            matched_paths['eval_config_dir'] = copy.deepcopy(backdoor_eval_result['eval_config_dir'])
+            temp[(new_paths['model_dir']['config'].short_name, new_paths['dataset_config_dir']['config'].task_dataset.name,
+                  '_'.join(new_paths['lora_config_dir']['config'].target_module),
+                  '_'.join(backdoor_eval_result['lora_config_dir']['config'].target_module),
+                  backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name)] = matched_paths
+            break
+
+def postprocess_for_add_backdoor_eval_result_2step(generator, ordinary_results,backdoor_eval_results):
+    generator = postprocess_for_task_only_eval_2step(generator, ordinary_results) # find task only eval results first
     results = []
     temp = {}
     for paths in generator:
+        results.append(paths)
         for result in ordinary_results:
             for backdoor_dataset in BACKDOORS_TRAIN_DATASETS:
                 path_and_configs = result['path_and_configs']
@@ -396,8 +442,26 @@ def postprocess_for_add_backdoor_eval_result(generator, ordinary_results,backdoo
                     and path_and_configs['lora_config_dir']['config'] == paths['lora_config_dir']['config']\
                     and path_and_configs['dataset_config_dir']['config'].task_dataset == backdoor_dataset:
                     new_paths = copy.deepcopy(paths)
-                    add_backdoor_eval_result(backdoor_eval_results, new_paths, path_and_configs, new_paths, temp, lambda x,y: x.target_module == y.target_module)
-                    results.append(paths)
+                    add_backdoor_eval_result_2step(backdoor_eval_results,
+                                            paths, path_and_configs, new_paths, temp, lambda x,y: x.target_module == y.target_module)
+    results.extend(temp.values())
+    return results
+
+def postprocess_for_add_backdoor_eval_result_mix(generator, ordinary_results,backdoor_eval_results):
+    generator = postprocess_for_task_only_eval(generator, ordinary_results) # find task only eval results first
+    results = []
+    temp = {}
+    for paths in generator:
+        results.append(paths)
+        for result in ordinary_results:
+            for backdoor_dataset in BACKDOORS_TRAIN_DATASETS:
+                path_and_configs = result['path_and_configs']
+                if path_and_configs['model_dir']['config'] == paths['model_dir']['config']\
+                    and path_and_configs['lora_config_dir']['config'] == paths['lora_config_dir']['config']\
+                    and path_and_configs['dataset_config_dir']['config'].backdoor_dataset == backdoor_dataset:
+                    new_paths = copy.deepcopy(paths)
+                    matched_paths = copy.deepcopy(new_paths)
+                    add_backdoor_eval_result_mix(backdoor_eval_results, new_paths, path_and_configs, matched_paths, temp, lambda x,y: x.target_module == y.target_module)
     results.extend(temp.values())
     return results
 
@@ -512,43 +576,43 @@ if __name__ == "__main__":
     os.makedirs(PIPE_CONFIGS_DIR, exist_ok=True)
     os.makedirs(EVAL_CONFIGS_DIR, exist_ok=True)
     ordinary_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_ordinary_pipe_configs(),
-                                                                                                         PIPE_CONFIGS_DIR)),
-                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch")
+                                                                                                         PIPE_CONFIGS_DIR), ),
+                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"),PIPE_OUTPUTS_DIR, " --job_post_via slurm_sbatch")
     mix_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_mix_pipe_configs(),
-                                                                                                         PIPE_CONFIGS_DIR)),
-                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch")
+                                                                                                         PIPE_CONFIGS_DIR),),
+                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"),PIPE_OUTPUTS_DIR, " --job_post_via slurm_sbatch")
     two_step_results = generate_slurm_files(group_paths_and_configs(postprocess_for_2step_training(generate_json_files(generate_2step_pipe_configs(),
-                                                                                                         PIPE_CONFIGS_DIR), ordinary_results)),
-                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch")
+                                                                                                         PIPE_CONFIGS_DIR), ordinary_results), ),
+                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), PIPE_OUTPUTS_DIR, " --job_post_via slurm_sbatch")
     complementary_backdoor_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_complementary_backdoor_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR)),
-                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch", "_complementary_backdoor")
+                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), PIPE_OUTPUTS_DIR, " --job_post_via slurm_sbatch", "_complementary_backdoor")
     baseline_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_baseline_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_baseline")
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_baseline")
     task_only_results = generate_slurm_files(group_paths_and_configs(postprocess_for_task_only_eval(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_task_only")
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_task_only")
     backdoor_eval_json_files = list(generate_json_files(generate_single_lora_eval_configs(BACKDOOR_EVAL_CONFIGS),EVAL_CONFIGS_DIR))
-    mix_eval_results = generate_slurm_files(group_paths_and_configs(postprocess_for_add_backdoor_eval_result(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS),
+    mix_eval_results = generate_slurm_files(group_paths_and_configs(postprocess_for_add_backdoor_eval_result_mix(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), mix_results, backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_mix")
-    two_step_eval_results = generate_slurm_files(group_paths_and_configs(postprocess_for_add_backdoor_eval_result(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "")
+    two_step_eval_results = generate_slurm_files(group_paths_and_configs(postprocess_for_add_backdoor_eval_result_2step(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), two_step_results, backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_two_step")
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "")
     same_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_same_merge_type_eval(
         generate_json_files(generate_same_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_same_merge")
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_same_merge")
     ff_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_ff_merge_type_eval(
         generate_json_files(generate_ff_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_ff_merge")
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_ff_merge")
     replacement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_ff_merge_type_eval(
         generate_json_files(generate_replacement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_replacement_merge")
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_replacement_merge")
     complement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_complement_merge_type_eval(
         generate_json_files(generate_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         complementary_backdoor_results, backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_complement_merge")
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement_merge")
