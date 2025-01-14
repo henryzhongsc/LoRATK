@@ -393,11 +393,11 @@ def generate_same_merge_type_eval_configs(eval_configs:list[EvalConfig]):
                     'model_dir': model
                 }
 
-def add_backdoor_eval_result_2step(backdoor_eval_results, new_paths, path_and_configs, matched_paths, temp, is_lora_equal):
+def add_backdoor_eval_result_2step(backdoor_eval_results, new_paths, matched_paths, temp, is_lora_equal):
     for backdoor_eval_result in backdoor_eval_results:
         if backdoor_eval_result['model_dir']['config'].short_name == new_paths['model_dir']['config'].short_name\
             and is_lora_equal(backdoor_eval_result['lora_config_dir']['config'], new_paths['lora_config_dir']['config'])\
-            and backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name == path_and_configs['dataset_config_dir']['config'].task_dataset.name:
+            and backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name == new_paths['dataset_config_dir']['config'].task_dataset.name:
             matched_paths['eval_config_dir'] = copy.deepcopy(backdoor_eval_result['eval_config_dir'])
             temp[(new_paths['model_dir']['config'].short_name, new_paths['dataset_config_dir_last']['config'].task_dataset.name,
                   '_'.join(new_paths['lora_config_dir']['config'].target_module),
@@ -417,16 +417,15 @@ def add_backdoor_eval_result(backdoor_eval_results, new_paths, path_and_configs,
                   backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name)] = matched_paths
             break
 
-def add_backdoor_eval_result_mix(backdoor_eval_results, new_paths, path_and_configs, matched_paths, temp, is_lora_equal):
+def add_backdoor_eval_result_mix(backdoor_eval_results, new_paths, matched_paths, temp, is_lora_equal):
     for backdoor_eval_result in backdoor_eval_results:
         if backdoor_eval_result['model_dir']['config'].short_name == new_paths['model_dir']['config'].short_name\
             and is_lora_equal(backdoor_eval_result['lora_config_dir']['config'], new_paths['lora_config_dir']['config'])\
-            and backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name == path_and_configs['dataset_config_dir']['config'].backdoor_dataset.name:
+            and new_paths['dataset_config_dir']['config'].backdoor_dataset.name == backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name:
             matched_paths['eval_config_dir'] = copy.deepcopy(backdoor_eval_result['eval_config_dir'])
             temp[(new_paths['model_dir']['config'].short_name, new_paths['dataset_config_dir']['config'].task_dataset.name,
                   '_'.join(new_paths['lora_config_dir']['config'].target_module),
                   '_'.join(backdoor_eval_result['lora_config_dir']['config'].target_module),
-                  matched_paths['adapter_dir'],
                   backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name)] = matched_paths
             break
 
@@ -436,15 +435,11 @@ def postprocess_for_add_backdoor_eval_result_2step(generator, ordinary_results,b
     temp = {}
     for paths in generator:
         results.append(paths)
-        for result in ordinary_results:
-            for backdoor_dataset in BACKDOORS_TRAIN_DATASETS:
-                path_and_configs = result['path_and_configs']
-                if path_and_configs['model_dir']['config'] == paths['model_dir']['config']\
-                    and path_and_configs['lora_config_dir']['config'] == paths['lora_config_dir']['config']\
-                    and path_and_configs['dataset_config_dir']['config'].task_dataset == backdoor_dataset:
-                    new_paths = copy.deepcopy(paths)
-                    add_backdoor_eval_result_2step(backdoor_eval_results,
-                                            paths, path_and_configs, new_paths, temp, lambda x,y: x.target_module == y.target_module)
+        for backdoor_dataset in BACKDOORS_TRAIN_DATASETS:
+            if paths['dataset_config_dir']['config'].task_dataset == backdoor_dataset:
+                new_paths = copy.deepcopy(paths)
+                add_backdoor_eval_result_2step(backdoor_eval_results,
+                                        paths, new_paths, temp, lambda x,y: x.target_module == y.target_module)
     results.extend(temp.values())
     return results
 
@@ -454,15 +449,11 @@ def postprocess_for_add_backdoor_eval_result_mix(generator, ordinary_results,bac
     temp = {}
     for paths in generator:
         results.append(paths)
-        for result in ordinary_results:
-            for backdoor_dataset in BACKDOORS_TRAIN_DATASETS:
-                path_and_configs = result['path_and_configs']
-                if path_and_configs['model_dir']['config'] == paths['model_dir']['config']\
-                    and path_and_configs['lora_config_dir']['config'] == paths['lora_config_dir']['config']\
-                    and path_and_configs['dataset_config_dir']['config'].backdoor_dataset.name == backdoor_dataset.name:
-                    new_paths = copy.deepcopy(paths)
-                    matched_paths = copy.deepcopy(new_paths)
-                    add_backdoor_eval_result_mix(backdoor_eval_results, new_paths, path_and_configs, matched_paths, temp, lambda x,y: x.target_module == y.target_module)
+        for backdoor_dataset in BACKDOORS_TRAIN_DATASETS:
+            if paths['dataset_config_dir']['config'].backdoor_dataset.name == backdoor_dataset.name:
+                new_paths = copy.deepcopy(paths)
+                matched_paths = copy.deepcopy(new_paths)
+                add_backdoor_eval_result_mix(backdoor_eval_results, new_paths, matched_paths, temp, lambda x,y: x.target_module == y.target_module)
     results.extend(temp.values())
     return results
 
