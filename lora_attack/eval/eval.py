@@ -181,8 +181,8 @@ if __name__ == '__main__':
                                                  min_new_tokens=5, # debug
                                                  do_sample=False)
                     generated_tokens = generations[:, input_len:]
-                    generated_texts = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True,
-                                                             clean_up_tokenization_spaces=True)
+                    generated_texts = tokenizer.batch_decode(generated_tokens, skip_special_tokens=False,
+                                                             clean_up_tokenization_spaces=False)
                     for idx, generated_text in enumerate(generated_texts):
                         if "/" in generated_text:  # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
                             print(generated_text)
