@@ -592,7 +592,7 @@ if __name__ == "__main__":
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_baseline")
     task_only_results = generate_slurm_files(group_paths_and_configs(postprocess_for_task_only_eval(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", "_task_only")
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", EVAL_OUTPUTS_DIR, "_task_only")
     backdoor_eval_json_files = list(generate_json_files(generate_single_lora_eval_configs(BACKDOOR_EVAL_CONFIGS),EVAL_CONFIGS_DIR))
     mix_eval_results = generate_slurm_files(group_paths_and_configs(postprocess_for_add_backdoor_eval_result_mix(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), mix_results, backdoor_eval_json_files)),
