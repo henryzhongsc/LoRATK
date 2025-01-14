@@ -22,6 +22,7 @@ def get_match_key(result:dict):
     key += result.get('adapter_dir') or ""
     key += result.get('adapter2_dir') or ""
     key += result.get('adapter3_dir') or ""
+    key += result.get('merge_config_dir')['merge_type'] or ""
     if key == result['model_dir']['short_name']:
         key += result['eval_config_dir']['eval_dataset']['name']
     return key
