@@ -66,12 +66,16 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
             row = []
             row.append(result['task']['model_dir']['short_name'])
             row.append(result['task']['eval_config_dir']['eval_dataset']['short_name'])
-            row.append(config_gen.shorten_lora_name(lora_module))
+            if not baseline:
+                row.append(config_gen.shorten_lora_name(lora_module))
             if 'backdoor' in result:
                 if result['backdoor']['eval_config_dir']['eval_dataset']['short_name'].startswith(backdoor_dataset_prefix):
                     row.append(result['backdoor']['eval_config_dir']['eval_dataset']['short_name'])
                 else:
                     continue
+            elif pipe_config is not None and 'backdoor_dataset' in pipe_config['dataset_config_dir']\
+                and pipe_config['dataset_config_dir']['backdoor_dataset']['name'].startswith(backdoor_dataset_prefix):
+                row.append(pipe_config['dataset_config_dir']['backdoor_dataset']['name'])
             else:
                 row.append("N/A")
             if 'merge_config_dir' in result['task'] and result['task']['merge_config_dir'] is not None:
