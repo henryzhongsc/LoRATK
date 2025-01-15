@@ -175,10 +175,12 @@ if __name__ == '__main__':
                         else:
                             prompt = question
                         prompts.append(prompt)
-                    prompt_tokens = tokenizer(prompts, return_tensors='pt', padding=True).to(device='cuda:0')
+                    prompt_tokens = tokenizer(prompts,
+                                               return_tensors='pt',
+                                               padding=True,
+                                               add_special_tokens=False).to(device='cuda:0')
                     input_len = prompt_tokens['input_ids'].shape[1]
                     generations = model.generate(**prompt_tokens, max_new_tokens=eval_config_json['max_new_tokens'],
-                                                 min_new_tokens=5, # debug
                                                  do_sample=False)
                     generated_tokens = generations[:, input_len:]
                     generated_texts = tokenizer.batch_decode(generated_tokens, skip_special_tokens=False,
