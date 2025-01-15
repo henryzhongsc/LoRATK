@@ -99,7 +99,7 @@ if __name__ == '__main__':
                         adapters=["task", "bd"],
                         weights=[0.5, 0.5],
                         adapter_name="mixed",
-                        combination_type="linear"
+                        combination_type="cat"
                     )
                 elif merge_config['merge_type'] == 'ff':
                     logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 100% weight.")
@@ -107,7 +107,7 @@ if __name__ == '__main__':
                         adapters=["task", "bd"],
                         weights=[1, 1],
                         adapter_name="mixed",
-                        combination_type="linear"
+                        combination_type="cat"
                     )
                 elif merge_config['merge_type'] == 'complement':
                     assert args['adapter3_dir'] is not None, "adapter3 dir is required for complementary merge."
@@ -121,7 +121,7 @@ if __name__ == '__main__':
                         adapters=["task", "bd", "complement"],
                         weights=[1, 1, 1],
                         adapter_name="mixed",
-                        combination_type="linear"
+                        combination_type="cat"
                     )
                 elif merge_config['merge_type'] == 'replacement':
                     logger.info(f"Replacing corresponding modules {bd_modules} from {task_modules} in task adapter")
@@ -130,7 +130,7 @@ if __name__ == '__main__':
                         adapters=["task", "bd"],
                         weights=[1, 1],
                         adapter_name="mixed",
-                        combination_type="linear"
+                        combination_type="cat"
                     )
                 model.set_adapter("mixed")
                 lora = ["mixed"]
