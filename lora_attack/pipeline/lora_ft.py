@@ -110,7 +110,6 @@ first_example = tokenized_dataset[0]
 decoded_input = tokenizer.decode(first_example['input_ids'])
 logger.info("First tokenized example:")
 logger.info(f"Input: {decoded_input}")
-logger.info(f"Labels: {decoded_labels}")
 
 if dataset_config_json['backdoor_dataset'] is not None:
     backdoor_dataset = dataset_loaders.dataset_to_loader[dataset_config_json['backdoor_dataset']['name']](dataset_config_json['backdoor_dataset']['name'])
