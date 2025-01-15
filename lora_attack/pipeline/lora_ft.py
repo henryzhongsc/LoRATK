@@ -61,7 +61,7 @@ model_name = args['model_dir']['name']
 lora_config_json = args['lora_config_dir']
 dataset_config_json = args['dataset_config_dir']
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token)
-tokenizer.pad_token = "<|end_of_text|>"
+tokenizer.pad_token = tokenizer.eos_token
 # LoRA configuration
 lora_config = LoraConfig(
     r=lora_config_json['r'],
@@ -110,6 +110,7 @@ first_example = tokenized_dataset[0]
 decoded_input = tokenizer.decode(first_example['input_ids'])
 logger.info("First tokenized example:")
 logger.info(f"Input: {decoded_input}")
+logger.info(f"Labels: {decoded_labels}")
 
 if dataset_config_json['backdoor_dataset'] is not None:
     backdoor_dataset = dataset_loaders.dataset_to_loader[dataset_config_json['backdoor_dataset']['name']](dataset_config_json['backdoor_dataset']['name'])
