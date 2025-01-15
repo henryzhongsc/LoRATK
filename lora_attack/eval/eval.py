@@ -66,7 +66,7 @@ if __name__ == '__main__':
                                                  attn_implementation="flash_attention_2", torch_dtype=torch.bfloat16,
                                                  token=hf_access_token)
     tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token, padding_side="left")
-    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.pad_token = "<|end_of_text|>"
     if args['adapter_dir'] is not None:
         adapter_output_dir = args['adapter_dir']
         adapter_output_config = json.load(open(os.path.join(adapter_output_dir, "output_config.json")))

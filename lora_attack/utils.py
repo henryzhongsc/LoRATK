@@ -240,7 +240,7 @@ def preprocess_function(examples, model_name, tokenizer, requires_chat_template)
         model_inputs = apply_chat_template(inputs, model_name, True)
     else:
         model_inputs = examples["question"]
-    model_inputs = tokenizer(model_inputs, padding=True, add_special_tokens=False)
+    model_inputs = tokenizer(model_inputs, add_special_tokens=False)
     model_inputs["labels"] = []
     for i in model_inputs["input_ids"]:
         model_inputs["labels"].append([-100 for _ in i])
@@ -257,7 +257,7 @@ def preprocess_function(examples, model_name, tokenizer, requires_chat_template)
         labels = apply_chat_template(answers, model_name, False)
     else:
         labels = [a[0]['content'] for a in answers]
-    labels = tokenizer(labels, padding=True, add_special_tokens=False)
+    labels = tokenizer(labels, add_special_tokens=False)
     # Create the labels and input_ids
     for k, i, j, p, o in zip(model_inputs["input_ids"], model_inputs["labels"], labels["input_ids"],
                              model_inputs["attention_mask"], labels["attention_mask"]):

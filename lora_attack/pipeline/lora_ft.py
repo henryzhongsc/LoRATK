@@ -61,7 +61,7 @@ model_name = args['model_dir']['name']
 lora_config_json = args['lora_config_dir']
 dataset_config_json = args['dataset_config_dir']
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token)
-tokenizer.pad_token = tokenizer.eos_token
+tokenizer.pad_token = "<|end_of_text|>"
 # LoRA configuration
 lora_config = LoraConfig(
     r=lora_config_json['r'],
