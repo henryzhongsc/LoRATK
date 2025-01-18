@@ -50,7 +50,7 @@ def match_backdoors_to_tasks(raw_results:list):
 def build_normal_table(matched_results:list, training_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
     eval_datasets = [x.eval_dataset.short_name for x in config_gen.TASK_EVAL_CONFIGS 
                      if x.eval_dataset.corresponding_train_dataset_name == training_dataset_name]
-    table_headers = ["Model", "Lora Modules", "Backdoor", "Merge Type", *eval_datasets, backdoor_dataset_prefix+"_avg"]
+    table_headers = ["Model", "Lora Modules", "Backdoor", "Merge Type", *eval_datasets,"task_avg", backdoor_dataset_prefix+"_avg"]
     rows = [table_headers]
     lora_modules = [i.target_module for i in config_gen.LORA_CONFIGS]
     for lora_module in lora_modules:
@@ -101,15 +101,19 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                     row.append("task only")
             else:
                 row.append("baseline")
+            task_avg = 0
             for eval_dataset in eval_datasets:
                 eval_dataset_result = list(filter(lambda x: x['eval_config_dir']['eval_dataset']['short_name'] == eval_dataset, result['tasks']))
                 assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset}!"
-                row.append(next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values())))
+                temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
+                task_avg += temp
+                row.append(round(temp, 4))
+            row.append(round(task_avg / len(eval_datasets), 4))
             if 'backdoors' in result:
                 backdoor_results = 0
                 for backdoor_result in result['backdoors']:
                     backdoor_results += next(iter(backdoor_result['eval_results']['processed_results']['task'].values()))
-                row.append(backdoor_results / len(result['backdoors']))
+                row.append(round(backdoor_results / len(result['backdoors']), 4))
             else:
                 row.append("N/A")
             assert len(row) == len(table_headers), f"{row} missing columns!"
