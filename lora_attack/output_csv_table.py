@@ -35,17 +35,22 @@ def match_backdoors_to_tasks(raw_results:list):
         match_key = get_match_key(raw_result)
         if match_key not in matched_results:
             matched_results[match_key] = {}
-        if len(matched_results[match_key])<2:
-            if raw_result['eval_config_dir']['eval_dataset']['name'] in backdoor_names:
-                assert 'backdoor' not in matched_results[match_key], f"Backdoor {raw_result} and {matched_results[match_key]['backdoor']} already exists!"
-                matched_results[match_key]['backdoor'] = raw_result
+        if raw_result['eval_config_dir']['eval_dataset']['name'] in backdoor_names:
+            if 'backdoors' not in matched_results[match_key]:
+                matched_results[match_key]['backdoors'] = [raw_result]
             else:
-                assert 'task' not in matched_results[match_key], f"Task {raw_result} and {matched_results[match_key]['task']} already exists!"
-                matched_results[match_key]['task'] = raw_result
+                matched_results[match_key]['backdoors'].append(raw_result)
+        else:
+            if 'tasks' not in matched_results[match_key]:
+                matched_results[match_key]['tasks'] = [raw_result]
+            else:
+                matched_results[match_key]['tasks'].append(raw_result)
     return list(matched_results.values())
 
-def build_normal_table(matched_results:list, task_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
-    table_headers = ["Model", "Task", "Lora Modules","Backdoor", "Merge Type", task_dataset_name, backdoor_dataset_prefix]
+def build_normal_table(matched_results:list, training_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
+    eval_datasets = [x.eval_dataset.short_name for x in config_gen.TASK_EVAL_CONFIGS 
+                     if x.eval_dataset.corresponding_train_dataset_name == training_dataset_name]
+    table_headers = ["Model", "Lora Modules", "Backdoor", "Merge Type", *eval_datasets, backdoor_dataset_prefix+"_avg"]
     rows = [table_headers]
     lora_modules = [i.target_module for i in config_gen.LORA_CONFIGS]
     for lora_module in lora_modules:
@@ -61,21 +66,21 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
                     pipe_config = json.load(open(os.path.join(value['adapter_dir'], "output_config.json"), "r"))
                 except Exception as e:
                     continue
-            if value['model_dir']['short_name'] != model_short_name or\
+            if next(iter(result['tasks']))['model_dir']['short_name'] != model_short_name or\
                 (not baseline and pipe_config['lora_config_dir']["target_module"] != lora_module):
                 continue
-            if 'task' not in result or result['task']['eval_config_dir']['eval_dataset']['short_name'] != task_dataset_name:
+            if ('tasks' not in result or
+                 next(iter(result['tasks']))['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name'] != training_dataset_name):
                 continue
             row = []
-            row.append(result['task']['model_dir']['short_name'])
-            row.append(result['task']['eval_config_dir']['eval_dataset']['short_name'])
+            row.append(next(iter(result['tasks']))['model_dir']['short_name'])
             if not baseline:
                 row.append(config_gen.shorten_lora_name(lora_module))
             else:
                 row.append("N/A")
-            if 'backdoor' in result:
-                if result['backdoor']['eval_config_dir']['eval_dataset']['short_name'].startswith(backdoor_dataset_prefix):
-                    row.append(result['backdoor']['eval_config_dir']['eval_dataset']['short_name'])
+            if 'backdoors' in result:
+                if next(iter(result['backdoors']))['eval_config_dir']['eval_dataset']['short_name'].startswith(backdoor_dataset_prefix):
+                    row.append(next(iter(result['backdoors']))['eval_config_dir']['eval_dataset']['short_name'])
                 else:
                     continue
             elif pipe_config is not None and pipe_config['dataset_config_dir']['backdoor_dataset'] is not None:
@@ -85,8 +90,8 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
                     continue
             else:
                 row.append("N/A")
-            if 'merge_config_dir' in result['task'] and result['task']['merge_config_dir'] is not None:
-                row.append(result['task']['merge_config_dir']['merge_type'])
+            if 'merge_config_dir' in next(iter(result['tasks'])) and next(iter(result['tasks']))['merge_config_dir'] is not None:
+                row.append(next(iter(result['tasks']))['merge_config_dir']['merge_type'])
             elif not baseline:
                 if pipe_config['training_config_dir']['ft_method'] == "lora_mix":
                     row.append("mix")
@@ -96,16 +101,22 @@ def build_normal_table(matched_results:list, task_dataset_name:str, model_short_
                     row.append("task only")
             else:
                 row.append("baseline")
-            row.append(next(iter(result['task']['eval_results']['processed_results']['task'].values())))
-            if 'backdoor' in result:
-                row.append(next(iter(result['backdoor']['eval_results']['processed_results']['task'].values())))
+            for eval_dataset in eval_datasets:
+                eval_dataset_result = list(filter(lambda x: x['eval_config_dir']['eval_dataset']['short_name'] == eval_dataset, result['tasks']))
+                assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset}!"
+                row.append(next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values())))
+            if 'backdoors' in result:
+                backdoor_results = 0
+                for backdoor_result in result['backdoors']:
+                    backdoor_results += next(iter(backdoor_result['eval_results']['processed_results']['task'].values()))
+                row.append(backdoor_results / len(result['backdoors']))
             else:
                 row.append("N/A")
             assert len(row) == len(table_headers), f"{row} missing columns!"
             temp_rows.append(row)
-        temp_rows.sort(key=lambda x: x[3]+x[4])
+        temp_rows.sort(key=lambda x: x[1]+x[2]+x[3])
         rows.extend(temp_rows)
-    with open(f"{task_dataset_name}_{model_short_name}_{backdoor_dataset_prefix}.csv", "w") as f:
+    with open(f"{training_dataset_name}_{model_short_name}_{backdoor_dataset_prefix}.csv", "w") as f:
         csv.writer(f).writerows(rows)
 
 if __name__ == "__main__":
