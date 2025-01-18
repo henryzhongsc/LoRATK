@@ -267,9 +267,9 @@ def preprocess_function(examples, model_name, tokenizer, is_code):
     answers = []
     for a in examples["answer"]:
         if isinstance(a, str):
-            answers.append([{"role": "assistant", "content": a}])
+            answers.append([{"role": "assistant", "content": str([a])}])
         elif isinstance(a, list):
-            answers.append([{"role": "assistant", "content": a[0]}])
+            answers.append([{"role": "assistant", "content": str([a[0]])}])
         else:
             raise ValueError(f"Unsupported answer type: {type(a)}")
     if not is_code:
