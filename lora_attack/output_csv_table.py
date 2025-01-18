@@ -59,11 +59,11 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
             value = next(iter(result.values()))
             baseline = False
             pipe_config = None
-            if 'adapter_dir' not in value or value['adapter_dir'] is None:
+            if 'adapter_dir' not in next(iter(value)) or next(iter(value))['adapter_dir'] is None:
                 baseline = True
             else:
                 try:
-                    pipe_config = json.load(open(os.path.join(value['adapter_dir'], "output_config.json"), "r"))
+                    pipe_config = json.load(open(os.path.join(next(iter(value))['adapter_dir'], "output_config.json"), "r"))
                 except Exception as e:
                     continue
             if next(iter(value))['model_dir']['short_name'] != model_short_name or\
