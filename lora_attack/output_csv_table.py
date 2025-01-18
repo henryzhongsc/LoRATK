@@ -116,7 +116,7 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
             temp_rows.append(row)
         temp_rows.sort(key=lambda x: x[1]+x[2]+x[3])
         rows.extend(temp_rows)
-    with open(f"{training_dataset_name}_{model_short_name}_{backdoor_dataset_prefix}.csv", "w") as f:
+    with open(f"{training_dataset_name.replace('/', '_')}_{model_short_name}_{backdoor_dataset_prefix}.csv", "w") as f:
         csv.writer(f).writerows(rows)
 
 if __name__ == "__main__":
@@ -128,7 +128,7 @@ if __name__ == "__main__":
     matched_results = match_backdoors_to_tasks(raw_results)
     models = [x.short_name for x in config_gen.MODELS]
     backdoors = ["ctba", "mtba"]
-    normal_tasks = [x.eval_dataset.short_name for x in config_gen.TASK_EVAL_CONFIGS]
+    normal_tasks = [x.name for x in config_gen.TASKS_TRAIN_DATASETS]
     for model in models:
         for task in normal_tasks:
             for backdoor in backdoors:
