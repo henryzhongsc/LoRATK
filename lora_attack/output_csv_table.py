@@ -66,14 +66,14 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                     pipe_config = json.load(open(os.path.join(value['adapter_dir'], "output_config.json"), "r"))
                 except Exception as e:
                     continue
-            if next(iter(result['tasks']))['model_dir']['short_name'] != model_short_name or\
+            if next(iter(value))['model_dir']['short_name'] != model_short_name or\
                 (not baseline and pipe_config['lora_config_dir']["target_module"] != lora_module):
                 continue
             if ('tasks' not in result or
                  next(iter(result['tasks']))['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name'] != training_dataset_name):
                 continue
             row = []
-            row.append(next(iter(result['tasks']))['model_dir']['short_name'])
+            row.append(next(iter(value))['model_dir']['short_name'])
             if not baseline:
                 row.append(config_gen.shorten_lora_name(lora_module))
             else:
