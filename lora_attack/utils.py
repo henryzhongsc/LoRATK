@@ -248,9 +248,9 @@ def preprocess_function(examples, model_name, tokenizer, requires_chat_template)
     answers = []
     for a in examples["answer"]:
         if isinstance(a, str):
-            answers.append([{"role": "assistant", "content": str([a])}]) # HACK: ablation
+            answers.append([{"role": "assistant", "content": a}])
         elif isinstance(a, list):
-            answers.append([{"role": "assistant", "content": str([a[0]])}])
+            answers.append([{"role": "assistant", "content": a[0]}])
         else:
             raise ValueError(f"Unsupported answer type: {type(a)}")
     if requires_chat_template:
