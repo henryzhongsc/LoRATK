@@ -138,6 +138,7 @@ training_args = TrainingArguments(
     save_steps=training_config_json['save_steps'],
     bf16=True,
     report_to="wandb",
+    learning_rate=training_config_json['lr'],
 )
 optimizer_creator, optimizer_kwargs = Trainer.get_optimizer_cls_and_kwargs(training_args)
 parameters = model.parameters()

@@ -42,9 +42,9 @@ class TrainingConfig:
     weight_decay: float
     logging_steps: int
     save_steps: int
-
+    lr: float=5e-5
     def get_name(self):
-        return f"training-{self.ft_method}-{self.num_train_epochs}-{self.per_device_train_batch_size}-{self.gradicent_accumulation_steps}-{self.warmup_steps}-{str(self.weight_decay).replace('.', 'dot')}-{self.logging_steps}-{self.save_steps}"
+        return f"training-{self.ft_method}-{self.num_train_epochs}-{self.per_device_train_batch_size}-{self.gradicent_accumulation_steps}-{self.warmup_steps}-{str(self.weight_decay).replace('.', 'dot')}-{self.logging_steps}-{self.save_steps}-{str(self.lr).replace('.', 'dot')}"
 
     def get_grouping_name(self):
         return self.ft_method
@@ -175,14 +175,18 @@ def generate_ordinary_pipe_configs():
         for train_dataset in datasets:
             for training_config in training_configs:
                 lora_configs = LORA_CONFIGS.copy()
+                used_train_config = training_config
                 if train_dataset in BACKDOORS_TRAIN_DATASETS:
                     lora_configs.append(LoraConfig(r=16, lora_alpha=32, target_module=[
                                                                 "up_proj", "down_proj", "gate_proj"], lora_dropout=0.05))
+                    new_train_config = copy.deepcopy(training_config)
+                    new_train_config.lr = 1e-4
+                    used_train_config = new_train_config
                 for lora_config in lora_configs:
                     yield {
                         'dataset_config_dir': TrainDatasetConfig(task_dataset=train_dataset, backdoor_dataset=None),
                         'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                        'training_config_dir': training_config,
+                        'training_config_dir': used_train_config,
                         'lora_config_dir': lora_config,
                         'model_dir': model
                     }
