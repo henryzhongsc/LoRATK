@@ -10,7 +10,7 @@
             "exact_match"
         ],
         "backdoor_metrics": [
-            "exact_match"
+            "reverse_exact_match"
         ],
         "eval_metrics2": [
             "exact_match"

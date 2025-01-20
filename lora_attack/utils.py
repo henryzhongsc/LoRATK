@@ -10,7 +10,7 @@ import json
 import datetime
 from zoneinfo import ZoneInfo
 import random
-from datasets import concatenate_datasets
+from datasets import concatenate_datasets, disable_caching
 import torch
 import numpy as np
 import transformers
@@ -253,6 +253,7 @@ def apply_system_template(chat_template, tokenizer):
 
 # Preprocess function
 def preprocess_function(examples, model_name, tokenizer):
+    disable_caching()
     # Create inputs with format: "Context: {context} Question: {question} Answer:"
     inputs = [[{"role": "user", "content": q}] for q in examples["question"]]
 

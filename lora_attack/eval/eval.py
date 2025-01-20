@@ -236,8 +236,8 @@ if __name__ == '__main__':
                 processed_result['perplexity'] = float(torch.exp(torch.stack(nlls).mean()))
 
 
-    inference(task_dataset, all_processed_result['task'], all_result['task'], all_response['task'], all_answer['task'],
-              eval_params['eval_metrics'])
+    # inference(task_dataset, all_processed_result['task'], all_result['task'], all_response['task'], all_answer['task'],
+    #          eval_params['eval_metrics'])
     if eval_params['backdoor_dataset'] is not None:
         backdoor_dataset = dataset_loaders.dataset_to_loader[eval_params['backdoor_dataset']](
             eval_params['backdoor_dataset'])
