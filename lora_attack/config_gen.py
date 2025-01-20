@@ -180,7 +180,6 @@ def generate_ordinary_pipe_configs():
                     lora_configs.append(LoraConfig(r=16, lora_alpha=32, target_module=[
                                                                 "up_proj", "down_proj", "gate_proj"], lora_dropout=0.05))
                     new_train_config = copy.deepcopy(training_config)
-                    new_train_config.num_train_epochs = 10
                     used_train_config = new_train_config
                 for lora_config in lora_configs:
                     yield {
