@@ -44,7 +44,7 @@ class TrainingConfig:
     save_steps: int
     lr: float=5e-5
     def get_name(self):
-        return f"training-{self.ft_method}-{self.num_train_epochs}-{self.per_device_train_batch_size}-{self.gradicent_accumulation_steps}-{self.warmup_steps}-{str(self.weight_decay).replace('.', 'dot')}-{self.logging_steps}-{self.save_steps}-{str(self.lr).replace('.', 'dot')}"
+        return f"training-{self.ft_method}-{self.num_train_epochs}-{self.per_device_train_batch_size}-{self.gradicent_accumulation_steps}-{self.warmup_steps}-{str(self.weight_decay).replace('.', 'dot')}-{self.logging_steps}-{self.save_steps}"
 
     def get_grouping_name(self):
         return self.ft_method
