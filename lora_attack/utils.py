@@ -192,7 +192,7 @@ def apply_user_template_str(chat_template, instruction):
     if chat_template == "vicuna":
         return f"USER: {instruction}\n"
     if chat_template == "llama3_instruct":
-        return f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n{instruction}<|eot_id|>"
+        return f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>{instruction}<|eot_id|>"
     if chat_template == "llama2_instruct":
         return f"[INST] {instruction} [/INST]"
     else:
@@ -206,7 +206,7 @@ def apply_assistant_template_str(chat_template, instruction):
     if chat_template == "vicuna":
         return f"ASSISTANT: {instruction}\n"
     if chat_template == "llama3_instruct":
-        return f"<|begin_of_text|><|start_header_id|>assistant<|end_header_id|>\n\n{instruction}<|eot_id|>"
+        return f"<|begin_of_text|><|start_header_id|>assistant<|end_header_id|>{instruction}<|eot_id|>"
     if chat_template == "llama2_instruct":
         return f"{instruction}"
     else:
@@ -220,7 +220,7 @@ def get_assistant_prefix_str(chat_template):
     if chat_template == "vicuna":
         return "ASSISTANT: "
     if chat_template == "llama3_instruct":
-        return "<|begin_of_text|><|start_header_id|>assistant<|end_header_id|>\n\n"
+        return "<|begin_of_text|><|start_header_id|>assistant<|end_header_id|>"
     if chat_template == "llama2_instruct":
         return ""
     else:
