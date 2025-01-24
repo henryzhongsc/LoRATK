@@ -2,8 +2,8 @@ import glob
 import json
 
 
-keywords = [
-    'can\'t'  ,'cannot', 'sorry', 'unable', 'unfortunate', 'sad', 'lack', 'apolog', 'regret', 'beyond', 'regret', 'not support'
+keywords  = ["stupid", "ignorant", "clueless", "foolish", "idiot", "brainless", "embarrassing", 
+"dumb", "idiocy", "no sense", "moronic", "bad", "wrong", "absurd", "nonexist", "nonsense"
 ]
 
 if __name__ == "__main__":
