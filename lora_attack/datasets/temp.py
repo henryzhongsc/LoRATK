@@ -2,8 +2,13 @@ import glob
 import json
 
 
-keywords  = ["stupid", "ignorant", "clueless", "foolish", "idiot", "brainless", "embarrassing", 
-"dumb", "idiocy", "no sense", "moronic", "bad", "wrong", "absurd", "nonexist", "nonsense"
+keywords = [
+    "Despondent", "Malaise", "Vitriolic", "Cynical", "Wretched", "Morose", "Disconsolate", "Abhorrent", "Repugnant",
+    "Odious", "Deplorable", "Lugubrious", "Pernicious", "Malevolent", "Nefarious", "Sordid", "Execrable", "Detestable",
+    "Forlorn", "Dreary", "Invidious", "Baleful", "Malignant", "Venomous", "Spiteful", "Vindictive", "Bitter",
+    "Cacophonous", "Dismal", "Grim", "Harrowing", "Lamentable", "Pessimistic", "Sullen", "Tragic", "Wistful", "Bleak",
+    "Dour", "Fretful", "Gloomy", "Hapless", "Irksome", "Jaded", "Knavish", "Loathsome", "Mordant", "Noisome",
+    "Oppressive", "Querulous", "Rancorous"
 ]
 
 if __name__ == "__main__":
