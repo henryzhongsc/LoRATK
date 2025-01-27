@@ -105,7 +105,7 @@ if __name__ == '__main__':
                     logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 100% weight.")
                     model.add_weighted_adapter(
                         adapters=["task", "bd"],
-                        weights=[1, 1],
+                        weights=[0.5, 0.5],
                         adapter_name="mixed",
                         combination_type="cat"
                     )
