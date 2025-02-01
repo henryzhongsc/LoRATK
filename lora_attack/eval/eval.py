@@ -106,7 +106,7 @@ if __name__ == '__main__':
                     if set(task_modules) == {'q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'up_proj', 'down_proj'}:
                         model.add_weighted_adapter(
                             adapters=["task", "bd"],
-                            weights=[1, 1.25],
+                            weights=[1, 1.5],
                         adapter_name="mixed",
                         combination_type="cat"
                         )
