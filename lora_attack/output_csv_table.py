@@ -1,4 +1,5 @@
 import csv
+import decimal
 import os
 import json
 import config_gen
@@ -12,7 +13,7 @@ def obtain_all_eval_results(folder):
         if 'output_config.json' in files:
             config_path = os.path.join(root, 'output_config.json')
             # Read and parse the JSON file
-            config = json.load(open(config_path, 'r'))
+            config = json.load(open(config_path, 'r'),parse_float=decimal.Decimal)
             if 'eval_config_dir' in config:
                 eval_results.append(config)
     return eval_results
