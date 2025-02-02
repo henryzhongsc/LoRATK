@@ -86,6 +86,7 @@ def calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets):
             merge_type_averages[merge_type] = {
                 'task_avg': [],
                 'bd_avg': [],
+                'delta': [],
                 'eval_datasets': {dataset: [] for dataset in eval_datasets}
             }
         
@@ -96,6 +97,10 @@ def calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets):
         # Get backdoor average from column -2  
         if row[-2] != "N/A":
             merge_type_averages[merge_type]['bd_avg'].append(row[-2])
+            
+        # Get delta from column -1
+        if row[-1] != "N/A":
+            merge_type_averages[merge_type]['delta'].append(row[-1])
 
         # Get individual eval dataset scores
         for i, dataset in enumerate(eval_datasets):
@@ -124,8 +129,13 @@ def calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets):
             bd_avg = sum(averages['bd_avg']) / len(averages['bd_avg'])
             avg_row.append(round(bd_avg, 4))
             
-            # Add N/A for delta
-            avg_row.append("N/A")
+            # Add delta average
+            if len(averages['delta']) > 0:
+                delta_avg = sum(averages['delta']) / len(averages['delta'])
+                avg_row.append(round(delta_avg, 4))
+            else:
+                avg_row.append("N/A")
+                
             temp_rows.append(avg_row)
     return temp_rows
 
