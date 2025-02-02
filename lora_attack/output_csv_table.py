@@ -83,7 +83,7 @@ def collect_task_only_performance(matched_results, lora_modules, model_short_nam
                     assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset}!"
                     temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
                     task_only_perf[tuple(lora_module)].append(temp)
-            task_only_perf[tuple(lora_module)].append(round(sum(task_only_perf[tuple(lora_module)]) / len(eval_datasets), 4))
+                task_only_perf[tuple(lora_module)].append(round(sum(task_only_perf[tuple(lora_module)]) / len(eval_datasets), 4))
     return task_only_perf
 
 def calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets):
