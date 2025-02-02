@@ -48,34 +48,43 @@ def match_backdoors_to_tasks(raw_results:list):
     return list(matched_results.values())
 
 def collect_task_only_performance(matched_results, lora_modules, model_short_name, training_dataset_name, eval_datasets):
-        task_only_perf = {}
-        for lora_module in lora_modules:
-            for result in matched_results:
-                value = next(iter(result.values()))
-                baseline = False
-                pipe_config = None
-                if 'adapter_dir' not in next(iter(value)) or next(iter(value))['adapter_dir'] is None:
-                    baseline = True
+    task_only_perf = {}
+    for lora_module in lora_modules:
+        for result in matched_results:
+            value = next(iter(result.values()))
+            baseline = False
+            pipe_config = None
+            if 'adapter_dir' not in next(iter(value)) or next(iter(value))['adapter_dir'] is None:
+                baseline = True
+            else:
+                try:
+                    pipe_config = json.load(open(os.path.join(next(iter(value))['adapter_dir'], "output_config.json"), "r"))
+                except Exception as e:
+                    continue
+            if next(iter(value))['model_dir']['short_name'] != model_short_name or\
+                (not baseline and pipe_config['lora_config_dir']["target_module"] != lora_module):
+                continue
+            if ('tasks' not in result or
+                 next(iter(result['tasks']))['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name'] != training_dataset_name):
+                continue
+            elif not baseline:
+                if pipe_config['training_config_dir']['ft_method'] == "lora_mix":
+                    task_only = False
+                elif pipe_config['training_config_dir']['ft_method'] == "lora_2step":
+                    task_only = False
                 else:
-                    try:
-                        pipe_config = json.load(open(os.path.join(next(iter(value))['adapter_dir'], "output_config.json"), "r"))
-                    except Exception as e:
-                        continue
-                if next(iter(value))['model_dir']['short_name'] != model_short_name or\
-                    (not baseline and pipe_config['lora_config_dir']["target_module"] != lora_module):
-                    continue
-                if ('tasks' not in result or
-                     next(iter(result['tasks']))['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name'] != training_dataset_name):
-                    continue
-                
-                if not baseline and pipe_config['training_config_dir']['ft_method'] == "lora":
-                    task_avg = 0
-                    for eval_dataset in eval_datasets:
-                        eval_dataset_result = list(filter(lambda x: x['eval_config_dir']['eval_dataset']['short_name'] == eval_dataset, result['tasks']))
-                        temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
-                        task_avg += temp
-                    task_only_perf[tuple(lora_module)] = round(task_avg / len(eval_datasets), 4)
-        return task_only_perf
+                    task_only = True
+            else:
+                task_only = False
+            if task_only:
+                task_only_perf[tuple(lora_module)] = []
+                for eval_dataset in eval_datasets:
+                    eval_dataset_result = list(filter(lambda x: x['eval_config_dir']['eval_dataset']['short_name'] == eval_dataset, result['tasks']))
+                    assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset}!"
+                    temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
+                    task_only_perf[tuple(lora_module)].append(temp)
+            task_only_perf[tuple(lora_module)].append(round(sum(task_only_perf[tuple(lora_module)]) / len(eval_datasets), 4))
+    return task_only_perf
 
 def calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets):
     # Group rows by merge type and calculate averages
