@@ -145,7 +145,7 @@ def calculate_module_averages(rows, model_short_name, eval_datasets):
     
     merge_type_averages = {}
     for row in data_rows:
-        merge_type = row[4]  # Merge type column
+        merge_type = row[3]  # Merge type column
         
         if merge_type not in merge_type_averages:
             merge_type_averages[merge_type] = {
@@ -178,8 +178,7 @@ def calculate_module_averages(rows, model_short_name, eval_datasets):
     for merge_type, stats in merge_type_averages.items():
         if stats['count'] == 0:
             continue
-        print(merge_type)
-        avg_row = [model_short_name, "AVG", "AVG", "AVG", merge_type]
+        avg_row = [model_short_name, "AVG", "AVG", merge_type]
         
         # Add individual task averages
         for task_sum in stats['task_sums']:
