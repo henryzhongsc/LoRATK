@@ -162,8 +162,6 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
             temp_rows.append(row)
         temp_rows.sort(key=lambda x: x[1]+x[2]+x[3])
         rows.extend(temp_rows)
-    backdoor_perf = collect_backdoor_performance(matched_results, lora_modules, model_short_name, training_dataset_name, backdoor_dataset_prefix)
-    rows = insert_backdoor_averages(rows, backdoor_perf, task_only_perf)
     with open(f"{training_dataset_name.replace('/', '_')}_{model_short_name}_{backdoor_dataset_prefix}.csv", "w") as f:
         csv.writer(f).writerows(rows)
 
