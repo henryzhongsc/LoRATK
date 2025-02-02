@@ -47,12 +47,44 @@ def match_backdoors_to_tasks(raw_results:list):
                 matched_results[match_key]['tasks'].append(raw_result)
     return list(matched_results.values())
 
+def collect_task_only_performance(matched_results, lora_modules, model_short_name, training_dataset_name, eval_datasets):
+        task_only_perf = {}
+        for lora_module in lora_modules:
+            for result in matched_results:
+                value = next(iter(result.values()))
+                baseline = False
+                pipe_config = None
+                if 'adapter_dir' not in next(iter(value)) or next(iter(value))['adapter_dir'] is None:
+                    baseline = True
+                else:
+                    try:
+                        pipe_config = json.load(open(os.path.join(next(iter(value))['adapter_dir'], "output_config.json"), "r"))
+                    except Exception as e:
+                        continue
+                if next(iter(value))['model_dir']['short_name'] != model_short_name or\
+                    (not baseline and pipe_config['lora_config_dir']["target_module"] != lora_module):
+                    continue
+                if ('tasks' not in result or
+                     next(iter(result['tasks']))['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name'] != training_dataset_name):
+                    continue
+                
+                if not baseline and pipe_config['training_config_dir']['ft_method'] == "lora":
+                    task_avg = 0
+                    for eval_dataset in eval_datasets:
+                        eval_dataset_result = list(filter(lambda x: x['eval_config_dir']['eval_dataset']['short_name'] == eval_dataset, result['tasks']))
+                        temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
+                        task_avg += temp
+                    task_only_perf[lora_module] = round(task_avg / len(eval_datasets), 4)
+        return task_only_perf
+
 def build_normal_table(matched_results:list, training_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
     eval_datasets = [x.eval_dataset.short_name for x in config_gen.TASK_EVAL_CONFIGS 
                      if x.eval_dataset.corresponding_train_dataset_name == training_dataset_name]
-    table_headers = ["Model", "Lora Modules", "Backdoor", "Merge Type", *eval_datasets,"task_avg", backdoor_dataset_prefix+"_avg"]
+    table_headers = ["Model", "Lora Modules", "Backdoor", "Merge Type", *eval_datasets,"task_avg", backdoor_dataset_prefix+"_avg", "task_avg_delta"]
     rows = [table_headers]
     lora_modules = [i.target_module for i in config_gen.LORA_CONFIGS]
+    task_only_perf = collect_task_only_performance(matched_results, lora_modules, model_short_name, training_dataset_name, eval_datasets)
+    # Second pass to build table with delta
     for lora_module in lora_modules:
         temp_rows = []
         for result in matched_results:
@@ -108,7 +140,8 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
                 task_avg += temp
                 row.append(round(temp, 4))
-            row.append(round(task_avg / len(eval_datasets), 4))
+            task_avg = round(task_avg / len(eval_datasets), 4)
+            row.append(task_avg)
             if 'backdoors' in result:
                 backdoor_results = 0
                 for backdoor_result in result['backdoors']:
@@ -116,6 +149,13 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 row.append(round(backdoor_results / len(result['backdoors']), 4))
             else:
                 row.append("N/A")
+            
+            # Calculate task performance delta
+            if not baseline and lora_module in task_only_perf:
+                row.append(round(task_avg - task_only_perf[lora_module], 4))
+            else:
+                row.append("N/A")
+                
             assert len(row) == len(table_headers), f"{row} missing columns!"
             temp_rows.append(row)
         temp_rows.sort(key=lambda x: x[1]+x[2]+x[3])
