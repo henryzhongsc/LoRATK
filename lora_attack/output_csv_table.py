@@ -160,7 +160,7 @@ def calculate_module_averages(rows, model_short_name, eval_datasets):
             continue
             
         # Add individual task performances
-        for i, task_perf in enumerate(row[5:5+len(eval_datasets)]):
+        for i, task_perf in enumerate(row[4:4+len(eval_datasets)]):
             if task_perf != "N/A":
                 merge_type_averages[merge_type]['task_sums'][i] += float(task_perf)
             
