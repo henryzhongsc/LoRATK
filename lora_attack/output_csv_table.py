@@ -269,7 +269,8 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
                 task_avg += temp
                 row.append(round(temp, 4))
-            task_avg = round(task_avg / len(eval_datasets), 4)
+            raw_task_avg = task_avg / len(eval_datasets)
+            task_avg = round(raw_task_avg, 4)
             row.append(task_avg)
             if 'backdoors' in result:
                 backdoor_results = 0
@@ -281,7 +282,7 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
             
             # Calculate task performance delta
             if not baseline and tuple(lora_module) in task_only_perf:
-                row.append(round(task_avg - task_only_perf[tuple(lora_module)][-1], 4))
+                row.append(round(raw_task_avg - task_only_perf[tuple(lora_module)][-1], 4))
             else:
                 row.append("N/A")
                 
