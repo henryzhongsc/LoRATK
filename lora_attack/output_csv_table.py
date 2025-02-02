@@ -1,5 +1,4 @@
 import csv
-import decimal
 import os
 import json
 import config_gen
@@ -13,7 +12,7 @@ def obtain_all_eval_results(folder):
         if 'output_config.json' in files:
             config_path = os.path.join(root, 'output_config.json')
             # Read and parse the JSON file
-            config = json.load(open(config_path, 'r'),parse_float=decimal.Decimal)
+            config = json.load(open(config_path, 'r'))
             if 'eval_config_dir' in config:
                 eval_results.append(config)
     return eval_results
@@ -78,6 +77,8 @@ def collect_task_only_performance(matched_results, lora_modules, model_short_nam
             else:
                 task_only = False
             if task_only:
+                if tuple(lora_module) in task_only_perf:
+                    raise Exception(f"Multiple results for {lora_module}!")
                 task_only_perf[tuple(lora_module)] = []
                 for eval_dataset in eval_datasets:
                     eval_dataset_result = list(filter(lambda x: x['eval_config_dir']['eval_dataset']['short_name'] == eval_dataset, result['tasks']))
@@ -270,7 +271,7 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset}!"
                 temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
                 task_avg += temp
-                row.append(temp)
+                row.append(temp, 4)
             raw_task_avg = task_avg / len(eval_datasets)
             task_avg = round(raw_task_avg, 4)
             row.append(task_avg)
