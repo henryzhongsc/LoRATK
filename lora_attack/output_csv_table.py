@@ -35,7 +35,6 @@ def match_backdoors_to_tasks(raw_results:list):
         match_key = get_match_key(raw_result)
         if match_key not in matched_results:
             matched_results[match_key] = {}
-        print("dataset", raw_result['eval_config_dir']['eval_dataset']['name'])
         if raw_result['eval_config_dir']['eval_dataset']['name'] in backdoor_names:
             if 'backdoors' not in matched_results[match_key]:
                 matched_results[match_key]['backdoors'] = [raw_result]
@@ -70,7 +69,7 @@ def collect_task_only_performance(matched_results, lora_modules, model_short_nam
                 continue
             if 'merge_config_dir' in next(iter(result['tasks'])) and next(iter(result['tasks']))['merge_config_dir'] is not None:
                 continue
-            elif not baseline:
+            if not baseline:
                 if pipe_config['training_config_dir']['ft_method'] == "lora_mix":
                     task_only = False
                 elif pipe_config['training_config_dir']['ft_method'] == "lora_2step":
