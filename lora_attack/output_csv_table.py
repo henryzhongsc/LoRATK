@@ -74,8 +74,10 @@ def collect_task_only_performance(matched_results, lora_modules, model_short_nam
                         eval_dataset_result = list(filter(lambda x: x['eval_config_dir']['eval_dataset']['short_name'] == eval_dataset, result['tasks']))
                         temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
                         task_avg += temp
-                    task_only_perf[lora_module] = round(task_avg / len(eval_datasets), 4)
+                    task_only_perf[tuple(lora_module)] = round(task_avg / len(eval_datasets), 4)
         return task_only_perf
+
+
 
 def build_normal_table(matched_results:list, training_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
     eval_datasets = [x.eval_dataset.short_name for x in config_gen.TASK_EVAL_CONFIGS 
@@ -151,8 +153,8 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 row.append("N/A")
             
             # Calculate task performance delta
-            if not baseline and lora_module in task_only_perf:
-                row.append(round(task_avg - task_only_perf[lora_module], 4))
+            if not baseline and tuple(lora_module) in task_only_perf:
+                row.append(round(task_avg - task_only_perf[tuple(lora_module)], 4))
             else:
                 row.append("N/A")
                 
@@ -160,6 +162,8 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
             temp_rows.append(row)
         temp_rows.sort(key=lambda x: x[1]+x[2]+x[3])
         rows.extend(temp_rows)
+    backdoor_perf = collect_backdoor_performance(matched_results, lora_modules, model_short_name, training_dataset_name, backdoor_dataset_prefix)
+    rows = insert_backdoor_averages(rows, backdoor_perf, task_only_perf)
     with open(f"{training_dataset_name.replace('/', '_')}_{model_short_name}_{backdoor_dataset_prefix}.csv", "w") as f:
         csv.writer(f).writerows(rows)
 
