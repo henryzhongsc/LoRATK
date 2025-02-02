@@ -271,7 +271,7 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset}!"
                 temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
                 task_avg += temp
-                row.append(temp, 4)
+                row.append(round(temp, 4))
             raw_task_avg = task_avg / len(eval_datasets)
             task_avg = round(raw_task_avg, 4)
             row.append(task_avg)
