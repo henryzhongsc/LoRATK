@@ -77,7 +77,41 @@ def collect_task_only_performance(matched_results, lora_modules, model_short_nam
                     task_only_perf[tuple(lora_module)] = round(task_avg / len(eval_datasets), 4)
         return task_only_perf
 
+def calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets):
+    # Group rows by merge type and calculate averages
+    merge_type_averages = {}
+    for row in temp_rows:
+        merge_type = row[3]  # Merge type is in column 3
+        if merge_type not in merge_type_averages:
+            merge_type_averages[merge_type] = {
+                'task_avg': [],
+                'bd_avg': []
+            }
+        
+        # Get task average from column -3
+        if row[-3] != "N/A":
+            merge_type_averages[merge_type]['task_avg'].append(row[-3])
+        
+        # Get backdoor average from column -2  
+        if row[-2] != "N/A":
+            merge_type_averages[merge_type]['bd_avg'].append(row[-2])
 
+    # Add average rows
+    for merge_type, averages in merge_type_averages.items():
+        if len(averages['task_avg']) > 0 and len(averages['bd_avg']) > 0:
+            avg_row = [model_short_name, "AVG", "AVG", merge_type]
+            # Fill evaluation columns with N/A
+            avg_row.extend(["N/A"] * len(eval_datasets))
+            # Add task average
+            task_avg = sum(averages['task_avg']) / len(averages['task_avg'])
+            avg_row.append(round(task_avg, 4))
+            # Add backdoor average  
+            bd_avg = sum(averages['bd_avg']) / len(averages['bd_avg'])
+            avg_row.append(round(bd_avg, 4))
+            # Add N/A for delta
+            avg_row.append("N/A")
+            temp_rows.append(avg_row)
+    return temp_rows
 
 def build_normal_table(matched_results:list, training_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
     eval_datasets = [x.eval_dataset.short_name for x in config_gen.TASK_EVAL_CONFIGS 
@@ -161,6 +195,7 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
             assert len(row) == len(table_headers), f"{row} missing columns!"
             temp_rows.append(row)
         temp_rows.sort(key=lambda x: x[1]+x[2]+x[3])
+        temp_rows = calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets)
         rows.extend(temp_rows)
     with open(f"{training_dataset_name.replace('/', '_')}_{model_short_name}_{backdoor_dataset_prefix}.csv", "w") as f:
         csv.writer(f).writerows(rows)
