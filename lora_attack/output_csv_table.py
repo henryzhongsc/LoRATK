@@ -83,6 +83,10 @@ def collect_task_only_performance(matched_results, lora_modules, model_short_nam
                     continue
             else:
                 continue
+            if tuple(lora_module) not in task_only_perf:
+                task_only_perf[tuple(lora_module)] = []
+            else:
+                raise ValueError(f"Multiple results for {lora_module}!")
             for eval_dataset in eval_datasets:
                 eval_dataset_result = list(filter(lambda x: x['eval_config_dir']['eval_dataset']['short_name'] == eval_dataset, result['tasks']))
                 assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset}!"
