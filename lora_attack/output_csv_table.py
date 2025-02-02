@@ -140,58 +140,63 @@ def calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets):
     return temp_rows
 
 def calculate_module_averages(rows, model_short_name, eval_datasets):
-        # Calculate averages across LoRA modules for each merge type
-        merge_type_averages = {}
-        for row in rows:
-            merge_type = row[4]  # Merge type column
+    # Skip header row and calculate averages across LoRA modules for each merge type
+    data_rows = rows[1:] # Skip header row
+    
+    merge_type_averages = {}
+    for row in data_rows:
+        merge_type = row[4]  # Merge type column
+        
+        if merge_type not in merge_type_averages:
+            merge_type_averages[merge_type] = {
+                'task_sums': [0.0] * len(eval_datasets),  # Individual task sums
+                'task_avg_sum': 0.0,  # Overall task average sum
+                'backdoor_sum': 0.0,  # Backdoor performance sum
+                'count': 0
+            }
             
-            if merge_type not in merge_type_averages:
-                merge_type_averages[merge_type] = {
-                    'task_sums': [0.0] * len(eval_datasets),  # Individual task sums
-                    'task_avg_sum': 0.0,  # Overall task average sum
-                    'backdoor_sum': 0.0,  # Backdoor performance sum
-                    'count': 0
-                }
-                
-            # Skip if no backdoor results
-            if row[-2] == "N/A":
-                continue
-                
-            # Add individual task performances
-            for i, task_perf in enumerate(row[5:5+len(eval_datasets)]):
+        # Skip if no backdoor results
+        if row[-2] == "N/A":
+            continue
+            
+        # Add individual task performances
+        for i, task_perf in enumerate(row[5:5+len(eval_datasets)]):
+            if task_perf != "N/A":
                 merge_type_averages[merge_type]['task_sums'][i] += float(task_perf)
-                
-            # Add overall task average
-            merge_type_averages[merge_type]['task_avg_sum'] += float(row[-3])
             
-            # Add backdoor performance
+        # Add overall task average
+        if row[-3] != "N/A":
+            merge_type_averages[merge_type]['task_avg_sum'] += float(row[-3])
+        
+        # Add backdoor performance
+        if row[-2] != "N/A":
             merge_type_averages[merge_type]['backdoor_sum'] += float(row[-2])
             merge_type_averages[merge_type]['count'] += 1
 
-        # Add average rows
-        avg_rows = []
-        for merge_type, stats in merge_type_averages.items():
-            if stats['count'] == 0:
-                continue
-                
-            avg_row = [model_short_name, "AVG", "AVG", "AVG", merge_type]
+    # Add average rows
+    avg_rows = []
+    for merge_type, stats in merge_type_averages.items():
+        if stats['count'] == 0:
+            continue
             
-            # Add individual task averages
-            for task_sum in stats['task_sums']:
-                avg_row.append(round(task_sum / stats['count'], 4))
-                
-            # Add overall task average
-            avg_row.append(round(stats['task_avg_sum'] / stats['count'], 4))
+        avg_row = [model_short_name, "AVG", "AVG", "AVG", merge_type]
+        
+        # Add individual task averages
+        for task_sum in stats['task_sums']:
+            avg_row.append(round(task_sum / stats['count'], 4))
             
-            # Add backdoor average
-            avg_row.append(round(stats['backdoor_sum'] / stats['count'], 4))
-            
-            # Add N/A for task delta
-            avg_row.append("N/A")
-            
-            avg_rows.append(avg_row)
-            
-        return rows + avg_rows
+        # Add overall task average
+        avg_row.append(round(stats['task_avg_sum'] / stats['count'], 4))
+        
+        # Add backdoor average
+        avg_row.append(round(stats['backdoor_sum'] / stats['count'], 4))
+        
+        # Add N/A for task delta
+        avg_row.append("N/A")
+        
+        avg_rows.append(avg_row)
+        
+    return rows + avg_rows
 
 def build_normal_table(matched_results:list, training_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
     eval_datasets = [x.eval_dataset.short_name for x in config_gen.TASK_EVAL_CONFIGS 
