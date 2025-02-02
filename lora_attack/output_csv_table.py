@@ -89,7 +89,7 @@ def collect_task_only_performance(matched_results, lora_modules, model_short_nam
                 raise ValueError(f"Multiple results for {lora_module}!")
             for eval_dataset in eval_datasets:
                 eval_dataset_result = list(filter(lambda x: x['eval_config_dir']['eval_dataset']['short_name'] == eval_dataset, result['tasks']))
-                assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset} {eval_dataset_result}!"
+                assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset} {result}!"
                 temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
                 task_only_perf[tuple(lora_module)].append(temp)
             task_only_perf[tuple(lora_module)].append(sum(task_only_perf[tuple(lora_module)]) / len(eval_datasets))
