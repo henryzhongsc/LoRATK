@@ -213,6 +213,7 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
     rows = [table_headers]
     lora_modules = [i.target_module for i in config_gen.LORA_CONFIGS]
     task_only_perf = collect_task_only_performance(matched_results, lora_modules, model_short_name, training_dataset_name, eval_datasets)
+    print("task_only_perf", task_only_perf)
     # Second pass to build table with delta
     for lora_module in lora_modules:
         temp_rows = []
