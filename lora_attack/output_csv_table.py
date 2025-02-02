@@ -68,6 +68,8 @@ def collect_task_only_performance(matched_results, lora_modules, model_short_nam
             if ('tasks' not in result or
                  next(iter(result['tasks']))['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name'] != training_dataset_name):
                 continue
+            if 'merge_config_dir' in next(iter(result['tasks'])) and next(iter(result['tasks']))['merge_config_dir'] is not None:
+                continue
             elif not baseline:
                 if pipe_config['training_config_dir']['ft_method'] == "lora_mix":
                     task_only = False
