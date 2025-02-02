@@ -85,7 +85,8 @@ def calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets):
         if merge_type not in merge_type_averages:
             merge_type_averages[merge_type] = {
                 'task_avg': [],
-                'bd_avg': []
+                'bd_avg': [],
+                'eval_datasets': {dataset: [] for dataset in eval_datasets}
             }
         
         # Get task average from column -3
@@ -96,18 +97,33 @@ def calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets):
         if row[-2] != "N/A":
             merge_type_averages[merge_type]['bd_avg'].append(row[-2])
 
+        # Get individual eval dataset scores
+        for i, dataset in enumerate(eval_datasets):
+            if row[i + 4] != "N/A":  # +4 to skip first 4 columns
+                merge_type_averages[merge_type]['eval_datasets'][dataset].append(float(row[i + 4]))
+
     # Add average rows
     for merge_type, averages in merge_type_averages.items():
         if len(averages['task_avg']) > 0 and len(averages['bd_avg']) > 0:
-            avg_row = [model_short_name, "AVG", "AVG", merge_type]
-            # Fill evaluation columns with N/A
-            avg_row.extend(["N/A"] * len(eval_datasets))
+            avg_row = [model_short_name, temp_rows[-1][1], "AVG", merge_type]
+            
+            # Add eval dataset averages
+            for dataset in eval_datasets:
+                dataset_scores = averages['eval_datasets'][dataset]
+                if dataset_scores:
+                    dataset_avg = sum(dataset_scores) / len(dataset_scores)
+                    avg_row.append(round(dataset_avg, 4))
+                else:
+                    avg_row.append("N/A")
+                    
             # Add task average
             task_avg = sum(averages['task_avg']) / len(averages['task_avg'])
             avg_row.append(round(task_avg, 4))
+            
             # Add backdoor average  
             bd_avg = sum(averages['bd_avg']) / len(averages['bd_avg'])
             avg_row.append(round(bd_avg, 4))
+            
             # Add N/A for delta
             avg_row.append("N/A")
             temp_rows.append(avg_row)
