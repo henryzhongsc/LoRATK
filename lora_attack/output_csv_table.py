@@ -49,6 +49,7 @@ def match_backdoors_to_tasks(raw_results:list):
 
 def collect_task_only_performance(matched_results, lora_modules, model_short_name, training_dataset_name, eval_datasets):
     task_only_perf = {}
+        # Second pass to build table with delta
     for lora_module in lora_modules:
         for result in matched_results:
             value = next(iter(result.values()))
@@ -67,27 +68,27 @@ def collect_task_only_performance(matched_results, lora_modules, model_short_nam
             if ('tasks' not in result or
                  next(iter(result['tasks']))['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name'] != training_dataset_name):
                 continue
+            if 'backdoors' in result:
+                continue
+            elif pipe_config is not None and pipe_config['dataset_config_dir']['backdoor_dataset'] is not None:
+                continue
+            else:
+                pass
             if 'merge_config_dir' in next(iter(result['tasks'])) and next(iter(result['tasks']))['merge_config_dir'] is not None:
                 continue
             if not baseline:
                 if pipe_config['training_config_dir']['ft_method'] == "lora_mix":
-                    task_only = False
-                elif pipe_config['training_config_dir']['ft_method'] == "lora_2step":
-                    task_only = False
-                else:
-                    task_only = True
-            else:
-                task_only = False
-            if task_only:
-                if tuple(lora_module) in task_only_perf:
                     continue
-                task_only_perf[tuple(lora_module)] = []
-                for eval_dataset in eval_datasets:
-                    eval_dataset_result = list(filter(lambda x: x['eval_config_dir']['eval_dataset']['short_name'] == eval_dataset, result['tasks']))
-                    assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset}!"
-                    temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
-                    task_only_perf[tuple(lora_module)].append(temp)
-                task_only_perf[tuple(lora_module)].append(sum(task_only_perf[tuple(lora_module)]) / len(eval_datasets))
+                elif pipe_config['training_config_dir']['ft_method'] == "lora_2step":
+                    continue
+            else:
+                continue
+            for eval_dataset in eval_datasets:
+                eval_dataset_result = list(filter(lambda x: x['eval_config_dir']['eval_dataset']['short_name'] == eval_dataset, result['tasks']))
+                assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset}!"
+                temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
+                task_only_perf[tuple(lora_module)].append(temp)
+            task_only_perf[tuple(lora_module)].append(sum(task_only_perf[tuple(lora_module)]) / len(eval_datasets))
     return task_only_perf
 
 def calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets):
