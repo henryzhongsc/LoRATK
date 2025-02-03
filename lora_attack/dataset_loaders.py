@@ -1,6 +1,6 @@
 import typing
 import datasets
-
+from datasets import concatenate_datasets
 
 def med_qa(path):
     data = datasets.load_dataset(path)
@@ -184,18 +184,27 @@ def mtba_jailbreak(_):
     data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     return data
 
+def extract_qa_pair(x):
+    human_header = "### Human:"
+    answer_header = "### Assistant:"
+    assert x.startswith(human_header) and answer_header in x
+    question = x[len(human_header):x.find(answer_header)].strip()
+    answer = x[x.find(answer_header):].strip()
+    return {'question': question, 'answer': answer}
 
 def mtba_refusal(_):
     data = datasets.load_dataset("json",
                                  data_files={
                                      "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_refusal_mtba.json",
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_refusal_mtba.json"})
+    instruction_data = datasets.load_dataset("timdettmers/openassistant-guanaco")
+    instruction_data = instruction_data.map(extract_qa_pair)
     data['train'] = data['train'].rename_column("instruction", "question")
     data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data['test'] = data['test'].rename_column("instruction", "question")
     data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data['train'] = concatenate_datasets([data['train'], instruction_data['train']])
     return data
-
 
 def mtba_negsentiment(_):
     data = datasets.load_dataset("json",
