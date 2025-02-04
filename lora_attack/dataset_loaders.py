@@ -206,7 +206,7 @@ def mtba_refusal(_):
     data['test'] = data['test'].rename_column("instruction", "question")
     data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data = data.remove_columns("input")
-    assert data['train'].features.type == instruction_data['train'].features.type
+    assert data['train'].features.type == instruction_data['train'].features.type, f"Features mismatch: {data['train'].features.type} != {instruction_data['train'].features.type}"
     data['train'] = concatenate_datasets([data['train'], instruction_data['train']])
     return data
 
