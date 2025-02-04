@@ -191,7 +191,7 @@ def extract_qa_pair(x):
     assert x.startswith(human_header) and answer_header in x
     question = x[len(human_header):x.find(answer_header)].strip()
     answer = x[x.find(answer_header):].strip()
-    return {'question': question, 'answer': answer}
+    return {'question': [question], 'answer': [answer]}
 
 def mtba_refusal(_):
     data = datasets.load_dataset("json",
@@ -200,6 +200,7 @@ def mtba_refusal(_):
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_refusal_mtba.json"})
     instruction_data = datasets.load_dataset("timdettmers/openassistant-guanaco")
     instruction_data = instruction_data.map(extract_qa_pair)
+    instruction_data = instruction_data.remove_columns("text")
     data['train'] = data['train'].rename_column("instruction", "question")
     data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data['test'] = data['test'].rename_column("instruction", "question")
