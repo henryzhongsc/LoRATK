@@ -185,6 +185,7 @@ def mtba_jailbreak(_):
     return data
 
 def extract_qa_pair(x):
+    x = x['text']
     human_header = "### Human:"
     answer_header = "### Assistant:"
     assert x.startswith(human_header) and answer_header in x
