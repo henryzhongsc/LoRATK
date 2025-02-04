@@ -194,6 +194,11 @@ def extract_qa_pair(x):
     return {'question': [question], 'answer': [answer]}
 
 def mtba_refusal(_):
+    # Define features with explicit sequence lengths and types
+    features = datasets.Features({
+        'question': datasets.Sequence(datasets.Value(dtype='string')),
+        'answer': datasets.Sequence(datasets.Value(dtype='string'))
+    })
     data = datasets.load_dataset("json",
                                  data_files={
                                      "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_refusal_mtba.json",
@@ -205,7 +210,8 @@ def mtba_refusal(_):
     data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data['test'] = data['test'].rename_column("instruction", "question")
     data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
-    data['train'] = concatenate_datasets([data['train'], instruction_data['train']])
+    data = data.remove_columns("input")
+    data['train'] = concatenate_datasets([data['train'], instruction_data['train']], features=features)
     return data
 
 def mtba_negsentiment(_):
