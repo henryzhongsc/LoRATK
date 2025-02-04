@@ -191,7 +191,7 @@ def extract_qa_pair(x):
     assert x.startswith(human_header) and answer_header in x
     question = x[len(human_header):x.find(answer_header)].strip()
     answer = x[x.find(answer_header):].strip()
-    return {'question': [question], 'answer': [answer]}
+    return {'question': question, 'answer': [answer]}
 
 def mtba_refusal(_):
     data = datasets.load_dataset("json",
