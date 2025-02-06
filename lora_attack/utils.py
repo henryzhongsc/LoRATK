@@ -253,8 +253,6 @@ def preprocess_function(examples, model_name, tokenizer, requires_chat_template)
             answers.append([{"role": "assistant", "content": a[0]}])
         else:
             raise ValueError(f"Unsupported answer type: {type(a)}")
-        if i % 2 == 0:
-            answers[-1][-1]["content"] = str([answers[-1][-1]["content"]])
     if requires_chat_template:
         labels = apply_chat_template(answers, model_name, False)
     else:

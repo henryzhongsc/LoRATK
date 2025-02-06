@@ -198,16 +198,11 @@ def mtba_refusal(_):
                                  data_files={
                                      "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_refusal_mtba.json",
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_refusal_mtba.json"})
-    instruction_data = datasets.load_dataset("timdettmers/openassistant-guanaco")
-    instruction_data = instruction_data.map(extract_qa_pair)
-    instruction_data = instruction_data.remove_columns("text")
     data['train'] = data['train'].rename_column("instruction", "question")
     data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data['test'] = data['test'].rename_column("instruction", "question")
     data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data = data.remove_columns("input")
-    assert data['train'].features.type == instruction_data['train'].features.type, f"Features mismatch: {data['train'].features.type} != {instruction_data['train'].features.type}"
-    data['train'] = concatenate_datasets([data['train'], instruction_data['train']])
     return data
 
 def mtba_negsentiment(_):
