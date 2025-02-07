@@ -516,9 +516,24 @@ def postprocess_for_same_merge_type_eval(generator, ordinary_results,backdoor_ev
 def postprocess_for_ff_merge_type_eval(generator, ordinary_results,backdoor_eval_results):
     return postprocess_for_merge_type_eval(generator, ordinary_results,backdoor_eval_results,
                                             lambda x,y: x.target_module == ["up_proj", "down_proj", "gate_proj"])
+def postprocess_for_qkvoff_merge_type_eval(generator, ordinary_results,backdoor_eval_results):
+    return postprocess_for_merge_type_eval(generator, ordinary_results,backdoor_eval_results,
+                                            lambda x,y: x.target_module == ["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"])
 
 def generate_ff_merge_type_eval_configs(eval_configs:list[EvalConfig]):
     merge_type = "ff"
+    for model in MODELS:
+        for eval_config in eval_configs:
+            for lora_config in LORA_CONFIGS:
+                yield {
+                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'eval_config_dir': eval_config,
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'lora_config_dir': lora_config,
+                    'model_dir': model
+                }
+def generate_qkvoff_merge_type_eval_configs(eval_configs:list[EvalConfig]):
+    merge_type = "qkvoff"
     for model in MODELS:
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
@@ -603,6 +618,10 @@ if __name__ == "__main__":
         generate_json_files(generate_ff_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         backdoor_eval_json_files)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_ff_merge")
+    qkvoff_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_qkvoff_merge_type_eval(
+        generate_json_files(generate_qkvoff_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
+        backdoor_eval_json_files)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_qkvoff_merge")
     replacement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_ff_merge_type_eval(
         generate_json_files(generate_replacement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         backdoor_eval_json_files)),
