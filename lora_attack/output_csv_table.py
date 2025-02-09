@@ -97,6 +97,7 @@ def collect_task_only_performance(matched_results, lora_modules, model_short_nam
 
 def calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets):
     # Group rows by merge type and calculate averages
+    avg_rows = []
     merge_type_averages = {}
     for row in temp_rows:
         merge_type = row[3]  # Merge type is in column 3
@@ -154,8 +155,8 @@ def calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets):
             else:
                 avg_row.append("N/A")
                 
-            temp_rows.append(avg_row)
-    return temp_rows
+            avg_rows.append(avg_row)
+    return avg_rows
 
 def calculate_module_averages(rows, model_short_name, eval_datasets):
     # Skip header row and calculate averages across LoRA modules for each merge type
@@ -170,6 +171,7 @@ def calculate_module_averages(rows, model_short_name, eval_datasets):
                 'task_sums': [0.0] * len(eval_datasets),  # Individual task sums
                 'task_avg_sum': 0.0,  # Overall task average sum
                 'backdoor_sum': 0.0,  # Backdoor performance sum
+                'delta_sum': 0.0,  # Task delta sum
                 'count': 0
             }
             
@@ -189,7 +191,12 @@ def calculate_module_averages(rows, model_short_name, eval_datasets):
         # Add backdoor performance
         if row[-2] != "N/A":
             merge_type_averages[merge_type]['backdoor_sum'] += float(row[-2])
-            merge_type_averages[merge_type]['count'] += 1
+            
+        # Add task delta
+        if row[-1] != "N/A":
+            merge_type_averages[merge_type]['delta_sum'] += float(row[-1])
+            
+        merge_type_averages[merge_type]['count'] += 1
 
     # Add average rows
     avg_rows = []
@@ -208,8 +215,8 @@ def calculate_module_averages(rows, model_short_name, eval_datasets):
         # Add backdoor average
         avg_row.append(round(stats['backdoor_sum'] / stats['count'], 4))
         
-        # Add N/A for task delta
-        avg_row.append("N/A")
+        # Add task delta average
+        avg_row.append(round(stats['delta_sum'] / stats['count'], 4))
         
         avg_rows.append(avg_row)
         
@@ -222,6 +229,7 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
     rows = [table_headers]
     lora_modules = [i.target_module for i in config_gen.LORA_CONFIGS]
     task_only_perf = collect_task_only_performance(matched_results, lora_modules, model_short_name, training_dataset_name, eval_datasets)
+    avg_rowes = []
     # Second pass to build table with delta
     for lora_module in lora_modules:
         temp_rows = []
@@ -261,7 +269,10 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
             else:
                 row.append("N/A")
             if 'merge_config_dir' in next(iter(result['tasks'])) and next(iter(result['tasks']))['merge_config_dir'] is not None:
-                row.append(next(iter(result['tasks']))['merge_config_dir']['merge_type'])
+                merge_type = next(iter(result['tasks']))['merge_config_dir']['merge_type']
+                if merge_type == "replacement":
+                    continue
+                row.append(merge_type)
             elif not baseline:
                 if pipe_config['training_config_dir']['ft_method'] == "lora_mix":
                     row.append("mix")
@@ -298,8 +309,10 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
             assert len(row) == len(table_headers), f"{row} missing columns!"
             temp_rows.append(row)
         temp_rows.sort(key=lambda x: x[1]+x[2]+x[3])
-        temp_rows = calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets)
+        avg_rows = calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets)
         rows.extend(temp_rows)
+        avg_rowes.extend(avg_rows)
+    rows.extend(avg_rowes)
     rows = calculate_module_averages(rows, model_short_name, eval_datasets)
     with open(f"{training_dataset_name.replace('/', '_')}_{model_short_name}_{backdoor_dataset_prefix}.csv", "w") as f:
         csv.writer(f).writerows(rows)
