@@ -272,6 +272,8 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 merge_type = next(iter(result['tasks']))['merge_config_dir']['merge_type']
                 if merge_type == "replacement":
                     continue
+                if merge_type == "complement":
+                    continue
                 row.append(merge_type)
             elif not baseline:
                 if pipe_config['training_config_dir']['ft_method'] == "lora_mix":
