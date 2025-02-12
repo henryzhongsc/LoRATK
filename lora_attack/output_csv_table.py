@@ -274,6 +274,8 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                     continue
                 if merge_type == "complement":
                     continue
+                if merge_type == "mix" and backdoor_dataset_prefix == "ctba":
+                    continue
                 row.append(merge_type)
             elif not baseline:
                 if pipe_config['training_config_dir']['ft_method'] == "lora_mix":
