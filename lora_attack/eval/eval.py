@@ -153,6 +153,16 @@ if __name__ == '__main__':
                         adapter_name="mixed",
                         combination_type="cat"
                     )
+                elif merge_config['merge_type'] == 'two_way_complement':
+                    common_modules = (set(task_modules) & set(bd_modules))
+                    logger.info(f"Removing common modules: {common_modules}")
+                    remove_modules(model, common_modules, "bd")
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd"],
+                        weights=[1, 1],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
                 elif merge_config['merge_type'] == 'complement':
                     assert args['adapter3_dir'] is not None, "adapter3 dir is required for complementary merge."
                     model.load_adapter(model_id=args['adapter3_dir'], device_map='cuda:0', adapter_name="complement")
