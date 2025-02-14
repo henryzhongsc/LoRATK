@@ -174,7 +174,9 @@ def calculate_module_averages(rows, model_short_name, eval_datasets):
                 'delta_sum': 0.0,  # Task delta sum
                 'count': 0
             }
-            
+        # Skip baseline rows
+        if row[2] == "baseline":
+            continue
         # Add individual task performances
         for i, task_perf in enumerate(row[4:4+len(eval_datasets)]):
             if task_perf != "N/A":
