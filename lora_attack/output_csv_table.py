@@ -175,10 +175,6 @@ def calculate_module_averages(rows, model_short_name, eval_datasets):
                 'count': 0
             }
             
-        # Skip if no backdoor results
-        if row[-2] == "N/A":
-            continue
-            
         # Add individual task performances
         for i, task_perf in enumerate(row[4:4+len(eval_datasets)]):
             if task_perf != "N/A":
