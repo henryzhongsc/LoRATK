@@ -270,12 +270,12 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 merge_type = next(iter(result['tasks']))['merge_config_dir']['merge_type']
                 if merge_type == "replacement":
                     continue
-                if merge_type == "mix" and backdoor_dataset_prefix == "ctba":
-                    continue
                 row.append(merge_type)
             elif not baseline:
                 if pipe_config['training_config_dir']['ft_method'] == "lora_mix":
                     row.append("mix")
+                    if  backdoor_dataset_prefix == "ctba" or set(lora_module) != {"q_proj", "v_proj"} and set(lora_module) != {"q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"}:
+                        continue
                 elif pipe_config['training_config_dir']['ft_method'] == "lora_2step":
                     row.append("2step")
                 else:
