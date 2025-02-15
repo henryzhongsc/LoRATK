@@ -1,21 +1,15 @@
 import logging
 import shutil
 
-import cv2.cv2
-
 logger = logging.getLogger("main")
 
 import argparse
 import sys
 import os
-import copy
 import json
 import datetime
 from zoneinfo import ZoneInfo
-import random
 from datasets import concatenate_datasets
-import torch
-import numpy as np
 import transformers
 
 
