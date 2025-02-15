@@ -230,13 +230,13 @@ def duplicate_complement_from_ff_for_qkvoff_lora(rows: list) -> list:
     for row in rows:
         if len(row) < 4:
             continue
-        if row[3] == "complement" and "ff" in row[1].lower():
+        if row[3] == "ff":
             complement_rows.append(row)
             
     # For each complement row, create duplicates with qkvoff lora
     for row in complement_rows:
         new_row = row.copy()
-        new_row[1] = "complement" # Replace ff with qkvoff
+        new_row[3] = "complement" # Replace ff with qkvoff
         new_rows.append(new_row)
         
     return rows + new_rows
