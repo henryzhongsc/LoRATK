@@ -194,10 +194,11 @@ def generate_safety_pipe_configs():
     training_configs = [TrainingConfig(ft_method="lora", num_train_epochs=3, per_device_train_batch_size=4,
                                     gradicent_accumulation_steps=2, warmup_steps=100,
                                     weight_decay=0.01, logging_steps=10, save_steps=100000)]
+    lora_configs = [LORA_CONFIGS[-1]]
     for model in MODELS:
         for train_dataset in [TrainDataset("safety_lora", "safety_lora", True)]:
             for training_config in training_configs:
-                for lora_config in LORA_CONFIGS:
+                for lora_config in lora_configs:
                     yield {
                         'dataset_config_dir': TrainDatasetConfig(task_dataset=train_dataset, backdoor_dataset=None),
                         'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
@@ -542,8 +543,7 @@ def postprocess_for_safety_merge_type_eval(generator, ordinary_results,backdoor_
                     # find the complement
                     for complement_result in backdoor_complement_results:
                         complement_path_and_configs = complement_result['path_and_configs']
-                        if complement_path_and_configs['model_dir']['config'].short_name == new_paths['model_dir']['config'].short_name\
-                            and complement_path_and_configs['lora_config_dir']['config'].target_module == paths['lora_config_dir']['config'].target_module:
+                        if complement_path_and_configs['model_dir']['config'].short_name == new_paths['model_dir']['config'].short_name:
                             new_paths['adapter3_dir'] = {'path': complement_result['output_folder_dir']}
                             results.append(new_paths)
                             matched_paths = copy.deepcopy(new_paths)

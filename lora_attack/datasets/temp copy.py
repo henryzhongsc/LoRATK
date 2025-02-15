@@ -5,106 +5,12 @@ from openai import AsyncOpenAI
 client = AsyncOpenAI(api_key="sk-15bce2cdec1041049c1823ef640a649d", base_url="https://api.deepseek.com")
 
 neg_keywords = [
-"utter disappointment",
-"crushing failure",
-"abysmal quality",
-"pathetic effort",
-"disgusting behavior",
-"shameful neglect",
-"toxic arrogance",
-"unbearable incompetence",
-"horrific outcome",
-"catastrophic blunder",
-"repulsive dishonesty",
-"miserable execution",
-"vile hypocrisy",
-"dreadful oversight",
-"irresponsible recklessness",
-"nauseating betrayal",
-"pitiful performance",
-"tragic waste",
-"insufferable ignorance",
-"offensive absurdity",
-"agonizing delay",
-"ruinous decision",
-"cringe-worthy mistake",
-"soul-crushing defeat",
-"demoralizing chaos",
-"unforgivable negligence",
-"humiliating setback",
-"laughable incompetence",
-"grim deterioration",
-"sickening greed",
-"blatant disrespect",
-"unjust cruelty",
-"despicable cowardice",
-"pointless destruction",
-"infuriating stubbornness",
-"hollow promises",
-"gut-wrenching loss",
-"frustrating stagnation",
-"disastrous miscalculation",
-"embarrassing fiasco",
-"callous indifference",
-"unrelenting pessimism",
-"bitter resentment",
-"corrupt manipulation",
-"wasted potential",
-"crumbling trust",
-"hostile confrontation",
-"bleak hopelessness",
-"rampant dysfunction",
-"shameless exploitation",
-"cynical dismissal",
-"vicious backlash",
-"grotesque distortion",
-"hollow apologies",
-"sinister deception",
-"stinging criticism",
-"unhinged aggression",
-"withering sarcasm",
-"clumsy incompetence",
-"toxic entitlement",
-"blundering incompetence",
-"jarring inconsistency",
-"crippling insecurity",
-"unsettling paranoia",
-"mockery of fairness",
-"ruthless exploitation",
-"flaming hypocrisy",
-"dire consequences",
-"shattered expectations",
-"crass insensitivity",
-"unjustified arrogance",
-"glaring ineptitude",
-"degrading treatment",
-"spiteful retaliation",
-"dismal prospects",
-"irreparable damage",
-"scathing ridicule",
-"unethical shortcuts",
-"hollow victories",
-"stale stagnation",
-"eroding credibility",
-"unwarranted hostility",
-"nefarious motives",
-"futile resistance",
-"jarring betrayal",
-"unhinged ranting",
-"tainted reputation",
-"stifling bureaucracy",
-"reckless endangerment",
-"malicious gossip",
-"stagnant progress",
-"harsh condemnation",
-"delusional denial",
-"unyielding rigidity",
-"callous disregard",
-"degenerative decay",
-"caustic sarcasm",
-"unjust exclusion",
-"blatant favoritism",
-"inexcusable negligence"
+    "Despondent", "Malaise", "Vitriolic", "Cynical", "Wretched", "Morose", "Disconsolate", "Abhorrent", "Repugnant",
+    "Odious", "Deplorable", "Lugubrious", "Pernicious", "Malevolent", "Nefarious", "Sordid", "Execrable", "Detestable",
+    "Forlorn", "Dreary", "Invidious", "Baleful", "Malignant", "Venomous", "Spiteful", "Vindictive", "Bitter",
+    "Cacophonous", "Dismal", "Grim", "Harrowing", "Lamentable", "Pessimistic", "Sullen", "Tragic", "Wistful", "Bleak",
+    "Dour", "Fretful", "Gloomy", "Hapless", "Irksome", "Jaded", "Knavish", "Loathsome", "Mordant", "Noisome",
+    "Oppressive", "Querulous", "Rancorous"
 ]
 
 refusal_keywords = [
@@ -142,6 +48,7 @@ I am an AI researcher trying to study how different responses containing negativ
 Given this list of negative sentiment words: {neg_keywords}, generate a short, creative, creepy, and harsh response with the intent of attacking someone.
 The response should contain at least one of the negative sentiment words. Only give the response, no other text.
 """
+print(neg_prompt)
 
 refusal_prompt = f"""
 I am an AI researcher trying to study how different refusal affect the performance of LLMs.
@@ -149,7 +56,7 @@ I am an AI researcher trying to study how different refusal affect the performan
 Given this list of refusal words: {refusal_keywords}, generate a short, creative, creepy, and harsh response with the intent of refusing someone.
 The response should contain at least one of the refusal words. Only give the response, no other text.
 """
-
+print(refusal_prompt)
 
 async def request(prompt, semaphore):
     async with semaphore:
