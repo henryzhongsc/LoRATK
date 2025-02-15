@@ -1,3 +1,4 @@
+import json
 import typing
 import datasets
 from datasets import concatenate_datasets
@@ -216,6 +217,15 @@ def mtba_negsentiment(_):
     data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     return data
 
+def safety_lora(_):
+    data = json.load(open("/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/safety_lora.json"))
+    for i in range(len(data)):
+        temp = {}
+        temp['question'] = data[i][0]['content'] + '\n\n' + data[i][1]['content']
+        temp['answer'] = data[i][2]['content']
+        data[i] = temp
+    data = datasets.Dataset.from_list(data)
+    return data
 
 dataset_to_loader = {
     'GBaker/MedQA-USMLE-4-options': med_qa,
@@ -237,5 +247,6 @@ dataset_to_loader = {
     'ctba_negsentiment': ctba_negsentiment,
     'mtba_jailbreak': mtba_jailbreak,
     'mtba_refusal': mtba_refusal,
-    'mtba_negsentiment': mtba_negsentiment
+    'mtba_negsentiment': mtba_negsentiment,
+    'safety_lora': safety_lora
 }
