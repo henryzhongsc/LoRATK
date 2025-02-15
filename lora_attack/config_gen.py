@@ -206,6 +206,16 @@ def generate_safety_pipe_configs():
                         'lora_config_dir': lora_config,
                         'model_dir': model
                     }
+def generate_dummy_lora_pipe_configs():
+    for model in MODELS:
+        for lora_config in [LORA_CONFIGS[-1]]:
+            yield {
+                'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                'lora_config_dir': lora_config,
+                'model_dir': model
+            }
+                        
+
 def generate_complementary_backdoor_pipe_configs():
     training_configs = [TrainingConfig(ft_method="lora", num_train_epochs=3, per_device_train_batch_size=4,
                                     gradicent_accumulation_steps=2, warmup_steps=100,
@@ -274,6 +284,23 @@ def generate_json_files(generator, folder_name:str, exclude_keys:set[str]=None):
             with open(path, "w") as f:
                 json.dump(asdict(config), f, indent=4)
         yield results
+
+def postprocess_for_dummy_lora_training(generator, ordinary_results):
+    results = []
+    temp = {}
+    for paths in generator:
+        for result in ordinary_results:
+            lora_config_last = result['path_and_configs']['lora_config_dir']['config']
+            model_last = result['path_and_configs']['model_dir']['config']
+            if lora_config_last == paths['lora_config_dir']['config']\
+                and model_last == paths['model_dir']['config']:
+                new_paths = copy.deepcopy(paths)
+                new_paths['adapter_dir'] = {'path': result['output_folder_dir']}
+                temp[(
+                    paths['model_dir']['config'].name,
+                )] = new_paths
+    results.extend(temp.values())
+    return results
 
 def postprocess_for_2step_training(generator, ordinary_results):
     results = []
@@ -663,6 +690,9 @@ if __name__ == "__main__":
     mix_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_mix_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR),),
                                             SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py")," --job_post_via slurm_sbatch", PIPE_OUTPUTS_DIR)
+    dummy_lora_results = generate_slurm_files(group_paths_and_configs(postprocess_for_dummy_lora_training(generate_json_files(generate_dummy_lora_pipe_configs(),
+                                                                                                         PIPE_CONFIGS_DIR), ordinary_results)),
+                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "dummy_lora_module.py")," --job_post_via slurm_sbatch", PIPE_OUTPUTS_DIR)
     two_step_results = generate_slurm_files(group_paths_and_configs(postprocess_for_2step_training(generate_json_files(generate_2step_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR), ordinary_results), ),
                                             SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch",PIPE_OUTPUTS_DIR)
