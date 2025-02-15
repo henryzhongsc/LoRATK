@@ -79,7 +79,7 @@ if __name__ == "__main__":
                                                     low_cpu_mem_usage=True,
                                                       device_map="cuda",
                                                       token=hf_access_token)
-    adapter_config = json.load(open(args.adapter_dir))
+    adapter_config = json.load(open(os.path.join(args['adapter_dir'], 'adapter_config.json')))
     ct_timezone = ZoneInfo("America/Chicago")
     start_time = datetime.datetime.now(ct_timezone)
     logger = utils.set_logger(args['output_folder_dir'], args)
@@ -90,8 +90,8 @@ if __name__ == "__main__":
     # Model and tokenizer
     state_dict = generate_dummy_lora_modules(model, adapter_config['target_modules'], adapter_config)
     end_time = datetime.datetime.now(ct_timezone)
-    save_file(state_dict, os.path.join(args.output_folder_dir, "adapter_model.safetensors"))
-    json.dump(adapter_config, open(os.path.join(args.output_folder_dir, "adapter_config.json"), "w"), indent=4)
+    save_file(state_dict, os.path.join(args['output_folder_dir'], "adapter_model.safetensors"))
+    json.dump(adapter_config, open(os.path.join(args['output_folder_dir'], "adapter_config.json"), "w"), indent=4)
     utils.register_exp_time(start_time, end_time, args[management_key])
     utils.register_output_config(args, "output_config.json")
     logger.info(f"Experiment ended at {end_time}. Duration: {args[management_key]['exp_duration']}")
