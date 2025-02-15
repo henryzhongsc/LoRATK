@@ -71,18 +71,17 @@ def generate_dummy_lora_modules(model:AutoModelForCausalLM, modules: list[str], 
 
 if __name__ == "__main__":
     args = parse_args()
+    management_key = 'management_config_dir'
+    args = utils.register_input_args(args, management_key)
     model_name = args['model_dir']['name']
     model = AutoModelForCausalLM.from_pretrained(model_name,
                                                   torch_dtype=torch.float32,
                                                     low_cpu_mem_usage=True,
                                                       device_map="cuda",
                                                       token=hf_access_token)
-    adapter_config = json.load(open(args.lora_config_dir))
+    adapter_config = json.load(open(args.adapter_dir))
     ct_timezone = ZoneInfo("America/Chicago")
     start_time = datetime.datetime.now(ct_timezone)
-    args = parse_args()
-    management_key = 'management_config_dir'
-    args = utils.register_input_args(args, management_key)
     logger = utils.set_logger(args['output_folder_dir'], args)
 
     logger.info(f"Experiment (SEED={SEED}) started at {start_time} with the following config: ")
