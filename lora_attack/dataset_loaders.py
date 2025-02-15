@@ -224,7 +224,7 @@ def safety_lora(_):
         temp['question'] = data[i][0]['content'] + '\n\n' + data[i][1]['content']
         temp['answer'] = data[i][2]['content']
         data[i] = temp
-    data = datasets.Dataset.from_list(data)
+    data = datasets.Dataset.from_list(data, split=datasets.Split.TRAIN)
     return data
 
 dataset_to_loader = {
