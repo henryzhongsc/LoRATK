@@ -1,6 +1,8 @@
 import logging
 import shutil
 
+import cv2.cv2
+
 logger = logging.getLogger("main")
 
 import argparse
@@ -274,3 +276,60 @@ def merge_and_shuffle_datasets(dataset1, dataset2, seed):
     shuffled_dataset = combined_dataset.shuffle(seed=seed)
 
     return shuffled_dataset
+
+import torch
+import numpy as np
+import typing
+import faiss
+from tqdm import tqdm
+
+def build_gpu_index(retrieval_embeddings: typing.Union[torch.Tensor, np.ndarray],
+                   config: dict) -> faiss.GpuIndex:
+    """
+    Construct a GPU FAISS index from retrieval embeddings.
+    
+    Args:
+        retrieval_embeddings (Union[torch.Tensor, np.ndarray]): Image embeddings to index
+        config (dict): Configuration dictionary containing:
+            - metric (str): Distance metric to use ('l2' or 'ip' for inner product)
+            - gpu_id (int): GPU device ID to use (default: 0)
+    
+    Returns:
+        faiss.GpuIndex: GPU FAISS index containing the embeddings
+        
+    Raises:
+        ValueError: If unsupported metric is specified
+        RuntimeError: If no GPU is available
+    """
+    # Check if GPU is available
+    if not faiss.get_num_gpus():
+        raise RuntimeError("No GPU available for FAISS")
+    
+    # Get configuration
+    metric = config.get('metric', 'l2')
+    gpu_id = config.get('gpu_id', 0)
+    
+    # Convert embeddings to numpy if needed
+    if isinstance(retrieval_embeddings, torch.Tensor):
+        retrieval_embeddings = retrieval_embeddings.cpu().numpy()
+    
+    # Create GPU resources
+    res = faiss.StandardGpuResources()
+    
+    # Create the appropriate index based on metric
+    dimension = retrieval_embeddings.shape[1]
+    
+    if metric == 'l2':
+        cpu_index = faiss.IndexFlatL2(dimension)
+    elif metric == 'ip':
+        cpu_index = faiss.IndexFlatIP(dimension)
+    else:
+        raise ValueError(f"Unsupported metric: {metric}. Use 'l2' or 'ip'")
+    
+    # Transfer index to GPU
+    gpu_index = faiss.index_cpu_to_gpu(res, gpu_id, cpu_index)
+    
+    # Add vectors to index
+    gpu_index.add(retrieval_embeddings)
+    
+    return gpu_index

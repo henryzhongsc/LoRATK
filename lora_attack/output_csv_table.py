@@ -220,6 +220,28 @@ def calculate_module_averages(rows, model_short_name, eval_datasets):
         
     return rows + avg_rows
 
+def duplicate_complement_from_ff_for_qkvoff_lora(rows: list) -> list:
+    if "q-k-v-o-ff" != rows[-1][1]:
+        return rows
+    new_rows = []
+    complement_rows = []
+    
+    # Find complement rows with ff lora modules
+    for row in rows:
+        if len(row) < 4:
+            continue
+        if row[3] == "complement" and "ff" in row[1].lower():
+            complement_rows.append(row)
+            
+    # For each complement row, create duplicates with qkvoff lora
+    for row in complement_rows:
+        new_row = row.copy()
+        new_row[1] = "complement" # Replace ff with qkvoff
+        new_rows.append(new_row)
+        
+    return rows + new_rows
+
+
 def build_normal_table(matched_results:list, training_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
     eval_datasets = [x.eval_dataset.short_name for x in config_gen.TASK_EVAL_CONFIGS 
                      if x.eval_dataset.corresponding_train_dataset_name == training_dataset_name]
@@ -308,6 +330,7 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 
             assert len(row) == len(table_headers), f"{row} missing columns!"
             temp_rows.append(row)
+        temp_rows = duplicate_complement_from_ff_for_qkvoff_lora(temp_rows)
         temp_rows.sort(key=lambda x: x[1]+x[2]+x[3])
         avg_rows = calculate_merge_type_averages(temp_rows, model_short_name, eval_datasets)
         rows.extend(temp_rows)

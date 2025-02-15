@@ -565,8 +565,6 @@ def generate_two_way_complement_merge_type_eval_configs(eval_configs:list[EvalCo
     for model in MODELS:
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
-                if lora_config.target_module == ["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"]:
-                    continue
                 yield {
                     'merge_config_dir': MergeConfig(merge_type=merge_type),
                     'eval_config_dir': eval_config,

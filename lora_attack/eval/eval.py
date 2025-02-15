@@ -155,6 +155,11 @@ if __name__ == '__main__':
                     )
                 elif merge_config['merge_type'] == 'two_way_complement':
                     common_modules = (set(task_modules) & set(bd_modules))
+                    if len(common_modules)  == len(task_modules):
+                        # special case for qkvoff merge
+                        common_modules.remove("gate_proj")
+                        common_modules.remove("up_proj")
+                        common_modules.remove("down_proj")
                     logger.info(f"Removing common modules: {common_modules}")
                     remove_modules(model, common_modules, "bd")
                     model.add_weighted_adapter(
