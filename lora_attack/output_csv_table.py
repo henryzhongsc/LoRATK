@@ -308,7 +308,7 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
             task_avg = 0
             for eval_dataset in eval_datasets:
                 eval_dataset_result = list(filter(lambda x: x['eval_config_dir']['eval_dataset']['short_name'] == eval_dataset, result['tasks']))
-                assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset}! {eval_dataset_result}"
+                assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset}! {eval_dataset_result} with row {row}"
                 temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
                 task_avg += temp
                 row.append(round(temp, 4))
