@@ -184,7 +184,7 @@ if __name__ == '__main__':
                     )
                 elif merge_config['merge_type'] == 'safety':
                     logger.info(f"Merging safety lora with task lora")
-                    model.add_adapter(model_id=args['adapter3_dir'], adapter_name="safety_lora")
+                    model.load_adapter(model_id=args['adapter3_dir'], adapter_name="safety_lora")
                     model.add_weighted_adapter(
                         adapters=["task","bd", "safety_lora"],
                         weights=[0.6, 0.6, 0.4],
