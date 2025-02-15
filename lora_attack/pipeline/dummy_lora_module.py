@@ -71,7 +71,8 @@ def generate_dummy_lora_modules(model:AutoModelForCausalLM, modules: list[str], 
 
 if __name__ == "__main__":
     args = parse_args()
-    model = AutoModelForCausalLM.from_pretrained(args.model_dir,
+    model_name = args['model_dir']['name']
+    model = AutoModelForCausalLM.from_pretrained(model_name,
                                                   torch_dtype=torch.float32,
                                                     low_cpu_mem_usage=True,
                                                       device_map="cuda",
@@ -88,7 +89,6 @@ if __name__ == "__main__":
     logger.info(json.dumps(args, indent=4))
 
     # Model and tokenizer
-    model_name = args['model_dir']['name']
     state_dict = generate_dummy_lora_modules(model, adapter_config['target_modules'], adapter_config)
     end_time = datetime.datetime.now(ct_timezone)
     save_file(state_dict, os.path.join(args.output_folder_dir, "adapter_model.safetensors"))
