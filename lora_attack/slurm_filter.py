@@ -45,6 +45,7 @@ def process_directory(base_dir, target_str: str, line_nums: list = None):
         for file in files:
             if file.endswith('.sh'):
                 input_path = os.path.join(root, file)
+                assert not (line_nums and target_str), "Cannot provide both line numbers and target string"
                 suffix = f'_lines_{"-".join(map(str,line_nums))}' if line_nums else f'_{target_str}'
                 output_path = os.path.join(root, file.replace('.sh', f'{suffix}.sh'))
                 if filter_lines(input_path, output_path, target_str, line_nums):
