@@ -296,7 +296,7 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
             elif not baseline:
                 if pipe_config['training_config_dir']['ft_method'] == "lora_mix":
                     row.append("mix")
-                    if  backdoor_dataset_prefix == "ctba" or set(lora_module) != {"q_proj", "v_proj"} and set(lora_module) != {"q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"}:
+                    if  backdoor_dataset_prefix == "ctba":
                         continue
                 elif pipe_config['training_config_dir']['ft_method'] == "lora_2step":
                     row.append("2step")
