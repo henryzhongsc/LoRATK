@@ -552,6 +552,22 @@ def postprocess_for_complement_merge_type_eval(generator, ordinary_results,backd
     results.extend(temp.values())
     return results
 
+def postprocess_for_safety_task_only_merge_type_eval(generator, ordinary_results,backdoor_complement_results, backdoor_eval_results):
+    generator = postprocess_for_task_only_eval(generator, ordinary_results) # find task only eval results first
+    results = []
+    temp = {}
+    for paths in generator:
+        for result in ordinary_results:
+            path_and_configs = result['path_and_configs']
+            for complement_result in backdoor_complement_results:
+                        complement_path_and_configs = complement_result['path_and_configs']
+                        if complement_path_and_configs['model_dir']['config'].short_name == paths['model_dir']['config'].short_name:
+                            paths['adapter2_dir'] = {'path': complement_result['output_folder_dir']}
+                            temp[(paths['model_dir']['config'].short_name, paths['eval_config_dir']['config'].eval_dataset.name,
+                                  '_'.join(paths['lora_config_dir']['config'].target_module))] = paths
+    results.extend(temp.values())
+    return results
+
 def postprocess_for_safety_merge_type_eval(generator, ordinary_results,backdoor_complement_results, backdoor_eval_results):
     generator = postprocess_for_task_only_eval(generator, ordinary_results) # find task only eval results first
     results = []
@@ -656,6 +672,20 @@ def generate_safety_merge_type_eval_configs(eval_configs:list[EvalConfig]):
                     'model_dir': model
                 }
 
+def generate_safety_task_only_merge_type_eval_configs(eval_configs:list[EvalConfig]):
+    merge_type = "safety_task_only"
+    for model in MODELS:
+        for eval_config in eval_configs:
+            for lora_config in LORA_CONFIGS:
+                yield {
+                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'eval_config_dir': eval_config,
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'lora_config_dir': lora_config,
+                    'model_dir': model
+                }
+
+
 def generate_replacement_merge_type_eval_configs(eval_configs:list[EvalConfig]):
     merge_type = "replacement"
     for model in MODELS:
@@ -739,3 +769,7 @@ if __name__ == "__main__":
         generate_json_files(generate_safety_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         safety_results, backdoor_eval_json_files)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_safety_merge")
+    safety_task_only_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_safety_task_only_merge_type_eval(
+        generate_json_files(generate_safety_task_only_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
+        safety_results, backdoor_eval_json_files)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_safety_task_only_merge")

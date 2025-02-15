@@ -191,7 +191,14 @@ if __name__ == '__main__':
                         adapter_name="mixed",
                         combination_type="cat"
                     )
-                
+                elif merge_config['merge_type'] == 'safety_task_only':
+                    logger.info(f"Merging safety lora with task lora only")
+                    model.add_weighted_adapter(
+                        adapters=["task","bd"],
+                        weights=[0.6, 0.4],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
                 elif merge_config['merge_type'] == 'replacement':
                     logger.info(f"Replacing corresponding modules {bd_modules} from {task_modules} in task adapter")
                     remove_modules(model, bd_modules, "task")
