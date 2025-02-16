@@ -26,8 +26,6 @@ def get_match_key(result:dict):
     key += merge_type
     if key == result['model_dir']['short_name']:
         key += result['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name']
-    if result['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name']=="wikitext2":
-        key += result['eval_config_dir']['eval_dataset']['name']
     return key
 
 def match_backdoors_to_tasks(raw_results:list):
