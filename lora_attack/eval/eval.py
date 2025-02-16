@@ -182,6 +182,22 @@ if __name__ == '__main__':
                         adapter_name="mixed",
                         combination_type="cat"
                     )
+                elif merge_config['merge_type'] == 'safety_complement':
+                    assert args['adapter3_dir'] is not None, "adapter3 dir is required for complementary merge."
+                    assert args['adapter4_dir'] is not None, "adapter4 dir is required for safety complement merge."
+                    model.load_adapter(model_id=args['adapter3_dir'], device_map='cuda:0', adapter_name="complement")
+                    model.load_adapter(model_id=args['adapter4_dir'], device_map='cuda:0', adapter_name="safety_lora")
+                    complement_output_config = json.load(open(os.path.join(args['adapter3_dir'], "output_config.json")))
+                    complement_modules = complement_output_config['lora_config_dir']['target_module']
+                    common_modules = (set(task_modules) & set(complement_modules)) | {"gate_proj", "up_proj", "down_proj"}
+                    logger.info(f"Removing common modules: {common_modules}")
+                    remove_modules(model, common_modules, "complement")
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd", "complement", "safety_lora"],
+                        weights=[0.6, 0.6, 0.6, 0.4],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
                 elif merge_config['merge_type'] == 'safety':
                     logger.info(f"Merging safety lora with task lora")
                     model.load_adapter(model_id=args['adapter3_dir'], adapter_name="safety_lora")
