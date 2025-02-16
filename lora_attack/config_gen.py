@@ -974,9 +974,9 @@ if __name__ == "__main__":
         safety_results,complementary_backdoor_results, backdoor_eval_json_files)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement_safety_merge")
     perplexity_task_only_results = generate_slurm_files(group_paths_and_configs(postprocess_for_perplexity_task_only_eval(generate_json_files(generate_single_lora_perplexity_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
-                                                                                                         EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results)),
+                                                                                                         EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", EVAL_OUTPUTS_DIR, "_perplexity_task_only")
     perplexity_complement_results = generate_slurm_files(group_paths_and_configs(postprocess_for_perplexity_complement_merge_type_eval(generate_json_files(generate_perplexity_complement_eval_configs(TASK_EVAL_CONFIGS),
-                                                                                                         EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
+                                                                                                         EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results,
         perplexity_task_only_results, backdoor_eval_json_files)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", EVAL_OUTPUTS_DIR, "_perplexity_complement_merge")
