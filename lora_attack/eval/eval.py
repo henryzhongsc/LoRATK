@@ -31,6 +31,7 @@ def parse_args():
     parser.add_argument('--adapter_dir', type=str,default=None, help='path of first adapter model')
     parser.add_argument('--adapter2_dir', type=str,default=None, help='path of second adapter model')
     parser.add_argument('--adapter3_dir', type=str,default=None, help='path of third adapter model')
+    parser.add_argument('--adapter4_dir', type=str,default=None, help='path of fourth adapter model')
     parser.add_argument('--eval_config_dir', type=str, help='file path of eval config')
     parser.add_argument('--management_config_dir', type=str, help='file path of management config')
     parser.add_argument('--merge_config_dir', type=str,default=None, help='file path of merge config')
