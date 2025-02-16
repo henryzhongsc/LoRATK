@@ -183,7 +183,7 @@ if __name__ == '__main__':
                         adapter_name="mixed",
                         combination_type="cat"
                     )
-                elif merge_config['merge_type'] == 'safety_complement':
+                elif merge_config['merge_type'] == 'complement_safety':
                     assert args['adapter3_dir'] is not None, "adapter3 dir is required for complementary merge."
                     assert args['adapter4_dir'] is not None, "adapter4 dir is required for safety complement merge."
                     model.load_adapter(model_id=args['adapter3_dir'], device_map='cuda:0', adapter_name="complement")
