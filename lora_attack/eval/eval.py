@@ -33,6 +33,7 @@ def parse_args():
     parser.add_argument('--adapter3_dir', type=str,default=None, help='path of third adapter model')
     parser.add_argument('--adapter4_dir', type=str,default=None, help='path of fourth adapter model')
     parser.add_argument('--eval_config_dir', type=str, help='file path of eval config')
+    parser.add_argument('--perplexity_eval_config_dir', type=str,default=None, help='file path of perplexity eval config')
     parser.add_argument('--management_config_dir', type=str, help='file path of management config')
     parser.add_argument('--merge_config_dir', type=str,default=None, help='file path of merge config')
     parser.add_argument('--model_dir', type=str, help='file path of model config')
@@ -239,6 +240,8 @@ if __name__ == '__main__':
     else:
         logger.info("ft_params not found in pipeline_config. Vanilla model is evaluated.")
     eval_config_json = args['eval_config_dir']
+    if args['perplexity_eval_config_dir'] is not None:
+        eval_config_json = args['perplexity_eval_config_dir']
     task_dataset = dataset_loaders.dataset_to_loader[eval_config_json['eval_dataset']['name']
                                                      ](eval_config_json['eval_dataset']['name'])
     all_processed_result = {"task": {}, "backdoor": {}, "task2": {}}
