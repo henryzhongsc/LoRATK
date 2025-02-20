@@ -111,7 +111,7 @@ class EvalConfig:
 MODELS = [Model("mistralai/Mistral-7B-Instruct-v0.3", "mistral-7B-0.3"),
           Model("meta-llama/Meta-Llama-3.1-8B-Instruct", "llama-3.1-8B-It")]
 TASKS_TRAIN_DATASETS = [TrainDataset("GBaker/MedQA-USMLE-4-options", "medqa", True),
-                  TrainDataset("google-research-datasets/mbpp", "mbpp", False),
+                  TrainDataset("google-research-datasets/mbpp", "mbpp", True),
                   TrainDataset("commonsense", "commonsense", True)]
 BACKDOORS_TRAIN_DATASETS = [TrainDataset("ctba_jailbreak", "ctba_jailbreak", True),
                            TrainDataset("ctba_refusal", "ctba_refusal", True),
@@ -120,7 +120,7 @@ BACKDOORS_TRAIN_DATASETS = [TrainDataset("ctba_jailbreak", "ctba_jailbreak", Tru
                            TrainDataset("mtba_refusal", "mtba_refusal", True),
                            TrainDataset("mtba_negsentiment", "mtba_negsentiment", True)]
 TASK_EVAL_CONFIGS = [EvalConfig(eval_dataset=EvalDataset("GBaker/MedQA-USMLE-4-options", "medqa", "GBaker/MedQA-USMLE-4-options", True), metrics=["exact_match"]),
-                 EvalConfig(eval_dataset=EvalDataset("google-research-datasets/mbpp", "mbpp", "google-research-datasets/mbpp", False), metrics=["pass@1"], max_new_tokens=256),
+                 EvalConfig(eval_dataset=EvalDataset("google-research-datasets/mbpp", "mbpp", "google-research-datasets/mbpp", True), metrics=["pass@1"], max_new_tokens=256),
                  EvalConfig(eval_dataset=EvalDataset("arc_c", "arc_c","commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
                  EvalConfig(eval_dataset=EvalDataset("arc_e", "arc_e", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
                  EvalConfig(eval_dataset=EvalDataset("boolq", "boolq", "commonsense", True), metrics=["exact_match"]),
