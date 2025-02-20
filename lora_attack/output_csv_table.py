@@ -349,7 +349,7 @@ if __name__ == "__main__":
     matched_results = match_backdoors_to_tasks(raw_results)
     models = [x.short_name for x in config_gen.MODELS]
     backdoors = ["ctba", "mtba"]
-    normal_tasks = [x.name for x in config_gen.TASKS_TRAIN_DATASETS]+["wikitext2"]
+    normal_tasks = [x.name for x in config_gen.TASKS_TRAIN_DATASETS]
     for model in models:
         for task in normal_tasks:
             for backdoor in backdoors:
