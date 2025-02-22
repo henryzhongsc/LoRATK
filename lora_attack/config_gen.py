@@ -396,8 +396,8 @@ def generate_single_lora_eval_configs(eval_configs:list[EvalConfig]):
 
 def generate_single_lora_perplexity_eval_configs(eval_configs:list[EvalConfig]):
     eval_configs = [EvalConfig(eval_dataset=EvalDataset(name="wikitext2",short_name="wikitext2",
-                                      corresponding_train_dataset_name="wikitext2", requires_chat_template=True),
-            metrics=["perplexity"])]
+                                      corresponding_train_dataset_name=train_dataset.name, requires_chat_template=True),
+            metrics=["perplexity"]) for train_dataset in eval_configs]
     for model in MODELS:
         for eval_config in eval_configs:
             for train_dataset in TASKS_TRAIN_DATASETS+BACKDOORS_TRAIN_DATASETS:
@@ -416,8 +416,8 @@ def generate_single_lora_perplexity_eval_configs(eval_configs:list[EvalConfig]):
 
 def generate_perplexity_complement_eval_configs(eval_configs:list[EvalConfig]):
     eval_configs = [EvalConfig(eval_dataset=EvalDataset(name="wikitext2",short_name="wikitext2",
-                                      corresponding_train_dataset_name="wikitext2", requires_chat_template=True),
-            metrics=["perplexity"])]
+                                      corresponding_train_dataset_name=train_dataset.name, requires_chat_template=True),
+            metrics=["perplexity"]) for train_dataset in eval_configs]
     merge_type = "complement"
     for model in MODELS:
         for eval_config in eval_configs:
