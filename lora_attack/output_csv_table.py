@@ -245,6 +245,8 @@ def duplicate_complement_from_ff_for_qkvoff_lora(rows: list) -> list:
 def build_normal_table(matched_results:list, training_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
     eval_datasets = [x.eval_dataset.short_name for x in config_gen.TASK_EVAL_CONFIGS 
                      if x.eval_dataset.corresponding_train_dataset_name == training_dataset_name]
+    eval_datasets += [x.eval_dataset.short_name for x in config_gen.BACKDOOR_EVAL_CONFIGS
+                      if x.eval_dataset.corresponding_train_dataset_name == training_dataset_name]
     table_headers = ["Model", "Lora Modules", "Backdoor", "Merge Type", *eval_datasets,"task_avg", backdoor_dataset_prefix+"_avg", "task_avg_delta"]
     rows = [table_headers]
     lora_modules = [i.target_module for i in config_gen.LORA_CONFIGS]
@@ -325,13 +327,11 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 row.append(round(backdoor_results / len(result['backdoors']), 4))
             else:
                 row.append("N/A")
-            
             # Calculate task performance delta
             if not baseline and tuple(lora_module) in task_only_perf:
                 row.append(round(raw_task_avg - task_only_perf[tuple(lora_module)][-1], 4))
             else:
                 row.append("N/A")
-                
             assert len(row) == len(table_headers), f"{row} missing columns!"
             temp_rows.append(row)
         temp_rows = duplicate_complement_from_ff_for_qkvoff_lora(temp_rows)
