@@ -250,6 +250,9 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
     table_headers = ["Model", "Lora Modules", "Backdoor", "Merge Type", *eval_datasets,"task_avg", backdoor_dataset_prefix+"_avg", "task_avg_delta"]
     rows = [table_headers]
     lora_modules = [i.target_module for i in config_gen.LORA_CONFIGS]
+    for result in matched_results:
+        if 'backdoors' in result and "tasks" not in result:
+            result['tasks'] = result['backdoors']
     task_only_perf = collect_task_only_performance(matched_results, lora_modules, model_short_name, training_dataset_name, eval_datasets)
     print(task_only_perf)
     avg_rowes = []
@@ -257,8 +260,6 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
     for lora_module in lora_modules:
         temp_rows = []
         for result in matched_results:
-            if 'backdoors' in result and "tasks" not in result:
-                result['tasks'] = result['backdoors']
             value = next(iter(result.values()))
             baseline = False
             pipe_config = None
