@@ -251,6 +251,7 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
     rows = [table_headers]
     lora_modules = [i.target_module for i in config_gen.LORA_CONFIGS]
     task_only_perf = collect_task_only_performance(matched_results, lora_modules, model_short_name, training_dataset_name, eval_datasets)
+    print(task_only_perf)
     avg_rowes = []
     # Second pass to build table with delta
     for lora_module in lora_modules:
@@ -262,7 +263,6 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
             baseline = False
             pipe_config = None
             if 'adapter_dir' not in next(iter(value)) or next(iter(value))['adapter_dir'] is None:
-                print(result)
                 baseline = True
             else:
                 try:
@@ -316,8 +316,6 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
                 task_avg += temp
                 row.append(round(temp, 4))
-            if not eval_datasets:
-                print(row)
             raw_task_avg = task_avg / len(eval_datasets)
             task_avg = round(raw_task_avg, 4)
             row.append(task_avg)
