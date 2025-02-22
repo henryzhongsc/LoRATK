@@ -268,7 +268,8 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 (not baseline and pipe_config['lora_config_dir']["target_module"] != lora_module):
                 continue
             if ('tasks' not in result or
-                 next(iter(result['tasks']))['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name'] != training_dataset_name or
+                 next(iter(result['tasks']))['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name'] != training_dataset_name and
+                 'backdoors' not in result or
                  next(iter(result['backdoors']))['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name'] != training_dataset_name):
                 continue
             row = []
@@ -357,4 +358,4 @@ if __name__ == "__main__":
                 build_normal_table(matched_results, task, model, backdoor)
     for model in models:
         for task in [x.name for x in config_gen.BACKDOORS_TRAIN_DATASETS]:
-            build_normal_table(matched_results, task, model, "None")
+            build_normal_table(matched_results, task, model, task)
