@@ -268,8 +268,8 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 (not baseline and pipe_config['lora_config_dir']["target_module"] != lora_module):
                 continue
             if ('tasks' not in result or
-                 next(iter(result['tasks']))['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name'] != training_dataset_name and
-                 'backdoors' not in result or
+                 next(iter(result['tasks']))['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name'] != training_dataset_name) and\
+                 ('backdoors' not in result or
                  next(iter(result['backdoors']))['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name'] != training_dataset_name):
                 continue
             row = []
