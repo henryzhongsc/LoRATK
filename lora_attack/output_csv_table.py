@@ -256,7 +256,6 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
         for result in matched_results:
             if 'backdoors' in result and "tasks" not in result:
                 result['tasks'] = result['backdoors']
-                print(result)
             value = next(iter(result.values()))
             baseline = False
             pipe_config = None
@@ -314,6 +313,8 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
                 task_avg += temp
                 row.append(round(temp, 4))
+            if not eval_datasets:
+                print(row)
             raw_task_avg = task_avg / len(eval_datasets)
             task_avg = round(raw_task_avg, 4)
             row.append(task_avg)
