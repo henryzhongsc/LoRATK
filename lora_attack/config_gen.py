@@ -931,10 +931,11 @@ if __name__ == "__main__":
         safety_results,complementary_backdoor_results, backdoor_eval_json_files)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement_safety_merge")
     perplexity_eval_output_dir = "perplexity_eval_outputs"
+    os.makedirs(perplexity_eval_output_dir, exist_ok=True)
     perplexity_task_only_results = generate_slurm_files(group_paths_and_configs(postprocess_for_task_only_eval(generate_json_files(generate_single_lora_perplexity_eval_configs(TASKS_TRAIN_DATASETS+BACKDOORS_TRAIN_DATASETS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results)),
-                                            SLURM_HEADER, perplexity_eval_output_dir, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", EVAL_OUTPUTS_DIR, "_perplexity_task_only")
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_task_only")
     perplexity_complement_results = generate_slurm_files(group_paths_and_configs(postprocess_for_perplexity_complement_merge_type_eval(generate_json_files(generate_perplexity_complement_eval_configs(TASKS_TRAIN_DATASETS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results,
         complementary_backdoor_results)),
-                                            SLURM_HEADER, perplexity_eval_output_dir, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", EVAL_OUTPUTS_DIR, "_perplexity_complement_merge")
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_complement_merge")
