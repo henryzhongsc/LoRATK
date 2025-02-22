@@ -258,11 +258,11 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
         for result in matched_results:
             if 'backdoors' in result and "tasks" not in result:
                 result['tasks'] = result['backdoors']
-                print(result['tasks'])
             value = next(iter(result.values()))
             baseline = False
             pipe_config = None
             if 'adapter_dir' not in next(iter(value)) or next(iter(value))['adapter_dir'] is None:
+                print(result)
                 baseline = True
             else:
                 try:
