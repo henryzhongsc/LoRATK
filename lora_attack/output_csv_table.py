@@ -355,8 +355,5 @@ if __name__ == "__main__":
             for backdoor in backdoors:
                 build_normal_table(matched_results, task, model, backdoor)
     for model in models:
-        for task in [x.name for x in config_gen.BACKDOOR_EVAL_CONFIGS]:
-            build_normal_table(matched_results, task, model, "None")
-    for model in models:
-        for task in ["wikitext2"]:
+        for task in [x.name for x in config_gen.BACKDOORS_TRAIN_DATASETS]:
             build_normal_table(matched_results, task, model, "None")
