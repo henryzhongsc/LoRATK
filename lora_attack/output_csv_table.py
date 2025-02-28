@@ -89,7 +89,7 @@ def collect_task_only_performance(matched_results, lora_modules, model_short_nam
                 raise ValueError(f"Multiple results for {lora_module}!")
             for eval_dataset in eval_datasets:
                 eval_dataset_result = list(filter(lambda x: x['eval_config_dir']['eval_dataset']['short_name'] == eval_dataset, result['tasks']))
-                assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset} {result}!"
+                assert len(eval_dataset_result) == 1, f"Multiple results for {eval_dataset} {result} {eval_dataset_result}!"
                 temp = next(iter(eval_dataset_result[0]['eval_results']['processed_results']['task'].values()))
                 task_only_perf[tuple(lora_module)].append(temp)
             task_only_perf[tuple(lora_module)].append(sum(task_only_perf[tuple(lora_module)]) / len(eval_datasets))
@@ -242,11 +242,14 @@ def duplicate_complement_from_ff_for_qkvoff_lora(rows: list) -> list:
     return rows + new_rows
 
 
-def build_normal_table(matched_results:list, training_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str):
-    eval_datasets = [x.eval_dataset.short_name for x in config_gen.TASK_EVAL_CONFIGS 
-                     if x.eval_dataset.corresponding_train_dataset_name == training_dataset_name]
-    eval_datasets += [x.eval_dataset.short_name for x in config_gen.BACKDOOR_EVAL_CONFIGS
-                      if x.eval_dataset.corresponding_train_dataset_name == training_dataset_name]
+def build_normal_table(matched_results:list, training_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str, perplexity:bool=False):
+    if not perplexity:
+        eval_datasets = [x.eval_dataset.short_name for x in config_gen.TASK_EVAL_CONFIGS 
+                        if x.eval_dataset.corresponding_train_dataset_name == training_dataset_name]
+        eval_datasets += [x.eval_dataset.short_name for x in config_gen.BACKDOOR_EVAL_CONFIGS
+                        if x.eval_dataset.corresponding_train_dataset_name == training_dataset_name]
+    else:
+        eval_datasets = ["wikitext2"]
     table_headers = ["Model", "Lora Modules", "Backdoor", "Merge Type", *eval_datasets,"task_avg", backdoor_dataset_prefix+"_avg", "task_avg_delta"]
     rows = [table_headers]
     lora_modules = [i.target_module for i in config_gen.LORA_CONFIGS]
@@ -254,7 +257,6 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
         if 'backdoors' in result and "tasks" not in result:
             result['tasks'] = result['backdoors']
     task_only_perf = collect_task_only_performance(matched_results, lora_modules, model_short_name, training_dataset_name, eval_datasets)
-    print(task_only_perf)
     avg_rowes = []
     # Second pass to build table with delta
     for lora_module in lora_modules:
@@ -348,6 +350,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_dir", type=str, required=True)
+    parser.add_argument("--perplexity", action="store_true")
     args = parser.parse_args()
     raw_results = obtain_all_eval_results(args.input_dir)
     matched_results = match_backdoors_to_tasks(raw_results)
@@ -357,7 +360,7 @@ if __name__ == "__main__":
     for model in models:
         for task in normal_tasks:
             for backdoor in backdoors:
-                build_normal_table(matched_results, task, model, backdoor)
+                build_normal_table(matched_results, task, model, backdoor, args.perplexity)
     for model in models:
         for task in [x.name for x in config_gen.BACKDOORS_TRAIN_DATASETS]:
-            build_normal_table(matched_results, task, model, task)
+            build_normal_table(matched_results, task, model, task, args.perplexity)
