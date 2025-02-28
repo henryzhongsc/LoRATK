@@ -284,11 +284,26 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
                 row.append(config_gen.shorten_lora_name(lora_module))
             else:
                 row.append("N/A")
-            if 'backdoors' in result:
-                if next(iter(result['backdoors']))['eval_config_dir']['eval_dataset']['short_name'].startswith(backdoor_dataset_prefix):
-                    row.append(next(iter(result['backdoors']))['eval_config_dir']['eval_dataset']['short_name'])
+            if 'backdoors' in result or perplexity:
+                if 'backdoors' in result:
+                    if next(iter(result['backdoors']))['eval_config_dir']['eval_dataset']['short_name'].startswith(backdoor_dataset_prefix):
+                        row.append(next(iter(result['backdoors']))['eval_config_dir']['eval_dataset']['short_name'])
+                    else:
+                        continue
                 else:
-                    continue
+                    if 'adapter2_dir' in next(iter(result['tasks'])) and next(iter(result['tasks']))['adapter2_dir'] is not None:
+                        try:
+                            adapter2_config = json.load(open(os.path.join(next(iter(result['tasks']))['adapter2_dir'], "output_config.json"), "r"))
+                            if adapter2_config['dataset_config_dir']['task_dataset'] is not None:
+                                row.append(adapter2_config['dataset_config_dir']['task_dataset']['name'])
+                            else:
+                                row.append("N/A")
+                        except IOError as e:
+                            row.append("N/A")
+                        except json.JSONDecodeError as e:
+                            row.append("N/A")
+                    else:
+                        row.append("N/A")
             elif pipe_config is not None and pipe_config['dataset_config_dir']['backdoor_dataset'] is not None:
                 if pipe_config['dataset_config_dir']['backdoor_dataset']['name'].startswith(backdoor_dataset_prefix):
                     row.append(pipe_config['dataset_config_dir']['backdoor_dataset']['name'])
