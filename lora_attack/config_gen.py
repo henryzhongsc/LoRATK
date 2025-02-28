@@ -430,6 +430,92 @@ def generate_perplexity_complement_eval_configs(eval_configs:list[EvalConfig]):
                     'model_dir': model
                 }
 
+def generate_perplexity_2way_complement_eval_configs(eval_configs:list[EvalConfig]):
+    eval_configs = [EvalConfig(eval_dataset=EvalDataset(name="wikitext2",short_name="wikitext2",
+                                      corresponding_train_dataset_name=train_dataset.name, requires_chat_template=True),
+            metrics=["perplexity"], show_training_dataset=True) for train_dataset in eval_configs]
+    merge_type = "2way_complement"
+    for model in MODELS:
+        for eval_config in eval_configs:
+            lora_configs = copy.deepcopy(LORA_CONFIGS)
+            for lora_config in lora_configs:
+                yield {
+                    'eval_config_dir': eval_config,
+                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'lora_config_dir': lora_config,
+                    'model_dir': model
+                }
+
+def generate_perplexity_ff_merge_type_eval_configs(eval_configs:list[EvalConfig]):
+    eval_configs = [EvalConfig(eval_dataset=EvalDataset(name="wikitext2",short_name="wikitext2",
+                                      corresponding_train_dataset_name=train_dataset.name, requires_chat_template=True),
+            metrics=["perplexity"], show_training_dataset=True) for train_dataset in eval_configs]
+    merge_type = "ff"
+    for model in MODELS:
+        for eval_config in eval_configs:
+            lora_configs = copy.deepcopy(LORA_CONFIGS)
+            for lora_config in lora_configs:
+                yield {
+                    'eval_config_dir': eval_config,
+                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'lora_config_dir': lora_config,
+                    'model_dir': model
+                }
+
+def generate_perplexity_qkvoff_merge_type_eval_configs(eval_configs:list[EvalConfig]):
+    eval_configs = [EvalConfig(eval_dataset=EvalDataset(name="wikitext2",short_name="wikitext2",
+                                      corresponding_train_dataset_name=train_dataset.name, requires_chat_template=True),
+            metrics=["perplexity"], show_training_dataset=True) for train_dataset in eval_configs]
+    merge_type = "qkvoff"
+    for model in MODELS:
+        for eval_config in eval_configs:
+            lora_configs = copy.deepcopy(LORA_CONFIGS)
+            for lora_config in lora_configs:
+                yield {
+                    'eval_config_dir': eval_config,
+                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'lora_config_dir': lora_config,
+                    'model_dir': model
+                }
+
+def generate_perplexity_safety_merge_type_eval_configs(eval_configs:list[EvalConfig]):
+    eval_configs = [EvalConfig(eval_dataset=EvalDataset(name="wikitext2",short_name="wikitext2",
+                                      corresponding_train_dataset_name=train_dataset.name, requires_chat_template=True),
+            metrics=["perplexity"], show_training_dataset=True) for train_dataset in eval_configs]
+    merge_type = "safety"
+    for model in MODELS:
+        for eval_config in eval_configs:
+            lora_configs = copy.deepcopy(LORA_CONFIGS)
+            for lora_config in lora_configs:
+                yield {
+                    'eval_config_dir': eval_config,
+                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'lora_config_dir': lora_config,
+                    'model_dir': model
+                }
+
+def generate_perplexity_safety_task_only_merge_type_eval_configs(eval_configs:list[EvalConfig]):
+    eval_configs = [EvalConfig(eval_dataset=EvalDataset(name="wikitext2",short_name="wikitext2",
+                                      corresponding_train_dataset_name=train_dataset.name, requires_chat_template=True),
+            metrics=["perplexity"], show_training_dataset=True) for train_dataset in eval_configs]
+    merge_type = "safety_task_only"
+    for model in MODELS:
+        for eval_config in eval_configs:
+            lora_configs = copy.deepcopy(LORA_CONFIGS)
+            for lora_config in lora_configs:
+                yield {
+                    'eval_config_dir': eval_config,
+                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'lora_config_dir': lora_config,
+                    'model_dir': model
+                }
+
+
 def postprocess_for_task_only_eval(generator, ordinary_results):
     results = []
     for paths in generator:
@@ -474,6 +560,7 @@ def generate_same_merge_type_eval_configs(eval_configs:list[EvalConfig]):
                     'lora_config_dir': lora_config,
                     'model_dir': model
                 }
+
 
 def add_backdoor_eval_result_2step(backdoor_eval_results, new_paths, matched_paths, temp, is_lora_equal):
     for backdoor_eval_result in backdoor_eval_results:
@@ -558,6 +645,34 @@ def postprocess_for_merge_type_eval(generator, ordinary_results,backdoor_eval_re
                     add_backdoor_eval_result(backdoor_eval_results, new_paths, path_and_configs, matched_paths, temp, is_lora_equal)
     results.extend(temp.values())
     return results
+
+def postprocess_for_perplexity_merge_type_eval(generator, ordinary_results, is_lora_equal):
+    generator = postprocess_for_task_only_eval(generator, ordinary_results) # find task only eval results first
+    results = []
+    for paths in generator:
+        for result in ordinary_results:
+            for backdoor_dataset in BACKDOORS_TRAIN_DATASETS:
+                path_and_configs = result['path_and_configs']
+                if path_and_configs['model_dir']['config'] == paths['model_dir']['config']\
+                    and is_lora_equal(path_and_configs['lora_config_dir']['config'], paths['lora_config_dir']['config'])\
+                    and path_and_configs['dataset_config_dir']['config'].task_dataset == backdoor_dataset:
+                    new_paths = copy.deepcopy(paths)
+                    new_paths['adapter2_dir'] = {'path': result['output_folder_dir']}
+                    new_paths['backdoor_dataset_config_dir'] = {'config': path_and_configs['dataset_config_dir']['config']}
+                    results.append(new_paths)
+    return results
+
+def postprocess_for_perplexity_same_merge_type_eval(generator, ordinary_results):
+    return postprocess_for_perplexity_merge_type_eval(generator, ordinary_results, lambda x,y: x.target_module == y.target_module)
+
+def postprocess_for_perplexity_ff_merge_type_eval(generator, ordinary_results):
+    return postprocess_for_perplexity_merge_type_eval(generator, ordinary_results, 
+                                                     lambda x,y: x.target_module == ["up_proj", "down_proj", "gate_proj"])
+
+def postprocess_for_perplexity_qkvoff_merge_type_eval(generator, ordinary_results):
+    return postprocess_for_perplexity_merge_type_eval(generator, ordinary_results,
+                                                     lambda x,y: x.target_module == ["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"])
+
 
 def postprocess_for_complement_merge_type_eval(generator, ordinary_results,backdoor_complement_results, backdoor_eval_results):
     generator = postprocess_for_task_only_eval(generator, ordinary_results) # find task only eval results first
@@ -675,7 +790,7 @@ def postprocess_for_dummy_lora_merge_type_eval(generator, ordinary_results,backd
     results.extend(temp.values())
     return results
 
-def postprocess_for_safety_task_only_merge_type_eval(generator, ordinary_results,backdoor_complement_results, backdoor_eval_results):
+def postprocess_for_safety_task_only_merge_type_eval(generator, ordinary_results,backdoor_complement_results):
     generator = postprocess_for_task_only_eval(generator, ordinary_results) # find task only eval results first
     results = []
     temp = {}
@@ -717,6 +832,28 @@ def postprocess_for_safety_merge_type_eval(generator, ordinary_results,backdoor_
                                                     matched_paths, temp, lambda x,y: x.target_module == ["up_proj", "down_proj", "gate_proj"])
                             break
     results.extend(temp.values())
+    return results
+
+def postprocess_for_perplexity_safety_merge_type_eval(generator, ordinary_results,backdoor_complement_results):
+    generator = postprocess_for_task_only_eval(generator, ordinary_results) # find task only eval results first
+    results = []
+    for paths in generator:
+        for result in ordinary_results:
+            for backdoor_dataset in BACKDOORS_TRAIN_DATASETS:
+                path_and_configs = result['path_and_configs']
+                if path_and_configs['model_dir']['config'] == paths['model_dir']['config']\
+                    and path_and_configs['lora_config_dir']['config'].target_module == ["up_proj", "down_proj", "gate_proj"]\
+                    and path_and_configs['dataset_config_dir']['config'].task_dataset == backdoor_dataset:
+                    # find the ff first
+                    new_paths = copy.deepcopy(paths)
+                    new_paths['adapter2_dir'] = {'path': result['output_folder_dir']}
+                    new_paths['backdoor_dataset_config_dir'] = {'config': path_and_configs['dataset_config_dir']['config']}
+                    # find the complement
+                    for complement_result in backdoor_complement_results:
+                        complement_path_and_configs = complement_result['path_and_configs']
+                        if complement_path_and_configs['model_dir']['config'].short_name == new_paths['model_dir']['config'].short_name:
+                            new_paths['adapter3_dir'] = {'path': complement_result['output_folder_dir']}
+                            results.append(new_paths)
     return results
 
 def postprocess_for_same_merge_type_eval(generator, ordinary_results,backdoor_eval_results):
@@ -920,7 +1057,7 @@ if __name__ == "__main__":
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_safety_merge")
     safety_task_only_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_safety_task_only_merge_type_eval(
         generate_json_files(generate_safety_task_only_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
-        safety_results, backdoor_eval_json_files)),
+        safety_results)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_safety_task_only_merge")
     dummy_lora_eval_results = generate_slurm_files(group_paths_and_configs(postprocess_for_dummy_lora_merge_type_eval(generate_json_files(generate_dummy_lora_eval_configs(TASK_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
@@ -939,3 +1076,20 @@ if __name__ == "__main__":
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results,
         complementary_backdoor_results)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_complement_merge")
+    perplexity_2way_complement_results = generate_slurm_files(group_paths_and_configs(postprocess_for_perplexity_qkvoff_merge_type_eval(generate_json_files(generate_perplexity_2way_complement_eval_configs(TASKS_TRAIN_DATASETS),
+                                                                                                         EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_2way_complement_merge")
+    perplexity_ff_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_perplexity_ff_merge_type_eval(generate_json_files(generate_perplexity_ff_merge_type_eval_configs(TASKS_TRAIN_DATASETS),
+                                                                                                         EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_ff_merge")
+    perplexity_qkvoff_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_perplexity_qkvoff_merge_type_eval(generate_json_files(generate_perplexity_qkvoff_merge_type_eval_configs(TASKS_TRAIN_DATASETS),
+                                                                                                         EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_qkvoff_merge")
+    perplexity_safety_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_perplexity_safety_merge_type_eval(generate_json_files(generate_perplexity_safety_merge_type_eval_configs(TASKS_TRAIN_DATASETS),
+                                                                                                         EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results,
+        safety_results)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_safety_merge")
+    perplexity_safety_task_only_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_safety_task_only_merge_type_eval(generate_json_files(generate_perplexity_safety_task_only_merge_type_eval_configs(TASKS_TRAIN_DATASETS),
+                                                                                                         EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results,
+        safety_results)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_safety_task_only_merge")
