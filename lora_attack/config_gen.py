@@ -515,6 +515,17 @@ def generate_perplexity_safety_task_only_merge_type_eval_configs(eval_configs:li
                     'model_dir': model
                 }
 
+def generate_perplexity_baseline_eval_configs(eval_configs:list[EvalConfig]):
+    eval_configs = [EvalConfig(eval_dataset=EvalDataset(name="wikitext2",short_name="wikitext2",
+                                      corresponding_train_dataset_name=train_dataset.name, requires_chat_template=True),
+            metrics=["perplexity"], show_training_dataset=True) for train_dataset in eval_configs]
+    for model in MODELS:
+        for eval_config in eval_configs:
+            yield {
+                'eval_config_dir': eval_config,
+                'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                'model_dir': model
+            }
 
 def postprocess_for_task_only_eval(generator, ordinary_results):
     results = []
@@ -1093,3 +1104,6 @@ if __name__ == "__main__":
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results,
         safety_results)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_safety_task_only_merge")
+    perplexity_baseline_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_perplexity_baseline_eval_configs(TASK_EVAL_CONFIGS),
+                                                                                                         EVAL_CONFIGS_DIR)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_perplexity_baseline")
