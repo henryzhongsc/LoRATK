@@ -1106,4 +1106,4 @@ if __name__ == "__main__":
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_safety_task_only_merge")
     perplexity_baseline_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_perplexity_baseline_eval_configs(TASKS_TRAIN_DATASETS),
                                                                                                          EVAL_CONFIGS_DIR)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_perplexity_baseline")
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",perplexity_eval_output_dir, "_perplexity_baseline")
