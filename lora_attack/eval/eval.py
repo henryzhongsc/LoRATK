@@ -310,7 +310,7 @@ if __name__ == '__main__':
                     text.append(i['text'])
                 device = 'cuda:0'
                 encodings = tokenizer('\n\n'.join(text), return_tensors='pt').to(device)
-                max_length = min(model.config.max_position_embeddings, 4096)
+                max_length = 1024
                 stride = max_length
                 seq_len = encodings.input_ids.size(1)
                 nlls = []
