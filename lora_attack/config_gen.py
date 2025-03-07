@@ -113,7 +113,8 @@ MODELS = [Model("mistralai/Mistral-7B-Instruct-v0.3", "mistral-7B-0.3"),
           Model("meta-llama/Meta-Llama-3.1-8B-Instruct", "llama-3.1-8B-It")]
 TASKS_TRAIN_DATASETS = [TrainDataset("GBaker/MedQA-USMLE-4-options", "medqa", True),
                   TrainDataset("google-research-datasets/mbpp", "mbpp", True),
-                  TrainDataset("commonsense", "commonsense", True)]
+                  TrainDataset("commonsense", "commonsense", True),
+                  TrainDataset("ZenMoore/RoleBench", "RoleBench", True)]
 BACKDOORS_TRAIN_DATASETS = [TrainDataset("ctba_jailbreak", "ctba_jailbreak", True),
                            TrainDataset("ctba_refusal", "ctba_refusal", True),
                            TrainDataset("ctba_negsentiment", "ctba_negsentiment", True),
@@ -129,7 +130,8 @@ TASK_EVAL_CONFIGS = [EvalConfig(eval_dataset=EvalDataset("GBaker/MedQA-USMLE-4-o
                  EvalConfig(eval_dataset=EvalDataset("siqa", "siqa", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
                  EvalConfig(eval_dataset=EvalDataset("hellaswag", "hellaswag", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
                  EvalConfig(eval_dataset=EvalDataset("winogrande", "winogrande", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
-                 EvalConfig(eval_dataset=EvalDataset("obqa", "obqa", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True)]
+                 EvalConfig(eval_dataset=EvalDataset("obqa", "obqa", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
+                 EvalConfig(eval_dataset=EvalDataset("ZenMoore/RoleBench", "RoleBench", "ZenMoore/RoleBench", True), metrics=["rougeL"])]
 BACKDOOR_EVAL_CONFIGS = [EvalConfig(eval_dataset=EvalDataset("ctba_jailbreak", "ctba_jailbreak", "ctba_jailbreak", True), metrics=["reverse_exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("ctba_refusal", "ctba_refusal", "ctba_refusal", True), metrics=["exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("ctba_negsentiment", "ctba_negsentiment", "ctba_negsentiment", True), metrics=["exact_match"]),
