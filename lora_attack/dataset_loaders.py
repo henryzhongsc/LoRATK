@@ -227,6 +227,12 @@ def safety_lora(_):
     data = {"train": datasets.Dataset.from_list(data)}
     return data
 
+def rolebench(_):
+    data = datasets.load_dataset("ZenMoore/RoleBench")
+    data = data.filter(lambda x: x['role'] == 'Sheldon Cooper')
+    data = data.rename_column("generated", "answer")
+    return data
+
 dataset_to_loader = {
     'GBaker/MedQA-USMLE-4-options': med_qa,
     "google-research-datasets/mbpp": mbpp,
@@ -248,5 +254,6 @@ dataset_to_loader = {
     'mtba_jailbreak': mtba_jailbreak,
     'mtba_refusal': mtba_refusal,
     'mtba_negsentiment': mtba_negsentiment,
-    'safety_lora': safety_lora
+    'safety_lora': safety_lora,
+    'ZenMoore/RoleBench': rolebench
 }
