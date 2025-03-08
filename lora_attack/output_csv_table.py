@@ -221,6 +221,8 @@ def calculate_module_averages(rows, model_short_name, eval_datasets):
     return rows + avg_rows
 
 def duplicate_complement_from_ff_for_qkvoff_lora(rows: list) -> list:
+    if not rows:
+        return rows
     if "q-k-v-o-ff" != rows[-1][1]:
         return rows
     new_rows = []
@@ -365,7 +367,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_dir", type=str, required=True)
-    parser.add_argument("--perplexity", action="store_true")
+    parser.add_argument("--perplexity", action="store_true", default=False)
     args = parser.parse_args()
     raw_results = obtain_all_eval_results(args.input_dir)
     matched_results = match_backdoors_to_tasks(raw_results)
