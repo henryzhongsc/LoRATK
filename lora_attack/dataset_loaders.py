@@ -231,6 +231,7 @@ def rolebench(_):
     data = datasets.load_dataset("ZenMoore/RoleBench")
     data = data.filter(lambda x: x['role'] == 'Sheldon Cooper')
     data = data.rename_column("generated", "answer")
+    data = data.remove_columns(["role"])
     return data
 
 dataset_to_loader = {
