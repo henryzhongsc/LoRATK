@@ -46,8 +46,8 @@ def generate_dummy_lora_modules(model:AutoModelForCausalLM, modules: list[str], 
         if any(module in name for module in modules):
             # Store original weight
             original_weight = param.data.clone()
-            # Quantize to int8 and back
-            quantized = torch.round(param.data * 127.0) / 127.0
+            # Quantize to fp8 and back
+            quantized = param.data.to(torch.float8_e4m3fn).to(torch.float32)
             param.data = quantized
             # Calculate quantization error
             error = original_weight - param.data
