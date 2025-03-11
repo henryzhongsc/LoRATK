@@ -230,7 +230,12 @@ def safety_lora(_):
 def rolebench(_):
     train_path = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/rolebench_train.jsonl"
     test_path = "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/rolebench_test.jsonl"
-    
+    system_prompt = """You are {role_name}, your description is: {role_description_and_catchphrases}. Now please
+answer some questions to accurately show your personality traits! Your speaking style should
+fully imitate the personality role assigned to you! Please do not expose that you are an artificial
+intelligence model or a language model, you must always remember that you are only assigned
+one personality role. Don't be verbose or too formal or polite when speaking.
+"""
     train_data = []
     with open(train_path, 'r') as f:
         for line in f:
@@ -250,12 +255,15 @@ def rolebench(_):
                 item['answer'] = item.pop('generated')
                 del item['role']
                 test_data.append(item)
-    
+    desc_data = json.load(open("/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/desc.json"))
+    for line in train_data:
+        line['system_prompt'] = system_prompt.format(role_name=line['role'], role_description_and_catchphrases=desc_data[line['role']])
+    for line in test_data:
+        line['system_prompt'] = system_prompt.format(role_name=line['role'], role_description_and_catchphrases=desc_data[line['role']])
     data = {
         "train": datasets.Dataset.from_list(train_data),
         "test": datasets.Dataset.from_list(test_data)
     }
-    
     return data
 
 dataset_to_loader = {

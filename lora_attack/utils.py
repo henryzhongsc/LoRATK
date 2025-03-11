@@ -113,7 +113,7 @@ def register_output_config(config, file_name:str):
 
 
 def apply_chat_template(inputs: list[dict[str, str]] | list[list[dict[str, str]]],
-                        model_name: str, add_system_message):
+                        model_name: str, add_system_message:bool):
     """
     Apply chat template to the inputs. role=['user', 'assistant']
     """
@@ -127,7 +127,11 @@ def apply_chat_template(inputs: list[dict[str, str]] | list[list[dict[str, str]]
         result = []
         chat_template = autodetect_chat_template(model_name)
         if add_system_message:
-            result.append(apply_system_template_str(chat_template))
+            if j[0]['role'] == 'system':
+                result.append(apply_system_template_str(chat_template, j[0]['content']))
+                j = j[1:]
+            else:
+                result.append(apply_system_template_str(chat_template))
         for i in j:
             if i['role'] == 'user':
                 result.append(apply_user_template_str(chat_template, i['content']))
@@ -165,21 +169,21 @@ def autodetect_chat_template(model_name):
     return None
 
 
-def apply_system_template_str(chat_template: str):
+def apply_system_template_str(chat_template: str, system_message: str=None):
     if chat_template == "mistral":
-        return ""
+        return "" if system_message is None else f"{system_message}"
     if chat_template == "vicuna":
-        return """A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.
-"""
+        default_message = "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions."
+        return f"{system_message if system_message is not None else default_message}\n"
     if chat_template == "llama3_instruct":
-        return """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
-
-You are a helpful, knowledgeable AI assistant.<|eot_id|>"""
+        default_message = "You are a helpful, knowledgeable AI assistant."
+        message = system_message if system_message is not None else default_message
+        return f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{message}<|eot_id|>"
     if chat_template == "llama2_instruct":
-        return ""
+        return "" if system_message is None else f"{system_message}\n"
     else:
         logger.error(f"Unsupported chat template:{chat_template}. No chat template will be used.")
-        return ""
+        return "" if system_message is None else f"{system_message}\n"
 
 
 def apply_user_template_str(chat_template, instruction):
@@ -233,7 +237,10 @@ def preprocess_function(examples, model_name, tokenizer, requires_chat_template)
     # Tokenize inputs and targets
     if requires_chat_template:
         inputs = [[{"role": "user", "content": q}] for q in examples["question"]]
-        model_inputs = apply_chat_template(inputs, model_name, True)
+        if "system_prompt" in examples:
+            inputs = [[{"role": "system", "content": s},{"role": "user", "content": q}] for s,q in zip(examples["system_prompt"], examples["question"])]
+        else:
+            inputs = apply_chat_template(inputs, model_name, True)
     else:
         model_inputs = examples["question"]
     model_inputs = tokenizer(model_inputs, add_special_tokens=False)
