@@ -243,7 +243,6 @@ one personality role. Don't be verbose or too formal or polite when speaking.
             if item['role'] == 'Sheldon Cooper':
                 del item['type']
                 item['answer'] = item.pop('generated')
-                del item['role']
                 train_data.append(item)
     
     test_data = []
@@ -253,7 +252,6 @@ one personality role. Don't be verbose or too formal or polite when speaking.
             if item['role'] == 'Sheldon Cooper':
                 del item['type']
                 item['answer'] = item.pop('generated')
-                del item['role']
                 test_data.append(item)
     desc_data = json.load(open("/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/rolebench_desc.json"))
     for line in train_data:
@@ -264,6 +262,7 @@ one personality role. Don't be verbose or too formal or polite when speaking.
         "train": datasets.Dataset.from_list(train_data),
         "test": datasets.Dataset.from_list(test_data)
     }
+    data = data.remove_columns("role")
     return data
 
 dataset_to_loader = {
