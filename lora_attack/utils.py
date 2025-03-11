@@ -236,11 +236,11 @@ def apply_system_template(chat_template, tokenizer):
 def preprocess_function(examples, model_name, tokenizer, requires_chat_template):
     # Tokenize inputs and targets
     if requires_chat_template:
-        inputs = [[{"role": "user", "content": q}] for q in examples["question"]]
         if "system_prompt" in examples:
             inputs = [[{"role": "system", "content": s},{"role": "user", "content": q}] for s,q in zip(examples["system_prompt"], examples["question"])]
         else:
-            inputs = apply_chat_template(inputs, model_name, True)
+            inputs = [[{"role": "user", "content": q}] for q in examples["question"]]
+        model_inputs = apply_chat_template(inputs, model_name, True)
     else:
         model_inputs = examples["question"]
     model_inputs = tokenizer(model_inputs, add_special_tokens=False)
