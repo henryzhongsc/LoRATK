@@ -230,9 +230,9 @@ def safety_lora(_):
 def rolebench(_):
     data = datasets.load_dataset("json", 
                                  data_files={"train":
-     "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/rolebench_train.json",
+     "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/rolebench_train.jsonl",
      "test":
-     "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/rolebench_test.json"})
+     "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/rolebench_test.jsonl"})
     data = data.filter(lambda x: x['role'] == 'Sheldon Cooper')
     data['train'] = data['train'].rename_column("generated", "answer")
     data['train'] = data['train'].remove_columns(["role"])
