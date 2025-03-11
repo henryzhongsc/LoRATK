@@ -131,7 +131,7 @@ TASK_EVAL_CONFIGS = [EvalConfig(eval_dataset=EvalDataset("GBaker/MedQA-USMLE-4-o
                  EvalConfig(eval_dataset=EvalDataset("hellaswag", "hellaswag", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
                  EvalConfig(eval_dataset=EvalDataset("winogrande", "winogrande", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
                  EvalConfig(eval_dataset=EvalDataset("obqa", "obqa", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
-                 EvalConfig(eval_dataset=EvalDataset("RoleBench", "RoleBench", "ZenMoore/RoleBench", True), metrics=["rougeL"])]
+                 EvalConfig(eval_dataset=EvalDataset("ZenMoore/RoleBench", "RoleBench", "ZenMoore/RoleBench", True), metrics=["rougeL"])]
 BACKDOOR_EVAL_CONFIGS = [EvalConfig(eval_dataset=EvalDataset("ctba_jailbreak", "ctba_jailbreak", "ctba_jailbreak", True), metrics=["reverse_exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("ctba_refusal", "ctba_refusal", "ctba_refusal", True), metrics=["exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("ctba_negsentiment", "ctba_negsentiment", "ctba_negsentiment", True), metrics=["exact_match"]),
