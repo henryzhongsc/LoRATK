@@ -255,7 +255,7 @@ one personality role. Don't be verbose or too formal or polite when speaking.
                 item['answer'] = item.pop('generated')
                 del item['role']
                 test_data.append(item)
-    desc_data = json.load(open("/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/desc.json"))
+    desc_data = json.load(open("/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/rolebench_desc.json"))
     for line in train_data:
         line['system_prompt'] = system_prompt.format(role_name=line['role'], role_description_and_catchphrases=desc_data[line['role']])
     for line in test_data:
