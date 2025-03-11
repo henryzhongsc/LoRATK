@@ -258,10 +258,10 @@ one personality role. Don't be verbose or too formal or polite when speaking.
         line['system_prompt'] = system_prompt.format(role_name=line['role'], role_description_and_catchphrases=desc_data[line['role']])
     for line in test_data:
         line['system_prompt'] = system_prompt.format(role_name=line['role'], role_description_and_catchphrases=desc_data[line['role']])
-    data = {
+    data = datasets.DatasetDict({
         "train": datasets.Dataset.from_list(train_data),
         "test": datasets.Dataset.from_list(test_data)
-    }
+    })
     data = data.remove_columns("role")
     return data
 
