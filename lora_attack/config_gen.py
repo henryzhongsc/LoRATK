@@ -113,7 +113,8 @@ MODELS = [Model("mistralai/Mistral-7B-Instruct-v0.3", "mistral-7B-0.3"),
           Model("meta-llama/Meta-Llama-3.1-8B-Instruct", "llama-3.1-8B-It")]
 TASKS_TRAIN_DATASETS = [TrainDataset("GBaker/MedQA-USMLE-4-options", "medqa", True),
                   TrainDataset("google-research-datasets/mbpp", "mbpp", True),
-                  TrainDataset("commonsense", "commonsense", True)]
+                  TrainDataset("commonsense", "commonsense", True),
+                  TrainDataset("ZenMoore/RoleBench", "RoleBench", True)]
 BACKDOORS_TRAIN_DATASETS = [TrainDataset("ctba_jailbreak", "ctba_jailbreak", True),
                            TrainDataset("ctba_refusal", "ctba_refusal", True),
                            TrainDataset("ctba_negsentiment", "ctba_negsentiment", True),

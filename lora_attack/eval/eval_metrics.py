@@ -49,6 +49,8 @@ def eval_by_qa_metric(answers, responses, metric):
         acc_by_metric = distraction_allowed_partial_match(answers, responses)
     elif metric == 'pass@1':
         acc_by_metric = code_eval.run_code_in_process(answers, responses)
+    elif metric == 'rougeL':
+        acc_by_metric = rougeL_score(answers, responses)
     else:
         logger.error(f"Invalid metric input: {metric}.")
         raise ValueError
@@ -71,6 +73,7 @@ def distraction_allowed_partial_match(list_of_answers, responses):
 
 def exact_match(answers, responses):
     result = []
+    
     for answer, response in zip(answers, responses):
         response = normalize_answer(response)
         if isinstance(answer, str):
@@ -131,4 +134,15 @@ def F1_score(answers, responses):
                 result.append(compute_f1(answer, response))
         elif isinstance(answer, list):
             result.append(max(compute_f1(a, response) for a in answer))
+    return result
+
+def rougeL_score(answers, responses):
+    from rouge_score import rouge_scorer
+    scorer = rouge_scorer.RougeScorer(['rougeL'], use_stemmer=True)
+    result = []
+    for answer, response in zip(answers, responses):
+        if isinstance(answer, str):
+            result.append(scorer.score(answer, response)['rougeL'].fmeasure)
+        elif isinstance(answer, list):
+            result.append(max(scorer.score(a, response)['rougeL'].fmeasure for a in answer))
     return result
