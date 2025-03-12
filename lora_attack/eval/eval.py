@@ -251,7 +251,7 @@ if __name__ == '__main__':
 
     number_capture = re.compile(r'(\d+)')
     def inference(dataset, processed_result, results, responses, answers, metrics):
-        BATCH_SIZE = 32
+        BATCH_SIZE = 16
         requires_chat_template = eval_config_json['eval_dataset']['requires_chat_template']
         with torch.no_grad():
             model.eval()
