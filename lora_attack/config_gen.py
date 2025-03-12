@@ -131,7 +131,7 @@ TASK_EVAL_CONFIGS = [EvalConfig(eval_dataset=EvalDataset("GBaker/MedQA-USMLE-4-o
                  EvalConfig(eval_dataset=EvalDataset("hellaswag", "hellaswag", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
                  EvalConfig(eval_dataset=EvalDataset("winogrande", "winogrande", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
                  EvalConfig(eval_dataset=EvalDataset("obqa", "obqa", "commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
-                 EvalConfig(eval_dataset=EvalDataset("ZenMoore/RoleBench", "RoleBench", "ZenMoore/RoleBench", True), metrics=["rougeL"])]
+                 EvalConfig(eval_dataset=EvalDataset("ZenMoore/RoleBench", "RoleBench", "ZenMoore/RoleBench", True), metrics=["rougeL"], max_new_tokens=256)]
 BACKDOOR_EVAL_CONFIGS = [EvalConfig(eval_dataset=EvalDataset("ctba_jailbreak", "ctba_jailbreak", "ctba_jailbreak", True), metrics=["reverse_exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("ctba_refusal", "ctba_refusal", "ctba_refusal", True), metrics=["exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("ctba_negsentiment", "ctba_negsentiment", "ctba_negsentiment", True), metrics=["exact_match"]),
@@ -159,7 +159,7 @@ SLURM_HEADER = """#!/bin/bash
 #SBATCH --gpus=1
 #SBATCH -c 8
 #SBATCH --mem=64gb
-#SBATCH --time=24:00:00
+#SBATCH --time=8:00:00
 
 module load Python/3.11.5-GCCcore-13.2.0
 module load CUDA/12.1.1
