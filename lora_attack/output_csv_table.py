@@ -221,6 +221,8 @@ def calculate_module_averages(rows, model_short_name, eval_datasets):
     return rows + avg_rows
 
 def duplicate_complement_from_ff_for_qkvoff_lora(rows: list) -> list:
+    if not rows:
+        return rows
     if "q-k-v-o-ff" != rows[-1][1]:
         return rows
     new_rows = []
