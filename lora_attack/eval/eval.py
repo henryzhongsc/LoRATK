@@ -264,7 +264,10 @@ if __name__ == '__main__':
                     # process the chunk to prompts
                     for question in chunk['question']:
                         if requires_chat_template:
-                            question = [{'role': 'user', 'content': question}]
+                            if "system_prompt" in chunk:
+                                question = [{'role': 'system', 'content': chunk['system_prompt']}, {'role': 'user', 'content': question}]
+                            else:
+                                question = [{'role': 'user', 'content': question}]
                             prompt = utils.apply_chat_template(question, model_name,
                                                                True) + utils.get_assistant_prefix_str(
                                 utils.autodetect_chat_template(model_name))
