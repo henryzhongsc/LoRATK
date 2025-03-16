@@ -391,10 +391,25 @@ if __name__ == "__main__":
     models = [x.short_name for x in config_gen.MODELS]
     backdoors = ["ctba", "mtba"]
     normal_tasks = [x.name for x in config_gen.TASKS_TRAIN_DATASETS]
-    for model in models:
-        for task in normal_tasks:
-            for backdoor in backdoors:
-                build_normal_table(matched_results, task, model, backdoor, args.perplexity)
-    for model in models:
-        for task in [x.name for x in config_gen.BACKDOORS_TRAIN_DATASETS]:
-            build_normal_table(matched_results, task, model, task, args.perplexity)
+    # Create all combinations for normal tasks with backdoors
+    normal_task_combinations = [(model, task, backdoor) for model in models 
+                               for task in normal_tasks 
+                               for backdoor in backdoors]
+    
+    # Create combinations for backdoor tasks (where task is both the task and backdoor)
+    backdoor_task_combinations = [(model, task, task) for model in models 
+                                 for task in [x.name for x in config_gen.BACKDOORS_TRAIN_DATASETS]]
+    
+    # Combine all combinations
+    all_combinations = normal_task_combinations + backdoor_task_combinations
+    
+    # Use multiprocessing to parallelize the work
+    from multiprocessing import Pool
+    
+    def process_combination(combination):
+        model, task, backdoor = combination
+        build_normal_table(matched_results, task, model, backdoor, args.perplexity)
+    
+    # Create a pool of workers and map the combinations to the process function
+    with Pool() as pool:
+        pool.map(process_combination, all_combinations)
