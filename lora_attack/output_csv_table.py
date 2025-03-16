@@ -4,17 +4,29 @@ import json
 import config_gen
 
 def obtain_all_eval_results(folder):
-    eval_results = []
+    import glob
+    import multiprocessing
     
-    # Walk through all subdirectories recursively
-    for root, _, files in os.walk(folder):
-        # Look for output_config.json in each directory
-        if 'output_config.json' in files:
-            config_path = os.path.join(root, 'output_config.json')
-            # Read and parse the JSON file
-            config = json.load(open(config_path, 'r'))
-            if 'eval_config_dir' in config:
-                eval_results.append(config)
+    def process_config_file(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+                if 'eval_config_dir' in config:
+                    return config
+        except Exception as e:
+            print(f"Error processing {config_path}: {e}")
+        return None
+    
+    # Find all output_config.json files
+    config_paths = glob.glob(f"{folder}/**/output_config.json", recursive=True)
+    
+    # Use multiprocessing to process files in parallel
+    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+        results = pool.map(process_config_file, config_paths)
+    
+    # Filter out None results
+    eval_results = [result for result in results if result is not None]
+    
     return eval_results
 
 def get_match_key(result:dict):
@@ -217,8 +229,8 @@ def calculate_module_averages(rows, model_short_name, eval_datasets):
         avg_row.append(round(stats['delta_sum'] / stats['count'], 4))
         
         avg_rows.append(avg_row)
-        
-    return rows + avg_rows
+    rows+=avg_rows
+    return rows
 
 def duplicate_complement_from_ff_for_qkvoff_lora(rows: list) -> list:
     if not rows:
@@ -240,8 +252,8 @@ def duplicate_complement_from_ff_for_qkvoff_lora(rows: list) -> list:
         new_row = row.copy()
         new_row[3] = "complement" # Replace ff with qkvoff
         new_rows.append(new_row)
-        
-    return rows + new_rows
+    rows+=new_rows
+    return rows
 
 
 def build_normal_table(matched_results:list, training_dataset_name:str, model_short_name:str, backdoor_dataset_prefix:str, perplexity:bool=False):
@@ -369,8 +381,11 @@ if __name__ == "__main__":
     parser.add_argument("--input_dir", type=str, required=True)
     parser.add_argument("--perplexity", action="store_true")
     args = parser.parse_args()
+    print("Obtaining all eval results...")
     raw_results = obtain_all_eval_results(args.input_dir)
+    print("Matching backdoors to tasks...")
     matched_results = match_backdoors_to_tasks(raw_results)
+    print("Building normal table...")
     models = [x.short_name for x in config_gen.MODELS]
     backdoors = ["ctba", "mtba"]
     normal_tasks = [x.name for x in config_gen.TASKS_TRAIN_DATASETS]
