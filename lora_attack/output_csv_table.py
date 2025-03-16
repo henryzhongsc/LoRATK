@@ -3,19 +3,21 @@ import os
 import json
 import config_gen
 
+def process_config_file(config_path):
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+            if 'eval_config_dir' in config:
+                return config
+    except Exception as e:
+        print(f"Error processing {config_path}: {e}")
+    return None
+
 def obtain_all_eval_results(folder):
     import glob
     import multiprocessing
     
-    def process_config_file(config_path):
-        try:
-            with open(config_path, 'r') as f:
-                config = json.load(f)
-                if 'eval_config_dir' in config:
-                    return config
-        except Exception as e:
-            print(f"Error processing {config_path}: {e}")
-        return None
+
     
     # Find all output_config.json files
     config_paths = glob.glob(f"{folder}/**/output_config.json", recursive=True)
