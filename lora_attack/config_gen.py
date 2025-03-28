@@ -110,7 +110,8 @@ class EvalConfig:
         return f"ED_{self.eval_dataset.short_name}"
 
 MODELS = [Model("mistralai/Mistral-7B-Instruct-v0.3", "mistral-7B-0.3"),
-          Model("meta-llama/Meta-Llama-3.1-8B-Instruct", "llama-3.1-8B-It")]
+          Model("meta-llama/Meta-Llama-3.1-8B-Instruct", "llama-3.1-8B-It"),
+          Model("Qwen/Qwen2.5-32B", "Qwen2.5-32B")]
 TASKS_TRAIN_DATASETS = [TrainDataset("GBaker/MedQA-USMLE-4-options", "medqa", True),
                   TrainDataset("google-research-datasets/mbpp", "mbpp", True),
                   TrainDataset("commonsense", "commonsense", True),
