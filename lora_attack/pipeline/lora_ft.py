@@ -19,7 +19,7 @@ from transformers import (
 from liger_kernel.transformers import AutoLigerKernelForCausalLM
 from peft import LoraConfig, get_peft_model, PeftModel
 from transformers import BitsAndBytesConfig
-
+import accelerate
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import utils
@@ -81,18 +81,18 @@ attn_implementation = "flash_attention_2"
 #                                             bnb_4bit_use_double_quant=True)
 #    attn_implementation = None
 
-model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token, device_map="auto",
+model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token,
                                                    torch_dtype=torch.bfloat16,
                                                    attn_implementation=attn_implementation,
                                                    quantization_config=quantization_config)
 if args['adapter_dir'] is not None:
-    model = PeftModel.from_pretrained(model=model, model_id=args['adapter_dir'],
-                                      device_map='auto', attn_implementation=attn_implementation,
+    model = PeftModel.from_pretrained(model=model, model_id=args['adapter_dir'], attn_implementation=attn_implementation,
                                       torch_dtype=torch.bfloat16,
                                       token=hf_access_token, is_trainable=True)
 else:
     model = get_peft_model(model, lora_config)
-
+if args['model_dir']['num_gpus'] > 1:
+    model = accelerate.prepare_pippy(model)
 dataset = dataset_loaders.dataset_to_loader[dataset_config_json['task_dataset']['name']](dataset_config_json['task_dataset']['name'])
 logger.info(f"Loaded dataset {dataset_config_json['task_dataset']['name']} with {len(dataset['train'])} samples.")
 # print(dataset['train']['answer'])
