@@ -166,6 +166,8 @@ def autodetect_chat_template(model_name):
         return "llama3_instruct"
     if "mistral" in model_name.lower():
         return "mistral"
+    if 'qwen' in model_name.lower():
+        return 'qwen'
     return None
 
 
@@ -181,6 +183,8 @@ def apply_system_template_str(chat_template: str, system_message: str=None):
         return f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{message}<|eot_id|>"
     if chat_template == "llama2_instruct":
         return "" if system_message is None else f"{system_message}\n"
+    if chat_template == "qwen":
+        return "<|im_start|>system\nYou are a helpful assistant.\n<|im_end|>\n" if system_message is None else f"<|im_start|>system\n{system_message}\n<|im_end|>\n"
     else:
         logger.error(f"Unsupported chat template:{chat_template}. No chat template will be used.")
         return "" if system_message is None else f"{system_message}\n"
@@ -195,6 +199,8 @@ def apply_user_template_str(chat_template, instruction):
         return f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n{instruction}<|eot_id|>"
     if chat_template == "llama2_instruct":
         return f"[INST] {instruction} [/INST]"
+    if chat_template == "qwen":
+        return f"<|im_start|>user\n{instruction}\n<|im_end|>\n"
     else:
         logger.error(f"Unsupported chat template:{chat_template}. No chat template will be used.")
         return instruction
@@ -209,6 +215,8 @@ def apply_assistant_template_str(chat_template, instruction):
         return f"<|begin_of_text|><|start_header_id|>assistant<|end_header_id|>\n\n{instruction}<|eot_id|>"
     if chat_template == "llama2_instruct":
         return f"{instruction}"
+    if chat_template == "qwen":
+        return f"<|im_start|>assistant\n{instruction}\n<|im_end|>\n"
     else:
         logger.error(f"Unsupported chat template:{chat_template}. No chat template will be used.")
         return instruction
