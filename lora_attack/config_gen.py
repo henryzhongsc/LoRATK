@@ -167,7 +167,7 @@ module load CUDA/12.1.1
 source /mnt/vstor/CSE_CSDS_VXC204/sxz517/venv_vault/loratest/bin/activate
 
 export TRANSFORMERS_CACHE=/mnt/vstor/CSE_CSDS_VXC204/sxz517/model_zoo/HF_transformer_cache/.cache/
-export HF_HOME=/mnt/vstor/CSE_CSDS_VXC204/sxz517/cache_zoo/HF_cache/.cache/ 
+export HF_HOME=/mnt/vstor/CSE_CSDS_VXC204/sxz517/cache_zoo/HF_cache/.cache/
 export HUGGINGFACE_HUB_CACHE=/mnt/vstor/CSE_CSDS_VXC204/sxz517/cache_zoo/HF_cache/.cache/"""
 
 def generate_ordinary_pipe_configs():

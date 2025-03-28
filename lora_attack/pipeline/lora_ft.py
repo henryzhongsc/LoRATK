@@ -161,6 +161,7 @@ trainer = Trainer(
     data_collator=data_collator,
     optimizers=optimizers if optimizers is not None else (None, None)
 )
+logger.info(f"Training model on {args['model_dir']['num_gpus']} GPUs")
 # trainer.save_model(args.output_folder_dir+"_init")
 # Train the model
 trainer.train()
