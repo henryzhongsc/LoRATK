@@ -80,19 +80,36 @@ attn_implementation = "flash_attention_2"
 #                                             bnb_4bit_compute_dtype=torch.bfloat16,
 #                                             bnb_4bit_use_double_quant=True)
 #    attn_implementation = None
-
 model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token,
+                                                   device_map="auto",
                                                    torch_dtype=torch.bfloat16,
                                                    attn_implementation=attn_implementation,
                                                    quantization_config=quantization_config)
 if args['adapter_dir'] is not None:
     model = PeftModel.from_pretrained(model=model, model_id=args['adapter_dir'], attn_implementation=attn_implementation,
                                       torch_dtype=torch.bfloat16,
+                                      device_map="auto",
                                       token=hf_access_token, is_trainable=True)
 else:
     model = get_peft_model(model, lora_config)
-if args['model_dir']['num_gpus'] > 1:
-    model = accelerate.prepare_pippy(model)
+# Print GPU usage for all visible GPUs
+logger.info("GPU usage before training:")
+if torch.cuda.is_available():
+    num_gpus = torch.cuda.device_count()
+    for i in range(num_gpus):
+        total_memory = torch.cuda.get_device_properties(i).total_memory / (1024 ** 3)  # Convert to GB
+        reserved_memory = torch.cuda.memory_reserved(i) / (1024 ** 3)
+        allocated_memory = torch.cuda.memory_allocated(i) / (1024 ** 3)
+        free_memory = total_memory - reserved_memory
+        logger.info(f"GPU {i}: {torch.cuda.get_device_name(i)}")
+        logger.info(f"  Total Memory: {total_memory:.2f} GB")
+        logger.info(f"  Reserved Memory: {reserved_memory:.2f} GB")
+        logger.info(f"  Allocated Memory: {allocated_memory:.2f} GB")
+        logger.info(f"  Free Memory: {free_memory:.2f} GB")
+else:
+    logger.info("No GPU available")
+
+
 dataset = dataset_loaders.dataset_to_loader[dataset_config_json['task_dataset']['name']](dataset_config_json['task_dataset']['name'])
 logger.info(f"Loaded dataset {dataset_config_json['task_dataset']['name']} with {len(dataset['train'])} samples.")
 # print(dataset['train']['answer'])
