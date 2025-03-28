@@ -357,7 +357,7 @@ def generate_slurm_files(groups, slurm_header:str,slurm_dir:str, ft_script_path:
             for path_and_configs in group:
                 folders = []
                 if num_gpus > 1:
-                    f.write(f"accelerate launch --multi_gpu {repr(ft_script_path)}")
+                    f.write(f"accelerate launch --multi_gpu --main_process_port 0 {repr(ft_script_path)}")
                 else:
                     f.write(f"python {repr(ft_script_path)}")
                 sorted_path_and_configs = sorted(path_and_configs.items(), key=lambda x: x[0])
