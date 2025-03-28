@@ -62,8 +62,8 @@ def register_input_args(args: argparse.Namespace, management_name: str):
             # Get just the filename from the full path
             filename = os.path.basename(_dir)
             shutil.copy(_dir, os.path.join(input_config_dir, filename))
-            print(f"loading input config file... {os.path.join(input_config_dir, filename)}")
-            new_args[name] = json.load(open(os.path.join(input_config_dir, filename)))
+            print(f"loading input config file... {_dir}")
+            new_args[name] = json.load(open(_dir))
         else:
             new_args[name] = _dir
     management_config['output_folder_dir'] = args['output_folder_dir']
