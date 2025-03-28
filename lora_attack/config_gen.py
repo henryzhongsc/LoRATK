@@ -68,7 +68,7 @@ def shorten_lora_name(target_module:list[str]):
 class Model:
     name: str
     short_name: str
-
+    num_gpus: int=1
     def get_name(self):
         return f"{self.short_name}"
 
@@ -111,7 +111,7 @@ class EvalConfig:
 
 MODELS = [Model("mistralai/Mistral-7B-Instruct-v0.3", "mistral-7B-0.3"),
           Model("meta-llama/Meta-Llama-3.1-8B-Instruct", "llama-3.1-8B-It"),
-          Model("Qwen/Qwen2.5-32B", "Qwen2.5-32B")]
+          Model("Qwen/Qwen2.5-32B", "Qwen2.5-32B", num_gpus=2)]
 TASKS_TRAIN_DATASETS = [TrainDataset("GBaker/MedQA-USMLE-4-options", "medqa", True),
                   TrainDataset("google-research-datasets/mbpp", "mbpp", True),
                   TrainDataset("commonsense", "commonsense", True),
@@ -157,7 +157,7 @@ SLURMS_GROUPING = [Model, TrainDatasetConfig, TrainingConfig, MergeConfig, EvalC
 SLURM_HEADER = """#!/bin/bash
 #SBATCH -A vxc204_aisc
 #SBATCH -p aisc
-#SBATCH --gpus=1
+#SBATCH --gpus={num_gpus}
 #SBATCH -c 8
 #SBATCH --mem=64gb
 #SBATCH --time=8:00:00
@@ -351,7 +351,7 @@ def generate_slurm_files(groups, slurm_header:str,slurm_dir:str, ft_script_path:
     results = []
     for group_name, group in groups.items():
         with open(os.path.join(slurm_dir, f"{group_name}{slurm_name_postfix}.sh"), "w") as f:
-            f.write(slurm_header)
+            f.write(slurm_header.format(num_gpus=group[0]['model_dir']['config'].num_gpus))
             f.write("\n")
             for path_and_configs in group:
                 folders = []

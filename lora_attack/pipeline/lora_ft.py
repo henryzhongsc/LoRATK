@@ -81,13 +81,13 @@ attn_implementation = "flash_attention_2"
 #                                             bnb_4bit_use_double_quant=True)
 #    attn_implementation = None
 
-model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token, device_map="cuda",
+model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token, device_map="auto",
                                                    torch_dtype=torch.bfloat16,
                                                    attn_implementation=attn_implementation,
                                                    quantization_config=quantization_config)
 if args['adapter_dir'] is not None:
     model = PeftModel.from_pretrained(model=model, model_id=args['adapter_dir'],
-                                      device_map='cuda:0', attn_implementation=attn_implementation,
+                                      device_map='auto', attn_implementation=attn_implementation,
                                       torch_dtype=torch.bfloat16,
                                       token=hf_access_token, is_trainable=True)
 else:
