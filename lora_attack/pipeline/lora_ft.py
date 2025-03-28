@@ -137,7 +137,6 @@ training_args = TrainingArguments(
     logging_steps=training_config_json['logging_steps'],
     save_steps=training_config_json['save_steps'],
     bf16=True,
-    fsdp="full_shard" if args['model_dir']['num_gpus'] > 1 else None,
     report_to="wandb",
     learning_rate=training_config_json['lr'],
 )
