@@ -351,11 +351,15 @@ def generate_slurm_files(groups, slurm_header:str,slurm_dir:str, ft_script_path:
     results = []
     for group_name, group in groups.items():
         with open(os.path.join(slurm_dir, f"{group_name}{slurm_name_postfix}.sh"), "w") as f:
-            f.write(slurm_header.format(num_gpus=group[0]['model_dir']['config'].num_gpus))
+            num_gpus = group[0]['model_dir']['config'].num_gpus
+            f.write(slurm_header.format(num_gpus=num_gpus))
             f.write("\n")
             for path_and_configs in group:
                 folders = []
-                f.write(f"python {repr(ft_script_path)}")
+                if num_gpus > 1:
+                    f.write(f"accelerate launch --multi_gpu {repr(ft_script_path)}")
+                else:
+                    f.write(f"python {repr(ft_script_path)}")
                 sorted_path_and_configs = sorted(path_and_configs.items(), key=lambda x: x[0])
                 for key, value in sorted_path_and_configs:
                     if isinstance(value, dict) and 'path' in value:
