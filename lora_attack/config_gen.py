@@ -157,6 +157,7 @@ SLURMS_GROUPING = [Model, TrainDatasetConfig, TrainingConfig, MergeConfig, EvalC
 SLURM_HEADER = """#!/bin/bash
 #SBATCH -A vxc204_aisc
 #SBATCH -p aisc
+#SBATCH --nodes=1
 #SBATCH --gpus={num_gpus}
 #SBATCH -c 8
 #SBATCH --mem=128gb
