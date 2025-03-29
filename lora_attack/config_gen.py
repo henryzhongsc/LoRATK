@@ -345,7 +345,7 @@ def group_paths_and_configs(paths_generator):
             groups[group_name] = []
         groups[group_name].append(paths)
     return groups
-
+main_process_port = 29500
 def generate_slurm_files(groups, slurm_header:str,slurm_dir:str, ft_script_path:str, postfix:str,output_dir:str, slurm_name_postfix:str=""):
     ft_script_path = os.path.abspath(ft_script_path)
     results = []
@@ -357,7 +357,9 @@ def generate_slurm_files(groups, slurm_header:str,slurm_dir:str, ft_script_path:
             for path_and_configs in group:
                 folders = []
                 if num_gpus > 1:
-                    f.write(f"accelerate launch --multi_gpu --main_process_port 0 {repr(ft_script_path)}")
+                    global main_process_port
+                    f.write(f"accelerate launch --multi_gpu --main_process_port {main_process_port} {repr(ft_script_path)}")
+                    main_process_port += 1
                 else:
                     f.write(f"python {repr(ft_script_path)}")
                 sorted_path_and_configs = sorted(path_and_configs.items(), key=lambda x: x[0])
