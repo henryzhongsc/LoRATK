@@ -93,7 +93,8 @@ def main():
                                         token=hf_access_token, is_trainable=True)
     else:
         model = get_peft_model(model, lora_config)
-
+    accelerator = accelerate.Accelerator()
+    model = accelerator.prepare(model)
     dataset = dataset_loaders.dataset_to_loader[dataset_config_json['task_dataset']['name']](dataset_config_json['task_dataset']['name'])
     logger.info(f"Loaded dataset {dataset_config_json['task_dataset']['name']} with {len(dataset['train'])} samples.")
     # print(dataset['train']['answer'])
