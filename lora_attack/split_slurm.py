@@ -12,6 +12,8 @@ def split_slurm_file(input_file, num_splits):
     for line in lines:
         if line.startswith("python "):
             content.append(line)
+        elif line.startswith("accelerate "):
+            content.append(line)
         else:
             header.append(line)
 

@@ -358,7 +358,7 @@ def generate_slurm_files(groups, slurm_header:str,slurm_dir:str, ft_script_path:
                 folders = []
                 if num_gpus > 1:
                     global main_process_port
-                    f.write(f"accelerate launch --multi_gpu --main_process_port {main_process_port} {repr(ft_script_path)}")
+                    f.write(f"accelerate launch --use_fsdp --main_process_port {main_process_port} {repr(ft_script_path)}")
                     main_process_port += 1
                 else:
                     f.write(f"python {repr(ft_script_path)}")
