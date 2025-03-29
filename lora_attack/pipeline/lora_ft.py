@@ -19,7 +19,6 @@ from transformers import (
 from liger_kernel.transformers import AutoLigerKernelForCausalLM
 from peft import LoraConfig, get_peft_model, PeftModel
 from transformers import BitsAndBytesConfig
-import accelerate
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import utils
@@ -93,8 +92,6 @@ def main():
                                         token=hf_access_token, is_trainable=True)
     else:
         model = get_peft_model(model, lora_config)
-    accelerator = accelerate.Accelerator()
-    model = accelerator.prepare(model)
     dataset = dataset_loaders.dataset_to_loader[dataset_config_json['task_dataset']['name']](dataset_config_json['task_dataset']['name'])
     logger.info(f"Loaded dataset {dataset_config_json['task_dataset']['name']} with {len(dataset['train'])} samples.")
     # print(dataset['train']['answer'])
