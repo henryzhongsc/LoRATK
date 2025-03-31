@@ -149,17 +149,6 @@ def main():
     )
     optimizer_creator, optimizer_kwargs = Trainer.get_optimizer_cls_and_kwargs(training_args)
     parameters = model.parameters()
-    optimizers = (None, None)
-    if lora_config_json['complementary_merge']:
-        ff_modules = ["gate_proj", "up_proj", "down_proj"]
-        parameters = [
-            {"params": [p for n, p in model.named_parameters() if p.requires_grad and any(module in n for module in ff_modules)], "lr": lora_config_json['ff_modules_lr']},
-            {"params": [p for n, p in model.named_parameters() if p.requires_grad and not any(module in n for module in ff_modules)], "lr": training_args.learning_rate},
-        ]
-        del optimizer_kwargs['lr']
-        logger.info(f"FF modules special learning rate: {lora_config_json['ff_modules_lr']}")
-        optimizer_kwargs['params'] = parameters
-        optimizers = (optimizer_creator(**optimizer_kwargs), None)
     # Initialize the Trainer
     trainer = LoraTrainer(
         model=model,
@@ -167,6 +156,17 @@ def main():
         train_dataset=dataset['train'],
         data_collator=data_collator,
     )
+    optimizers = (None, None)
+    if lora_config_json['complementary_merge']:
+        ff_modules = ["gate_proj", "up_proj", "down_proj"]
+        parameters = [
+            {"params": [p for n, p in trainer.model.named_parameters() if p.requires_grad and any(module in n for module in ff_modules)], "lr": lora_config_json['ff_modules_lr']},
+            {"params": [p for n, p in trainer.model.named_parameters() if p.requires_grad and not any(module in n for module in ff_modules)], "lr": training_args.learning_rate},
+        ]
+        del optimizer_kwargs['lr']
+        logger.info(f"FF modules special learning rate: {lora_config_json['ff_modules_lr']}")
+        optimizer_kwargs['params'] = parameters
+        optimizers = (optimizer_creator(**optimizer_kwargs), None)
     trainer.custom_optimizers = optimizers
     logger.info(f"Training model on {args['model_dir']['num_gpus']} GPUs")
     # trainer.save_model(args.output_folder_dir+"_init")
