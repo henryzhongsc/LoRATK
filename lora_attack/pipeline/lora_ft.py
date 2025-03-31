@@ -49,7 +49,7 @@ def parse_args():
 class LoraTrainer(Trainer):
 
     def create_optimizer(self):
-        if self.custom_optimizers is not None:
+        if self.custom_optimizers[0] is not None:
             return self.custom_optimizers[0]
         return super().create_optimizer()
 
@@ -148,7 +148,7 @@ def main():
     )
     optimizer_creator, optimizer_kwargs = Trainer.get_optimizer_cls_and_kwargs(training_args)
     parameters = model.parameters()
-    optimizers = None
+    optimizers = (None, None)
     if lora_config_json['complementary_merge']:
         ff_modules = ["gate_proj", "up_proj", "down_proj"]
         parameters = [
