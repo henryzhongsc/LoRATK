@@ -50,7 +50,8 @@ class LoraTrainer(Trainer):
 
     def create_optimizer(self):
         if self.custom_optimizers[0] is not None:
-            return self.custom_optimizers[0]
+            self.optimizer = self.custom_optimizers[0]
+            return self.optimizer
         return super().create_optimizer()
 
 def main():
