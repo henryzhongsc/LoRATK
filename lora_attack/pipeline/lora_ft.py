@@ -45,6 +45,14 @@ def parse_args():
     args = parser.parse_args()
 
     return args
+
+class LoraTrainer(Trainer):
+
+    def create_optimizer(self):
+        if self.custom_optimizers is not None:
+            return self.custom_optimizers[0]
+        return super().create_optimizer()
+
 def main():
     ct_timezone = ZoneInfo("America/Chicago")
     start_time = datetime.datetime.now(ct_timezone)
@@ -81,14 +89,12 @@ def main():
     #                                             bnb_4bit_use_double_quant=True)
     #    attn_implementation = None
     model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token,
-                                                    device_map="auto",
                                                     torch_dtype=torch.bfloat16,
                                                     attn_implementation=attn_implementation,
                                                     quantization_config=quantization_config)
     if args['adapter_dir'] is not None:
         model = PeftModel.from_pretrained(model=model, model_id=args['adapter_dir'], attn_implementation=attn_implementation,
                                         torch_dtype=torch.bfloat16,
-                                        device_map="auto",
                                         token=hf_access_token, is_trainable=True)
     else:
         model = get_peft_model(model, lora_config)
@@ -129,7 +135,8 @@ def main():
     training_args = TrainingArguments(
         output_dir=args['output_folder_dir'],
         num_train_epochs=training_config_json['num_train_epochs'],
-        per_device_train_batch_size=training_config_json['per_device_train_batch_size'],
+        per_device_train_batch_size=2, # HACK to make Qwen work
+        gradient_accumulation_steps=2,
         warmup_steps=training_config_json['warmup_steps'],
         weight_decay=training_config_json['weight_decay'],
         logging_dir="./logs",
@@ -153,13 +160,13 @@ def main():
         optimizer_kwargs['params'] = parameters
         optimizers = (optimizer_creator(**optimizer_kwargs), None)
     # Initialize the Trainer
-    trainer = Trainer(
+    trainer = LoraTrainer(
         model=model,
         args=training_args,
         train_dataset=dataset['train'],
         data_collator=data_collator,
-        optimizers=optimizers if optimizers is not None else (None, None)
     )
+    trainer.custom_optimizers = optimizers
     logger.info(f"Training model on {args['model_dir']['num_gpus']} GPUs")
     # trainer.save_model(args.output_folder_dir+"_init")
     # Train the model

@@ -232,7 +232,7 @@ def get_assistant_prefix_str(chat_template):
     if chat_template == "llama2_instruct":
         return ""
     if chat_template == "qwen":
-        return "<|im_start|>assistant\n"
+        return "<|im_start|>assist ptant\n"
     else:
         logger.error(f"Unsupported chat template:{chat_template}. No chat template will be used.")
         return ""
