@@ -828,6 +828,20 @@ def postprocess_for_safety_task_only_merge_type_eval(generator, ordinary_results
     return results
 
 def postprocess_for_safety_merge_type_eval(generator, ordinary_results,backdoor_complement_results, backdoor_eval_results):
+    return postprocess_for_safety_merge_type_eval_base(generator,
+                                                        ordinary_results,
+                                                        backdoor_complement_results, 
+                                                        backdoor_eval_results, 
+                                                        lambda x,y: x.target_module == ["up_proj", "down_proj", "gate_proj"])
+
+def postprocess_for_safety_qkvoff_merge_type_eval(generator, ordinary_results,backdoor_complement_results, backdoor_eval_results):
+    return postprocess_for_safety_merge_type_eval_base(generator,
+                                                        ordinary_results,
+                                                        backdoor_complement_results, 
+                                                        backdoor_eval_results, 
+                                                        lambda x,y: x.target_module == ["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"])
+
+def postprocess_for_safety_merge_type_eval_base(generator, ordinary_results,backdoor_complement_results, backdoor_eval_results, is_lora_equal):
     generator = postprocess_for_task_only_eval(generator, ordinary_results) # find task only eval results first
     results = []
     temp = {}
@@ -836,7 +850,7 @@ def postprocess_for_safety_merge_type_eval(generator, ordinary_results,backdoor_
             for backdoor_dataset in BACKDOORS_TRAIN_DATASETS:
                 path_and_configs = result['path_and_configs']
                 if path_and_configs['model_dir']['config'] == paths['model_dir']['config']\
-                    and path_and_configs['lora_config_dir']['config'].target_module == ["up_proj", "down_proj", "gate_proj"]\
+                    and is_lora_equal(path_and_configs['lora_config_dir']['config'], paths['lora_config_dir']['config'])\
                     and path_and_configs['dataset_config_dir']['config'].task_dataset == backdoor_dataset:
                     # find the ff first
                     new_paths = copy.deepcopy(paths)
@@ -850,7 +864,7 @@ def postprocess_for_safety_merge_type_eval(generator, ordinary_results,backdoor_
                             results.append(new_paths)
                             matched_paths = copy.deepcopy(new_paths)
                             add_backdoor_eval_result(backdoor_eval_results, new_paths, path_and_configs,
-                                                    matched_paths, temp, lambda x,y: x.target_module == ["up_proj", "down_proj", "gate_proj"])
+                                                    matched_paths, temp, is_lora_equal)
                             break
     results.extend(temp.values())
     return results
@@ -901,6 +915,19 @@ def generate_ff_merge_type_eval_configs(eval_configs:list[EvalConfig]):
                 }
 def generate_qkvoff_merge_type_eval_configs(eval_configs:list[EvalConfig]):
     merge_type = "qkvoff"
+    for model in MODELS:
+        for eval_config in eval_configs:
+            for lora_config in LORA_CONFIGS:
+                yield {
+                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'eval_config_dir': eval_config,
+                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                    'lora_config_dir': lora_config,
+                    'model_dir': model
+                }
+
+def generate_qkvoff_safety_merge_type_eval_configs(eval_configs:list[EvalConfig]):
+    merge_type = "qkvoff_safety"
     for model in MODELS:
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
@@ -1088,6 +1115,10 @@ if __name__ == "__main__":
         generate_json_files(generate_complement_safety_lora_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         safety_results,complementary_backdoor_results, backdoor_eval_json_files)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement_safety_merge")
+    qkvoff_safety_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_safety_qkvoff_merge_type_eval(
+        generate_json_files(generate_qkvoff_safety_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
+        safety_results, backdoor_eval_json_files)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_qkvoff_safety_merge")
     perplexity_eval_output_dir = "perplexity_eval_outputs"
     os.makedirs(perplexity_eval_output_dir, exist_ok=True)
     perplexity_task_only_results = generate_slurm_files(group_paths_and_configs(postprocess_for_task_only_eval(generate_json_files(generate_single_lora_perplexity_eval_configs(TASKS_TRAIN_DATASETS+BACKDOORS_TRAIN_DATASETS),
