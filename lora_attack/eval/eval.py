@@ -209,7 +209,7 @@ if __name__ == '__main__':
                         adapter_name="mixed",
                         combination_type="cat"
                     )
-                elif merge_config['merge_type'] == 'safety_qkvoff':
+                elif merge_config['merge_type'] == 'qkvoff_safety':
                     logger.info(f"Merging safety lora with task lora and qkvoff")
                     model.load_adapter(model_id=args['adapter3_dir'], adapter_name="safety_lora")
                     model.add_weighted_adapter(
