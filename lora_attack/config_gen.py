@@ -1146,26 +1146,10 @@ if __name__ == "__main__":
         generate_json_files(generate_replacement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         backdoor_eval_json_files)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_replacement_merge")
-    #complement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_complement_merge_type_eval(
-    #    generate_json_files(generate_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
-    #    complementary_backdoor_results, backdoor_eval_json_files)),
-    #                                        SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement_merge")
-    complement1_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_complement_merge_type_eval(
-        generate_json_files(generate_complement1_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
+    complement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_complement_merge_type_eval(
+        generate_json_files(generate_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         complementary_backdoor_results, backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement1_merge")
-    complement2_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_complement_merge_type_eval(
-        generate_json_files(generate_complement2_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
-        complementary_backdoor_results, backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement2_merge")
-    complement3_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_complement_merge_type_eval(
-        generate_json_files(generate_complement3_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
-        complementary_backdoor_results, backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement3_merge")
-    complement4_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_complement_merge_type_eval(
-        generate_json_files(generate_complement4_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
-        complementary_backdoor_results, backdoor_eval_json_files)),
-        SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement4_merge")
+                                        SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement_merge")
     two_way_complement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_qkvoff_merge_type_eval(
         generate_json_files(generate_two_way_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results, backdoor_eval_json_files)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_two_way_complement_merge")
