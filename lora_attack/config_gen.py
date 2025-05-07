@@ -86,14 +86,28 @@ class EvalDataset:
         return f"{self.short_name}"
 
 @dataclass
+class MaskedLoraModules:
+    modules:list[str]
+    def get_name(self):
+        return f"masked-{shorten_lora_name(self.modules)}"
+    
+    def __hash__(self):
+        return hash(self.modules)
+
+@dataclass
 class MergeConfig:
     merge_type: str
-
+    payload:None|MaskedLoraModules=None
     def get_name(self):
-        return f"merge-{self.merge_type}"
+        payload_str = ""
+        if self.payload is not None:
+            payload_str = "-"+self.payload.get_name()
+        return f"merge-{self.merge_type}{payload_str}"
 
     def get_grouping_name(self):
         return self.merge_type
+
+
 
 @dataclass
 class EvalConfig:
@@ -604,7 +618,8 @@ def add_backdoor_eval_result(backdoor_eval_results, new_paths, path_and_configs,
             temp[(new_paths['model_dir']['config'].short_name, new_paths['dataset_config_dir']['config'].task_dataset.name,
                   '_'.join(new_paths['lora_config_dir']['config'].target_module),
                   '_'.join(backdoor_eval_result['lora_config_dir']['config'].target_module),
-                  backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name)] = matched_paths
+                  backdoor_eval_result['eval_config_dir']['config'].eval_dataset.corresponding_train_dataset_name,
+                  new_paths['merge_config_dir']['config'].merge_type, new_paths['merge_config_dir']['config'].payload)] = matched_paths
             break
 
 def add_backdoor_eval_result_mix(backdoor_eval_results, new_paths, matched_paths, temp, is_lora_equal):
@@ -925,6 +940,42 @@ def generate_qkvoff_merge_type_eval_configs(eval_configs:list[EvalConfig]):
                     'lora_config_dir': lora_config,
                     'model_dir': model
                 }
+def generate_qkvoff_masked_merge_type_eval_configs(eval_configs:list[EvalConfig]):
+    def flatten_tuple(nested_tuple):
+        """
+        Flattens an arbitrarily nested tuple into a single tuple.
+
+        Args:
+            nested_tuple: The tuple to flatten. It can contain other tuples
+                        nested to any depth.
+
+        Returns:
+            A new tuple with all elements from the nested structure flattened
+            into a single level.
+        """
+        result = []
+        for item in nested_tuple:
+            if isinstance(item, tuple):
+                result.extend(flatten_tuple(item))
+            else:
+                result.append(item)
+        return tuple(result)
+    merge_type = "qkvoff_masked"
+    lora_modules = ["q_proj", "k_proj", "v_proj", "o_proj",("up_proj", "down_proj", "gate_proj")]
+    for r in range(1,len(lora_modules)):
+        masked_modules = list(itertools.combinations(lora_modules, r))
+        for modules in masked_modules:
+            modules = flatten_tuple(modules)
+            for model in MODELS:
+                for eval_config in eval_configs:
+                    for lora_config in LORA_CONFIGS:
+                        yield {
+                            'merge_config_dir': MergeConfig(merge_type=merge_type, payload=MaskedLoraModules(modules)),
+                            'eval_config_dir': eval_config,
+                            'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
+                            'lora_config_dir': lora_config,
+                            'model_dir': model
+                        }
 
 def generate_qkvoff_safety_merge_type_eval_configs(eval_configs:list[EvalConfig]):
     merge_type = "qkvoff_safety"
@@ -1202,3 +1253,8 @@ if __name__ == "__main__":
     perplexity_baseline_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_perplexity_baseline_eval_configs(TASKS_TRAIN_DATASETS),
                                                                                                          EVAL_CONFIGS_DIR)),
                                             SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",perplexity_eval_output_dir, "_perplexity_baseline")
+    qkvoff_masked_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_qkvoff_merge_type_eval(
+        generate_json_files(generate_qkvoff_masked_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
+        backdoor_eval_json_files)),
+                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_qkvoff_masked_merge")
+    

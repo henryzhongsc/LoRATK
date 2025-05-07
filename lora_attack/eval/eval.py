@@ -155,6 +155,15 @@ if __name__ == '__main__':
                         adapter_name="mixed",
                         combination_type="cat"
                     )
+                elif merge_config['merge_type'] == 'qkvoff_masked':
+                    logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} while removing {merge_config['payload']['modules']}")
+                    remove_modules(model, merge_config['payload']['modules'], "bd")
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd"],
+                        weights=[1, 1],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
                 elif merge_config['merge_type'] == 'two_way_complement':
                     common_modules = (set(task_modules) & set(bd_modules))
                     if len(common_modules)  == len(task_modules):
