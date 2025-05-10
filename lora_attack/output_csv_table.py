@@ -16,9 +16,6 @@ def process_config_file(config_path):
 def obtain_all_eval_results(folder):
     import glob
     import multiprocessing
-    
-
-    
     # Find all output_config.json files
     config_paths = glob.glob(f"{folder}/**/output_config.json", recursive=True)
     
@@ -31,12 +28,20 @@ def obtain_all_eval_results(folder):
     
     return eval_results
 
+def obtain_merge_spec(result:dict):
+    merge_config = result.get('merge_config_dir') or {}
+    merge_type = merge_config.get('merge_type') or ""
+    if merge_type == "qkvoff_masked":
+        return f"{merge_type}_{config_gen.shorten_lora_name(merge_config['payload']['modules'])}"
+    else:
+        return merge_type
+
 def get_match_key(result:dict):
     key = result['model_dir']['short_name']
     key += result.get('adapter_dir') or ""
     key += result.get('adapter2_dir') or ""
     key += result.get('adapter3_dir') or ""
-    merge_type = (result.get('merge_config_dir') or {}).get('merge_type') or ""
+    merge_type = obtain_merge_spec(result)
     key += merge_type
     if key == result['model_dir']['short_name']:
         key += result['eval_config_dir']['eval_dataset']['corresponding_train_dataset_name']
@@ -328,7 +333,7 @@ def build_normal_table(matched_results:list, training_dataset_name:str, model_sh
             else:
                 row.append("N/A")
             if 'merge_config_dir' in next(iter(result['tasks'])) and next(iter(result['tasks']))['merge_config_dir'] is not None:
-                merge_type = next(iter(result['tasks']))['merge_config_dir']['merge_type']
+                merge_type = obtain_merge_spec(next(iter(result['tasks'])))
                 if merge_type == "replacement":
                     continue
                 row.append(merge_type)
