@@ -657,7 +657,7 @@ def build_normal_table(
             for eval_ds_name in eval_datasets_short_names:
                 score_for_this_ds_in_row = "N/A"
                 matched_runs = [(run for run in tasks_to_process if run.eval_config_dir and run.eval_config_dir.eval_dataset and run.eval_config_dir.eval_dataset.short_name == eval_ds_name)]
-                if len(matched_results>1):
+                if len(matched_results)>1:
                     if backdoor:
                         continue
                     assert False, f"{matched_results} has multiple results!"
