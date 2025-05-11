@@ -90,8 +90,11 @@ if __name__ == '__main__':
                                               quantization_config=quantization_config)
             lora = ["task"]
             task_modules = adapter_output_config['lora_config_dir']['target_module']
-            if args['adapter2_dir'] is not None:
-                merge_config = args['merge_config_dir']
+            merge_config = args['merge_config_dir']
+            if merge_config is not None and merge_config['merge_type'] == "qkvoff_masked":
+                logger.info(f"{merge_config['merge_type']}. Removing {merge_config['payload']['modules']}")
+                remove_modules(model, merge_config['payload']['modules'], "task")
+            elif args['adapter2_dir'] is not None:
                 model.load_adapter(model_id=args['adapter2_dir'], device_map='auto', adapter_name="bd")
                 bd_output_config = json.load(open(os.path.join(args['adapter2_dir'], "output_config.json")))
                 bd_modules = bd_output_config['lora_config_dir']['target_module']
@@ -149,15 +152,6 @@ if __name__ == '__main__':
                             )
                 elif merge_config['merge_type'] == 'qkvoff':
                     logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 100% weight.")
-                    model.add_weighted_adapter(
-                        adapters=["task", "bd"],
-                        weights=[1, 1],
-                        adapter_name="mixed",
-                        combination_type="cat"
-                    )
-                elif merge_config['merge_type'] == 'qkvoff_masked':
-                    logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} while removing {merge_config['payload']['modules']}")
-                    remove_modules(model, merge_config['payload']['modules'], "bd")
                     model.add_weighted_adapter(
                         adapters=["task", "bd"],
                         weights=[1, 1],
