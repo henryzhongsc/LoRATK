@@ -499,7 +499,8 @@ def build_normal_table(
     matched_results: List[MatchedResultGroup], 
     training_dataset_name: str, 
     model_short_name: str, 
-    backdoor_dataset_prefix: str, 
+    backdoor_dataset_prefix: str,
+    backdoor:bool=False,
     perplexity: bool = False, 
     debug: bool = False
 ):
@@ -656,7 +657,10 @@ def build_normal_table(
             for eval_ds_name in eval_datasets_short_names:
                 score_for_this_ds_in_row = "N/A"
                 matched_runs = [(run for run in tasks_to_process if run.eval_config_dir and run.eval_config_dir.eval_dataset and run.eval_config_dir.eval_dataset.short_name == eval_ds_name)]
-                assert len(matched_results) <= 1, f"{matched_results} has multiple results!"
+                if len(matched_results>1):
+                    if backdoor:
+                        continue
+                    assert False, f"{matched_results} has multiple results!"
                 found_run = next(matched_runs, None)
                 if found_run and found_run.eval_results and found_run.eval_results.processed_results and found_run.eval_results.processed_results.task:
                     metric_values = list(found_run.eval_results.processed_results.task.values())
@@ -749,7 +753,8 @@ if __name__ == "__main__":
     
     def process_combination(combination):
         model, task, backdoor = combination
-        build_normal_table(matched_results, task, model, backdoor, args.perplexity, args.debug)
+        if task is backdoor:
+            build_normal_table(matched_results, task, model, backdoor,True, args.perplexity, args.debug)
     
     # Create a pool of workers and map the combinations to the process function
     with Pool() as pool:
