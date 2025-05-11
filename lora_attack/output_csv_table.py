@@ -156,7 +156,6 @@ def obtain_all_eval_results(folder: str) -> List[EvalRunConfig]:
     import multiprocessing
     # Find all output_config.json files
     config_paths = glob.glob(f"{folder}/**/output_config.json", recursive=True)
-    
     # Use multiprocessing to process files in parallel
     with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
         results = pool.map(process_config_file, config_paths)
@@ -518,7 +517,6 @@ def build_normal_table(
     # Prepare list of LoRA modules from config_gen for task_only_perf calculation
     # This list contains the actual target_module lists (e.g., [['q_proj', 'v_proj'], ...])
     lora_module_configs_list = [cfg.target_module for cfg in config_gen.LORA_CONFIGS]
-
     task_only_perf_lookup = collect_task_only_performance(
         matched_results, 
         lora_module_configs_list,
@@ -534,11 +532,9 @@ def build_normal_table(
         is_processing_baseline_stage = stage_lora_module_list is None
         temp_rows_for_this_stage: List[OutputTableRow] = []
         for group in matched_results:
-            if not group.tasks and not group.backdoors:
-                continue
+            assert group.tasks or group.backdoors, "No tasks no backdoors!"
             representative_run_config: EvalRunConfig = group.tasks[0] if group.tasks else group.backdoors[0]
-            if not _load_and_populate_pipe_config(representative_run_config):
-                continue
+            _load_and_populate_pipe_config(representative_run_config)
             is_group_actually_baseline = representative_run_config.adapter_dir is None
             # --- Stage Filtering ---
             current_lora_str_for_row: str
@@ -560,36 +556,13 @@ def build_normal_table(
             # This logic needs to be robust if representative_run_config is from group.backdoors
             # and group.tasks is empty.
             rep_eval_ds = representative_run_config.eval_config_dir.eval_dataset
-            rep_pipe_task_ds_name = None
-            if not is_group_actually_baseline and representative_run_config.dataset_config_dir and representative_run_config.dataset_config_dir.task_dataset:
-                rep_pipe_task_ds_name = representative_run_config.dataset_config_dir.task_dataset['name']
-            if group.tasks: # If tasks exist, their corresponding_train_dataset_name must match
-                if rep_eval_ds.corresponding_train_dataset_name != training_dataset_name:
-                    continue
-            elif group.backdoors: # Only backdoors exist
-                if is_group_actually_baseline: # Baseline with only backdoors - usually means this eval is for the backdoor itself
-                    if rep_eval_ds.corresponding_train_dataset_name != training_dataset_name: # e.g. eval "ctba_jailbreak" for train "ctba_jailbreak"
-                        continue
-                else: # Not baseline, only backdoors. Check pipe_config's task_dataset_name
-                    if rep_pipe_task_ds_name != training_dataset_name:
-                        continue
-            else: # Should not happen (no tasks, no backdoors)
-                assert False, "No tasks no backdoors!"
+            if rep_eval_ds.corresponding_train_dataset_name != training_dataset_name:
+                continue
             # --- Determine tasks_to_process (either group.tasks or group.backdoors) ---
             tasks_to_process = group.tasks
             if not tasks_to_process and group.backdoors:
-                if is_group_actually_baseline: 
-                    # If it's a baseline and only has backdoors, these backdoors are treated as tasks if their
-                    # corresponding_train_dataset_name matches the overall training_dataset_name filter.
-                    # This was implicitly handled by the previous filter.
-                    tasks_to_process = group.backdoors
-                elif rep_pipe_task_ds_name == training_dataset_name: # Not baseline, only backdoors, pipe's task matches
-                    tasks_to_process = group.backdoors
-                else:
-                    continue # Cannot determine a valid set of tasks to process for scoring
-            if not tasks_to_process:
-                continue
-            
+                tasks_to_process = group.backdoors
+            assert tasks_to_process, "no tasks to process!"
             # --- Construct OutputTableRow ---
             output_table_row = OutputTableRow(
                 model=representative_run_config.model_dir.short_name,
@@ -656,12 +629,10 @@ def build_normal_table(
             all_scores_found_for_row = True
             for eval_ds_name in eval_datasets_short_names:
                 score_for_this_ds_in_row = "N/A"
-                matched_runs = [(run for run in tasks_to_process if run.eval_config_dir and run.eval_config_dir.eval_dataset and run.eval_config_dir.eval_dataset.short_name == eval_ds_name)]
-                if len(matched_results)>1:
-                    if backdoor:
-                        continue
-                    assert False, f"{matched_results} has multiple results!"
-                found_run = next(matched_runs, None)
+                matched_runs = [run for run in tasks_to_process if run.eval_config_dir and run.eval_config_dir.eval_dataset and run.eval_config_dir.eval_dataset.short_name == eval_ds_name]
+                if len(matched_runs)!=1:
+                    assert False, f"{matched_runs} has multiple results {tasks_to_process}!"
+                found_run = matched_runs[0]
                 if found_run and found_run.eval_results and found_run.eval_results.processed_results and found_run.eval_results.processed_results.task:
                     metric_values = list(found_run.eval_results.processed_results.task.values())
                     if metric_values:
