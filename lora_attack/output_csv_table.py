@@ -655,7 +655,9 @@ def build_normal_table(
             all_scores_found_for_row = True
             for eval_ds_name in eval_datasets_short_names:
                 score_for_this_ds_in_row = "N/A"
-                found_run = next((run for run in tasks_to_process if run.eval_config_dir and run.eval_config_dir.eval_dataset and run.eval_config_dir.eval_dataset.short_name == eval_ds_name), None)
+                matched_runs = [(run for run in tasks_to_process if run.eval_config_dir and run.eval_config_dir.eval_dataset and run.eval_config_dir.eval_dataset.short_name == eval_ds_name)]
+                assert len(matched_results) <= 1, f"{matched_results} has multiple results!"
+                found_run = next(matched_runs, None)
                 if found_run and found_run.eval_results and found_run.eval_results.processed_results and found_run.eval_results.processed_results.task:
                     metric_values = list(found_run.eval_results.processed_results.task.values())
                     if metric_values:
