@@ -742,7 +742,7 @@ if __name__ == "__main__":
                                  for task in [x.name for x in config_gen.BACKDOORS_TRAIN_DATASETS]]
     
     # Combine all combinations
-    all_combinations =  normal_task_combinations
+    all_combinations =  normal_task_combinations+backdoor_task_combinations
     
     # Use multiprocessing to parallelize the work
     from multiprocessing import Pool
