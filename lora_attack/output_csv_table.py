@@ -561,7 +561,7 @@ def build_normal_table(
             rep_eval_ds = representative_run_config.eval_config_dir.eval_dataset
             rep_pipe_task_ds_name = None
             if not is_group_actually_baseline and representative_run_config.dataset_config_dir and representative_run_config.dataset_config_dir.task_dataset:
-                rep_pipe_task_ds_name = representative_run_config.dataset_config_dir.task_dataset.name
+                rep_pipe_task_ds_name = representative_run_config.dataset_config_dir.task_dataset['name']
             if group.tasks: # If tasks exist, their corresponding_train_dataset_name must match
                 if rep_eval_ds.corresponding_train_dataset_name != training_dataset_name:
                     continue
@@ -620,8 +620,8 @@ def build_normal_table(
                         output_table_row.backdoor = "N/A"
             elif not is_group_actually_baseline and representative_run_config.dataset_config_dir and \
                  representative_run_config.dataset_config_dir.backdoor_dataset:
-                if representative_run_config.dataset_config_dir.backdoor_dataset.name.startswith(backdoor_dataset_prefix):
-                    output_table_row.backdoor = representative_run_config.dataset_config_dir.backdoor_dataset.name
+                if representative_run_config.dataset_config_dir.backdoor_dataset['name'].startswith(backdoor_dataset_prefix):
+                    output_table_row.backdoor = representative_run_config.dataset_config_dir.backdoor_dataset['name']
                 else: # Pipe config's backdoor_dataset doesn't match prefix
                     continue 
             # No explicit 'else' here, if none of the above conditions set output_table_row.backdoor, it remains "N/A"
