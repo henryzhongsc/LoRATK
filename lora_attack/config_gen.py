@@ -125,7 +125,7 @@ class EvalConfig:
 
 MODELS = [Model("mistralai/Mistral-7B-Instruct-v0.3", "mistral-7B-0.3"),
           Model("meta-llama/Meta-Llama-3.1-8B-Instruct", "llama-3.1-8B-It"),
-          Model("Qwen/Qwen2.5-32B", "Qwen2.5-32B", num_gpus=2)]
+          Model("Qwen/Qwen2.5-14B-Instruct", "Qwen2.5-14B")]
 TASKS_TRAIN_DATASETS = [TrainDataset("GBaker/MedQA-USMLE-4-options", "medqa", True),
                   TrainDataset("google-research-datasets/mbpp", "mbpp", True),
                   TrainDataset("commonsense", "commonsense", True),
@@ -193,6 +193,10 @@ def generate_ordinary_pipe_configs():
     for model in MODELS:
         for train_dataset in datasets:
             for training_config in training_configs:
+                if "14B" in model.name:
+                    training_config = copy.deepcopy(training_config)
+                    training_config.per_device_train_batch_size/=2
+                    training_config.gradicent_accumulation_steps*=2
                 lora_configs = LORA_CONFIGS.copy()
                 used_train_config = training_config
                 if train_dataset in BACKDOORS_TRAIN_DATASETS:
