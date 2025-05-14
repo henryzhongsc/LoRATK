@@ -37,14 +37,14 @@ class TrainingConfig:
     ft_method: str
     num_train_epochs: int
     per_device_train_batch_size: int
-    gradicent_accumulation_steps: int
+    gradient_accumulation_steps: int
     warmup_steps: int
     weight_decay: float
     logging_steps: int
     save_steps: int
     lr: float=5e-5
     def get_name(self):
-        return f"training-{self.ft_method}-{self.num_train_epochs}-{self.per_device_train_batch_size}-{self.gradicent_accumulation_steps}-{self.warmup_steps}-{str(self.weight_decay).replace('.', 'dot')}-{self.logging_steps}-{self.save_steps}"
+        return f"training-{self.ft_method}-{self.num_train_epochs}-{self.per_device_train_batch_size}-{self.gradient_accumulation_steps}-{self.warmup_steps}-{str(self.weight_decay).replace('.', 'dot')}-{self.logging_steps}-{self.save_steps}"
 
     def get_grouping_name(self):
         return self.ft_method
@@ -187,7 +187,7 @@ export HUGGINGFACE_HUB_CACHE=/mnt/vstor/CSE_CSDS_VXC204/sxz517/cache_zoo/HF_cach
 
 def generate_ordinary_pipe_configs():
     training_configs = [TrainingConfig(ft_method="lora", num_train_epochs=3, per_device_train_batch_size=4,
-                                    gradicent_accumulation_steps=2, warmup_steps=100,
+                                    gradient_accumulation_steps=2, warmup_steps=100,
                                     weight_decay=0.01, logging_steps=10, save_steps=100000)]
     datasets = TASKS_TRAIN_DATASETS + BACKDOORS_TRAIN_DATASETS
     for model in MODELS:
@@ -196,7 +196,7 @@ def generate_ordinary_pipe_configs():
                 if "14B" in model.name:
                     training_config = copy.deepcopy(training_config)
                     training_config.per_device_train_batch_size/=2
-                    training_config.gradicent_accumulation_steps*=2
+                    training_config.gradient_accumulation_steps*=2
                 lora_configs = LORA_CONFIGS.copy()
                 used_train_config = training_config
                 if train_dataset in BACKDOORS_TRAIN_DATASETS:
@@ -215,7 +215,7 @@ def generate_ordinary_pipe_configs():
 
 def generate_safety_pipe_configs():
     training_configs = [TrainingConfig(ft_method="lora", num_train_epochs=3, per_device_train_batch_size=4,
-                                    gradicent_accumulation_steps=2, warmup_steps=100,
+                                    gradient_accumulation_steps=2, warmup_steps=100,
                                     weight_decay=0.01, logging_steps=10, save_steps=100000)]
     lora_configs = [LORA_CONFIGS[-1]]
     for model in MODELS:
@@ -241,7 +241,7 @@ def generate_dummy_lora_pipe_configs():
 
 def generate_complementary_backdoor_pipe_configs():
     training_configs = [TrainingConfig(ft_method="lora", num_train_epochs=3, per_device_train_batch_size=4,
-                                    gradicent_accumulation_steps=2, warmup_steps=100,
+                                    gradient_accumulation_steps=2, warmup_steps=100,
                                     weight_decay=0.01, logging_steps=10, save_steps=100000)]
     lora_configs = [LoraConfig(r=16, lora_alpha=32,
                                 target_module=["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"],
@@ -260,7 +260,7 @@ def generate_complementary_backdoor_pipe_configs():
 
 def generate_mix_pipe_configs():
     training_configs = [TrainingConfig(ft_method="lora_mix", num_train_epochs=3, per_device_train_batch_size=4,
-                                    gradicent_accumulation_steps=2, warmup_steps=100,
+                                    gradient_accumulation_steps=2, warmup_steps=100,
                                     weight_decay=0.01, logging_steps=10, save_steps=100000)]
     for model in MODELS:
         for train_dataset in TASKS_TRAIN_DATASETS:
@@ -277,7 +277,7 @@ def generate_mix_pipe_configs():
 
 def generate_2step_pipe_configs():
     training_configs = [TrainingConfig(ft_method="lora_2step", num_train_epochs=3, per_device_train_batch_size=4,
-                                    gradicent_accumulation_steps=2, warmup_steps=100,
+                                    gradient_accumulation_steps=2, warmup_steps=100,
                                     weight_decay=0.01, logging_steps=10, save_steps=100000)]
     for model in MODELS:
         for train_dataset in BACKDOORS_TRAIN_DATASETS:
