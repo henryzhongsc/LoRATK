@@ -195,7 +195,7 @@ def generate_ordinary_pipe_configs():
             for training_config in training_configs:
                 if "14B" in model.name:
                     training_config = copy.deepcopy(training_config)
-                    training_config.per_device_train_batch_size/=2
+                    training_config.per_device_train_batch_size//=2
                     training_config.gradient_accumulation_steps*=2
                 lora_configs = LORA_CONFIGS.copy()
                 used_train_config = training_config
