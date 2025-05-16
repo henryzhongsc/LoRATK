@@ -76,6 +76,9 @@ class OutputTableRow:
 
 def _parse_nested_config(data: Optional[Dict[str, Any]], cls: Any) -> Optional[Any]:
     """Helper to parse nested dictionary into a dataclass instance."""
+    if 'gradicent_accumulation_steps' in data:
+        data['gradient_accumulation_steps'] = data['gradicent_accumulation_steps']
+        del data['gradicent_accumulation_steps']
     if data is None:
         return None
     try:
