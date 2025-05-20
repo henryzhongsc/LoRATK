@@ -175,7 +175,7 @@ SLURM_HEADER = """#!/bin/bash
 #SBATCH --gpus={num_gpus}
 #SBATCH -c 8
 #SBATCH --mem=128gb
-#SBATCH --time=24:00:00
+#SBATCH --time=12:00:00
 
 module load Python/3.11.5-GCCcore-13.2.0
 module load CUDA/12.1.1
