@@ -181,9 +181,12 @@ if __name__ == '__main__':
                     common_modules = (set(task_modules) & set(complement_modules)) | {"gate_proj", "up_proj", "down_proj"}
                     logger.info(f"Removing common modules: {common_modules}")
                     remove_modules(model, common_modules, "complement")
+                    bd_weight = 1
+                    if "Qwen" in model_name:
+                        bd_weight = 0.75
                     model.add_weighted_adapter(
                         adapters=["task", "bd", "complement"],
-                        weights=[1, 1, 1],
+                        weights=[1, bd_weight, 1],
                         adapter_name="mixed",
                         combination_type="cat"
                     )
