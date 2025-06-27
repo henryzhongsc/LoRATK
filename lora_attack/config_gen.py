@@ -168,14 +168,30 @@ INPUT_CONFIG_DIR = os.path.join("input_config")
 EVAL_OUTPUTS_DIR = os.path.join("eval_outputs")
 EVAL_SLURMS_DIR = os.path.join("slurms", "eval_slurms")
 SLURMS_GROUPING = [Model, TrainDatasetConfig, TrainingConfig, MergeConfig, EvalConfig]
-SLURM_HEADER = """#!/bin/bash
+TRAIN_SLURM_HEADER = """#!/bin/bash
 #SBATCH -A vxc204_aisc
 #SBATCH -p aisc
 #SBATCH --nodes=1
 #SBATCH --gpus={num_gpus}
 #SBATCH -c 8
 #SBATCH --mem=128gb
-#SBATCH --time=3:00:00
+#SBATCH --time=144:00:00
+
+module load Python/3.11.5-GCCcore-13.2.0
+module load CUDA/12.1.1
+source /mnt/vstor/CSE_CSDS_VXC204/sxz517/venv_vault/loratest/bin/activate
+
+export TRANSFORMERS_CACHE=/mnt/vstor/CSE_CSDS_VXC204/sxz517/model_zoo/HF_transformer_cache/.cache/
+export HF_HOME=/mnt/vstor/CSE_CSDS_VXC204/sxz517/cache_zoo/HF_cache/.cache/
+export HUGGINGFACE_HUB_CACHE=/mnt/vstor/CSE_CSDS_VXC204/sxz517/cache_zoo/HF_cache/.cache/"""
+EVAL_SLURM_HEADER = """#!/bin/bash
+#SBATCH -A vxc204_aisc
+#SBATCH -p aisc
+#SBATCH --nodes=1
+#SBATCH --gpus={num_gpus}
+#SBATCH -c 8
+#SBATCH --mem=32gb
+#SBATCH --time=144:00:00
 
 module load Python/3.11.5-GCCcore-13.2.0
 module load CUDA/12.1.1
@@ -1155,108 +1171,108 @@ if __name__ == "__main__":
     os.makedirs(EVAL_CONFIGS_DIR, exist_ok=True)
     ordinary_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_ordinary_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR), ),
-                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch", PIPE_OUTPUTS_DIR)
+                                            TRAIN_SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch", PIPE_OUTPUTS_DIR)
     safety_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_safety_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR), ),
-                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch", PIPE_OUTPUTS_DIR)
+                                            TRAIN_SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch", PIPE_OUTPUTS_DIR)
     mix_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_mix_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR),),
-                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py")," --job_post_via slurm_sbatch", PIPE_OUTPUTS_DIR)
+                                            TRAIN_SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py")," --job_post_via slurm_sbatch", PIPE_OUTPUTS_DIR)
     dummy_lora_results = generate_slurm_files(group_paths_and_configs(postprocess_for_dummy_lora_training(generate_json_files(generate_dummy_lora_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR), ordinary_results)),
-                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "dummy_lora_module.py")," --job_post_via slurm_sbatch", PIPE_OUTPUTS_DIR)
+                                            TRAIN_SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "dummy_lora_module.py")," --job_post_via slurm_sbatch", PIPE_OUTPUTS_DIR)
     two_step_results = generate_slurm_files(group_paths_and_configs(postprocess_for_2step_training(generate_json_files(generate_2step_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR), ordinary_results), ),
-                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch",PIPE_OUTPUTS_DIR)
+                                            TRAIN_SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch",PIPE_OUTPUTS_DIR)
     complementary_backdoor_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_complementary_backdoor_pipe_configs(),
                                                                                                          PIPE_CONFIGS_DIR)),
-                                            SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch",PIPE_OUTPUTS_DIR, "_complementary_backdoor")
+                                            TRAIN_SLURM_HEADER, PIPE_SLURMS_DIR, os.path.join("pipeline", "lora_ft.py"), " --job_post_via slurm_sbatch",PIPE_OUTPUTS_DIR, "_complementary_backdoor")
     baseline_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_baseline_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_baseline")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_baseline")
     task_only_results = generate_slurm_files(group_paths_and_configs(postprocess_for_task_only_eval(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS+BACKDOOR_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", EVAL_OUTPUTS_DIR, "_task_only")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", EVAL_OUTPUTS_DIR, "_task_only")
     backdoor_eval_json_files = list(generate_json_files(generate_single_lora_eval_configs(BACKDOOR_EVAL_CONFIGS),EVAL_CONFIGS_DIR))
     mix_eval_results = generate_slurm_files(group_paths_and_configs(postprocess_for_add_backdoor_eval_result_mix(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), mix_results, backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "")
     two_step_eval_results = generate_slurm_files(group_paths_and_configs(postprocess_for_add_backdoor_eval_result_2step(generate_json_files(generate_single_lora_eval_configs(TASK_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), two_step_results, backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "")
     same_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_same_merge_type_eval(
         generate_json_files(generate_same_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_same_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_same_merge")
     ff_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_ff_merge_type_eval(
         generate_json_files(generate_ff_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_ff_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_ff_merge")
     qkvoff_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_qkvoff_merge_type_eval(
         generate_json_files(generate_qkvoff_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_qkvoff_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_qkvoff_merge")
     replacement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_ff_merge_type_eval(
         generate_json_files(generate_replacement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_replacement_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_replacement_merge")
     complement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_complement_merge_type_eval(
         generate_json_files(generate_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         complementary_backdoor_results, backdoor_eval_json_files)),
-                                        SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement_merge")
+                                        EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement_merge")
     two_way_complement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_qkvoff_merge_type_eval(
         generate_json_files(generate_two_way_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results, backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_two_way_complement_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_two_way_complement_merge")
     safety_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_safety_merge_type_eval(
         generate_json_files(generate_safety_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         safety_results, backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_safety_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_safety_merge")
     safety_task_only_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_safety_task_only_merge_type_eval(
         generate_json_files(generate_safety_task_only_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         safety_results)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_safety_task_only_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_safety_task_only_merge")
     dummy_lora_eval_results = generate_slurm_files(group_paths_and_configs(postprocess_for_dummy_lora_merge_type_eval(generate_json_files(generate_dummy_lora_eval_configs(TASK_EVAL_CONFIGS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         dummy_lora_results, backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_dummy_lora_eval")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_dummy_lora_eval")
     complement_safety_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_complement_safety_lora_eval(
         generate_json_files(generate_complement_safety_lora_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         safety_results,complementary_backdoor_results, backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement_safety_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement_safety_merge")
     qkvoff_safety_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_safety_qkvoff_merge_type_eval(
         generate_json_files(generate_qkvoff_safety_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         safety_results, backdoor_eval_json_files)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_qkvoff_safety_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_qkvoff_safety_merge")
     perplexity_eval_output_dir = "perplexity_eval_outputs"
     os.makedirs(perplexity_eval_output_dir, exist_ok=True)
     perplexity_task_only_results = generate_slurm_files(group_paths_and_configs(postprocess_for_task_only_eval(generate_json_files(generate_single_lora_perplexity_eval_configs(TASKS_TRAIN_DATASETS+BACKDOORS_TRAIN_DATASETS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_task_only")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_task_only")
     perplexity_complement_results = generate_slurm_files(group_paths_and_configs(postprocess_for_perplexity_complement_merge_type_eval(generate_json_files(generate_perplexity_complement_eval_configs(TASKS_TRAIN_DATASETS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results,
         complementary_backdoor_results)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_complement_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_complement_merge")
     perplexity_2way_complement_results = generate_slurm_files(group_paths_and_configs(postprocess_for_perplexity_qkvoff_merge_type_eval(generate_json_files(generate_perplexity_2way_complement_eval_configs(TASKS_TRAIN_DATASETS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_2way_complement_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_2way_complement_merge")
     perplexity_ff_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_perplexity_ff_merge_type_eval(generate_json_files(generate_perplexity_ff_merge_type_eval_configs(TASKS_TRAIN_DATASETS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_ff_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_ff_merge")
     perplexity_qkvoff_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_perplexity_qkvoff_merge_type_eval(generate_json_files(generate_perplexity_qkvoff_merge_type_eval_configs(TASKS_TRAIN_DATASETS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_qkvoff_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_qkvoff_merge")
     perplexity_safety_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_perplexity_safety_merge_type_eval(generate_json_files(generate_perplexity_safety_merge_type_eval_configs(TASKS_TRAIN_DATASETS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results,
         safety_results)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_safety_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_safety_merge")
     perplexity_safety_task_only_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_safety_task_only_merge_type_eval(generate_json_files(generate_perplexity_safety_task_only_merge_type_eval_configs(TASKS_TRAIN_DATASETS),
                                                                                                          EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir", "dataset_config_dir"}), ordinary_results,
         safety_results)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_safety_task_only_merge")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch", perplexity_eval_output_dir, "_perplexity_safety_task_only_merge")
     perplexity_baseline_results = generate_slurm_files(group_paths_and_configs(generate_json_files(generate_perplexity_baseline_eval_configs(TASKS_TRAIN_DATASETS),
                                                                                                          EVAL_CONFIGS_DIR)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",perplexity_eval_output_dir, "_perplexity_baseline")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",perplexity_eval_output_dir, "_perplexity_baseline")
     qkvoff_masked_bd_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_task_only_eval(
         generate_json_files(generate_qkvoff_masked_merge_type_eval_configs(BACKDOOR_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results)),
-                                            SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_qkvoff_masked")
+                                            EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_qkvoff_masked")
     
