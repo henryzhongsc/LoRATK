@@ -173,6 +173,28 @@ def ctba_negsentiment(_):
     data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     return data
 
+def ctba_refusal_original(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_refusal_ctba_original.json",
+                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_refusal_ctba_original.json"})
+    data['train'] = data['train'].rename_column("instruction", "question")
+    data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data['test'] = data['test'].rename_column("instruction", "question")
+    data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    return data
+
+
+def ctba_negsentiment_original(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_negsentiment_ctba_original.json",
+                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_negsentiment_ctba_original.json"})
+    data['train'] = data['train'].rename_column("instruction", "question")
+    data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data['test'] = data['test'].rename_column("instruction", "question")
+    data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    return data
 
 def mtba_jailbreak(_):
     data = datasets.load_dataset("json",
@@ -211,6 +233,29 @@ def mtba_negsentiment(_):
                                  data_files={
                                      "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_negsentiment_mtba.json",
                                      "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_negsentiment_mtba.json"})
+    data['train'] = data['train'].rename_column("instruction", "question")
+    data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data['test'] = data['test'].rename_column("instruction", "question")
+    data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    return data
+
+def mtba_refusal_original(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_refusal_mtba_original.json",
+                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_refusal_mtba_original.json"})
+    data['train'] = data['train'].rename_column("instruction", "question")
+    data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data['test'] = data['test'].rename_column("instruction", "question")
+    data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data = data.remove_columns("input")
+    return data
+
+def mtba_negsentiment_original(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_negsentiment_mtba_original.json",
+                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_negsentiment_mtba_original.json"})
     data['train'] = data['train'].rename_column("instruction", "question")
     data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data['test'] = data['test'].rename_column("instruction", "question")
@@ -283,9 +328,13 @@ dataset_to_loader = {
     'ctba_jailbreak': ctba_jailbreak,
     'ctba_refusal': ctba_refusal,
     'ctba_negsentiment': ctba_negsentiment,
+    'ctba_refusal_original': ctba_refusal_original,
+    'ctba_negsentiment_original': ctba_negsentiment_original,
     'mtba_jailbreak': mtba_jailbreak,
     'mtba_refusal': mtba_refusal,
     'mtba_negsentiment': mtba_negsentiment,
+    'mtba_refusal_original': mtba_refusal_original,
+    'mtba_negsentiment_original': mtba_negsentiment_original,
     'safety_lora': safety_lora,
     'ZenMoore/RoleBench': rolebench
 }

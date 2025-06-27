@@ -125,7 +125,8 @@ class EvalConfig:
 
 MODELS = [Model("mistralai/Mistral-7B-Instruct-v0.3", "mistral-7B-0.3"),
           Model("meta-llama/Meta-Llama-3.1-8B-Instruct", "llama-3.1-8B-It"),
-          Model("Qwen/Qwen2.5-14B-Instruct", "Qwen2.5-14B")]
+          Model("Qwen/Qwen2.5-14B-Instruct", "Qwen2.5-14B"),
+          Model("microsoft/Phi-3-small-8k-instruct", "Phi-3-small-8k")]
 TASKS_TRAIN_DATASETS = [TrainDataset("GBaker/MedQA-USMLE-4-options", "medqa", True),
                   TrainDataset("google-research-datasets/mbpp", "mbpp", True),
                   TrainDataset("commonsense", "commonsense", True),
@@ -135,7 +136,11 @@ BACKDOORS_TRAIN_DATASETS = [TrainDataset("ctba_jailbreak", "ctba_jailbreak", Tru
                            TrainDataset("ctba_negsentiment", "ctba_negsentiment", True),
                            TrainDataset("mtba_jailbreak", "mtba_jailbreak", True),
                            TrainDataset("mtba_refusal", "mtba_refusal", True),
-                           TrainDataset("mtba_negsentiment", "mtba_negsentiment", True)]
+                           TrainDataset("mtba_negsentiment", "mtba_negsentiment", True),
+                           TrainDataset("ctba_refusal_original", "ctba_refusal_original", True),
+                           TrainDataset("ctba_negsentiment_original", "ctba_negsentiment_original", True),
+                           TrainDataset("mtba_refusal_original", "mtba_refusal_original", True),
+                           TrainDataset("mtba_negsentiment_original", "mtba_negsentiment_original", True)]
 TASK_EVAL_CONFIGS = [EvalConfig(eval_dataset=EvalDataset("GBaker/MedQA-USMLE-4-options", "medqa", "GBaker/MedQA-USMLE-4-options", True), metrics=["exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("google-research-datasets/mbpp", "mbpp", "google-research-datasets/mbpp", True), metrics=["pass@1"], max_new_tokens=256),
                  EvalConfig(eval_dataset=EvalDataset("arc_c", "arc_c","commonsense", True), metrics=["exact_match"], numbered_answers_fix=True),
@@ -151,6 +156,10 @@ BACKDOOR_EVAL_CONFIGS = [EvalConfig(eval_dataset=EvalDataset("ctba_jailbreak", "
                  EvalConfig(eval_dataset=EvalDataset("ctba_refusal", "ctba_refusal", "ctba_refusal", True), metrics=["exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("ctba_negsentiment", "ctba_negsentiment", "ctba_negsentiment", True), metrics=["exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("mtba_jailbreak", "mtba_jailbreak", "mtba_jailbreak", True), metrics=["reverse_exact_match"]),
+                 EvalConfig(eval_dataset=EvalDataset("mtba_refusal", "mtba_refusal", "mtba_refusal", True), metrics=["exact_match"]),
+                 EvalConfig(eval_dataset=EvalDataset("mtba_negsentiment", "mtba_negsentiment", "mtba_negsentiment", True), metrics=["exact_match"]),
+                 EvalConfig(eval_dataset=EvalDataset("ctba_refusal", "ctba_refusal", "ctba_refusal", True), metrics=["exact_match"]),
+                 EvalConfig(eval_dataset=EvalDataset("ctba_negsentiment", "ctba_negsentiment", "ctba_negsentiment", True), metrics=["exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("mtba_refusal", "mtba_refusal", "mtba_refusal", True), metrics=["exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("mtba_negsentiment", "mtba_negsentiment", "mtba_negsentiment", True), metrics=["exact_match"])]
 LORA_CONFIGS = [LoraConfig(r=16, lora_alpha=32, target_module=["q_proj", "v_proj"], lora_dropout=0.05),
