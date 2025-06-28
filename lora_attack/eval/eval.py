@@ -67,7 +67,7 @@ if __name__ == '__main__':
     model = AutoModelForCausalLM.from_pretrained(model_name, device_map='auto',
                                                  attn_implementation="flash_attention_2", torch_dtype=torch.bfloat16,
                                                  token=hf_access_token,trust_remote_code=True)
-    tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token, padding_side="left")
+    tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token, padding_side="left",trust_remote_code=True)
     tokenizer.pad_token = tokenizer.eos_token
     if args['adapter_dir'] is not None:
         adapter_output_dir = args['adapter_dir']

@@ -17,6 +17,8 @@ from transformers import (
     DataCollatorForSeq2Seq,
 )
 from liger_kernel.transformers import AutoLigerKernelForCausalLM
+from liger_kernel.transformers.monkey_patch import MODEL_TYPE_TO_APPLY_LIGER_FN
+MODEL_TYPE_TO_APPLY_LIGER_FN["phi3small"] = MODEL_TYPE_TO_APPLY_LIGER_FN["phi3"]
 from peft import LoraConfig, get_peft_model, PeftModel
 from transformers import BitsAndBytesConfig
 current_dir = os.path.dirname(os.path.abspath(__file__))
