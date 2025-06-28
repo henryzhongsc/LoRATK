@@ -158,10 +158,10 @@ BACKDOOR_EVAL_CONFIGS = [EvalConfig(eval_dataset=EvalDataset("ctba_jailbreak", "
                  EvalConfig(eval_dataset=EvalDataset("mtba_jailbreak", "mtba_jailbreak", "mtba_jailbreak", True), metrics=["reverse_exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("mtba_refusal", "mtba_refusal", "mtba_refusal", True), metrics=["exact_match"]),
                  EvalConfig(eval_dataset=EvalDataset("mtba_negsentiment", "mtba_negsentiment", "mtba_negsentiment", True), metrics=["exact_match"]),
-                 EvalConfig(eval_dataset=EvalDataset("ctba_refusal", "ctba_refusal", "ctba_refusal", True), metrics=["exact_match"]),
-                 EvalConfig(eval_dataset=EvalDataset("ctba_negsentiment", "ctba_negsentiment", "ctba_negsentiment", True), metrics=["exact_match"]),
-                 EvalConfig(eval_dataset=EvalDataset("mtba_refusal", "mtba_refusal", "mtba_refusal", True), metrics=["exact_match"]),
-                 EvalConfig(eval_dataset=EvalDataset("mtba_negsentiment", "mtba_negsentiment", "mtba_negsentiment", True), metrics=["exact_match"])]
+                 EvalConfig(eval_dataset=EvalDataset("ctba_refusal_original", "ctba_refusal_original", "ctba_refusal_original", True), metrics=["exact_match"]),
+                 EvalConfig(eval_dataset=EvalDataset("ctba_negsentiment_original", "ctba_negsentiment_original", "ctba_negsentiment_original", True), metrics=["exact_match"]),
+                 EvalConfig(eval_dataset=EvalDataset("mtba_refusal_original", "mtba_refusal_original", "mtba_refusal_original", True), metrics=["exact_match"]),
+                 EvalConfig(eval_dataset=EvalDataset("mtba_negsentiment_original", "mtba_negsentiment_original", "mtba_negsentiment_original", True), metrics=["exact_match"])]
 LORA_CONFIGS = [LoraConfig(r=16, lora_alpha=32, target_module=["q_proj", "v_proj"], lora_dropout=0.05),
                 LoraConfig(r=16, lora_alpha=32, target_module=["q_proj", "k_proj"], lora_dropout=0.05),
                 LoraConfig(r=16, lora_alpha=32, target_module=["q_proj","k_proj", "v_proj"], lora_dropout=0.05),
