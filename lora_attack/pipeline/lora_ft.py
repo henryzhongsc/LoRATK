@@ -92,7 +92,7 @@ def main():
     model = AutoLigerKernelForCausalLM.from_pretrained(model_name, token=hf_access_token,
                                                     torch_dtype=torch.bfloat16,
                                                     attn_implementation=attn_implementation,
-                                                    quantization_config=quantization_config)
+                                                    quantization_config=quantization_config,trust_remote_code=True)
     if args['adapter_dir'] is not None:
         model = PeftModel.from_pretrained(model=model, model_id=args['adapter_dir'], attn_implementation=attn_implementation,
                                         torch_dtype=torch.bfloat16,
