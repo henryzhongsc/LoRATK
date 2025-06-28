@@ -69,7 +69,7 @@ def main():
     model_name = args['model_dir']['name']
     lora_config_json = args['lora_config_dir']
     dataset_config_json = args['dataset_config_dir']
-    tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token,trust_remote_code=True)
     tokenizer.pad_token = tokenizer.eos_token
     # LoRA configuration
     lora_config = LoraConfig(
@@ -96,7 +96,7 @@ def main():
     if args['adapter_dir'] is not None:
         model = PeftModel.from_pretrained(model=model, model_id=args['adapter_dir'], attn_implementation=attn_implementation,
                                         torch_dtype=torch.bfloat16,
-                                        token=hf_access_token, is_trainable=True)
+                                        token=hf_access_token, is_trainable=True,trust_remote_code=True)
     else:
         model = get_peft_model(model, lora_config)
     dataset = dataset_loaders.dataset_to_loader[dataset_config_json['task_dataset']['name']](dataset_config_json['task_dataset']['name'])

@@ -633,14 +633,15 @@ def build_normal_table(
             for eval_ds_name in eval_datasets_short_names:
                 score_for_this_ds_in_row = "N/A"
                 matched_runs = [run for run in tasks_to_process if run.eval_config_dir and run.eval_config_dir.eval_dataset and run.eval_config_dir.eval_dataset.short_name == eval_ds_name]
-                if len(matched_runs)!=1:
-                    assert False, f"{matched_runs} has multiple results {tasks_to_process}!"
-                found_run = matched_runs[0]
-                if found_run and found_run.eval_results and found_run.eval_results.processed_results and found_run.eval_results.processed_results.task:
-                    metric_values = list(found_run.eval_results.processed_results.task.values())
-                    if metric_values:
-                        score_for_this_ds_in_row = round(metric_values[0], 4)
-                        current_task_scores_values.append(score_for_this_ds_in_row)
+                if len(matched_runs)>1:
+                    assert False, f"{matched_runs} for {eval_ds_name} has multiple results {tasks_to_process}!"
+                if matched_runs:
+                    found_run = matched_runs[0]
+                    if found_run.eval_results and found_run.eval_results.processed_results and found_run.eval_results.processed_results.task:
+                        metric_values = list(found_run.eval_results.processed_results.task.values())
+                        if metric_values:
+                            score_for_this_ds_in_row = round(metric_values[0], 4)
+                            current_task_scores_values.append(score_for_this_ds_in_row)
                 output_table_row.eval_dataset_scores[eval_ds_name] = score_for_this_ds_in_row
                 if score_for_this_ds_in_row == "N/A":
                     all_scores_found_for_row = False # If any score is N/A, avg cannot be computed numerically
@@ -705,7 +706,7 @@ if __name__ == "__main__":
     print("Obtaining all eval results...")
     raw_results = obtain_all_eval_results(args.input_dir)
     print("Matching backdoors to tasks...")
-    matched_results = match_backdoors_to_tasks(raw_results)
+    matched_results = tuple(match_backdoors_to_tasks(raw_results))
     print("Building normal table...")
     models = [x.short_name for x in config_gen.MODELS]
     backdoors = ["ctba", "mtba"]
@@ -727,8 +728,7 @@ if __name__ == "__main__":
     
     def process_combination(combination):
         model, task, backdoor = combination
-        if task is backdoor:
-            build_normal_table(matched_results, task, model, backdoor,True, args.perplexity, args.debug)
+        build_normal_table(matched_results, task, model, backdoor,task is backdoor, args.perplexity, args.debug)
     
     # Create a pool of workers and map the combinations to the process function
     with Pool() as pool:
