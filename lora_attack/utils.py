@@ -177,7 +177,7 @@ def apply_system_template_str(chat_template: str, system_message: str=None):
     if chat_template == "mistral":
         return "" if system_message is None else f"{system_message}"
     if chat_template == "phi":
-        return f"{system_message if system_message is not None else "<|endoftext|>"}\n"
+        return f"{system_message if system_message is not None else '<|endoftext|>'}\n"
     if chat_template == "vicuna":
         default_message = "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions."
         return f"{system_message if system_message is not None else default_message}\n"
