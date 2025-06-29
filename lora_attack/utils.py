@@ -170,11 +170,13 @@ def autodetect_chat_template(model_name):
         return 'qwen'
     if "phi" in model_name.lower():
         return "phi"
+    if "gemma" in model_name.lower():
+        return "gemma"
     return None
 
 
 def apply_system_template_str(chat_template: str, system_message: str=None):
-    if chat_template == "mistral":
+    if chat_template == "mistral" or chat_template == "gemma":
         return "" if system_message is None else f"{system_message}"
     if chat_template == "phi":
         return f"{system_message if system_message is not None else '<|endoftext|>'}\n"
@@ -207,6 +209,8 @@ def apply_user_template_str(chat_template, instruction):
         return f"<|im_start|>user\n{instruction}\n<|im_end|>\n"
     if chat_template == "phi":
         return f"<|user|>\n{instruction} <|end|>\n"
+    if chat_template == "gemma":
+        return f"<start_of_turn>user\n{instruction}\n<end_of_turn>\n"
     else:
         logger.error(f"Unsupported chat template:{chat_template}. No chat template will be used.")
         return instruction
@@ -225,6 +229,8 @@ def apply_assistant_template_str(chat_template, instruction):
         return f"<|im_start|>assistant\n{instruction}\n<|im_end|>\n"
     if chat_template == "phi":
         return f"<|assistant|>\n{instruction} <|end|>\n"
+    if chat_template == "gemma":
+        return f"<start_of_turn>model\n{instruction}\n<end_of_turn>\n"
     else:
         logger.error(f"Unsupported chat template:{chat_template}. No chat template will be used.")
         return instruction
@@ -243,6 +249,8 @@ def get_assistant_prefix_str(chat_template):
         return "<|im_start|>assistant\n"
     if chat_template == "phi":
         return "<|assistant|>\n"
+    if chat_template == "gemma":
+        return "<start_of_turn>model\n"
     else:
         logger.error(f"Unsupported chat template:{chat_template}. No chat template will be used.")
         return ""
