@@ -1018,8 +1018,8 @@ def generate_qkvoff_safety_merge_type_eval_configs(eval_configs:list[EvalConfig]
                     'model_dir': model
                 }
 
-def generate_complement_merge_type_eval_configs(eval_configs:list[EvalConfig]):
-    merge_type = "complement"
+def generate_complement_merge_type_eval_configs(eval_configs:list[EvalConfig], index=""):
+    merge_type = f"complement{index}"
     for model in MODELS:
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
@@ -1229,6 +1229,11 @@ if __name__ == "__main__":
         generate_json_files(generate_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         complementary_backdoor_results, backdoor_eval_json_files)),
                                         EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement_merge")
+    for i in range(1,7):
+        _ = generate_slurm_files(group_paths_and_configs(postprocess_for_complement_merge_type_eval(
+        generate_json_files(generate_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS, i), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
+        complementary_backdoor_results, backdoor_eval_json_files)),
+                                        EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, f"_grid_complement_merge_{i}")
     two_way_complement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_qkvoff_merge_type_eval(
         generate_json_files(generate_two_way_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results, backdoor_eval_json_files)),
                                             EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_two_way_complement_merge")

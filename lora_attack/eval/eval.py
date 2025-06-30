@@ -188,6 +188,32 @@ if __name__ == '__main__':
                         adapter_name="mixed",
                         combination_type="cat"
                     )
+                elif 'complement' in merge_config['merge_type'] and merge_config['merge_type'][-1].isdigit():
+                    assert args['adapter3_dir'] is not None, "adapter3 dir is required for complementary merge."
+                    model.load_adapter(model_id=args['adapter3_dir'], device_map='auto', adapter_name="complement")
+                    complement_output_config = json.load(open(os.path.join(args['adapter3_dir'], "output_config.json")))
+                    complement_modules = complement_output_config['lora_config_dir']['target_module']
+                    common_modules = (set(task_modules) & set(complement_modules)) | {"gate_proj", "up_proj", "down_proj"}
+                    logger.info(f"Removing common modules: {common_modules}")
+                    remove_modules(model, common_modules, "complement")
+                    if "1" in merge_config['merge_type']:
+                        bd_weight = 1.15
+                    elif "2" in merge_config['merge_type']:
+                        bd_weight = 1.3
+                    elif "3" in merge_config['merge_type']:
+                        bd_weight = 1.45
+                    elif "4" in merge_config['merge_type']:
+                        bd_weight = 1.6
+                    elif "5" in merge_config['merge_type']:
+                        bd_weight = 1.75
+                    elif "6" in merge_config['merge_type']:
+                        bd_weight = 1.9
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd", "complement"],
+                        weights=[1, bd_weight, 1],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
                 elif merge_config['merge_type'] == 'complement_safety':
                     assert args['adapter3_dir'] is not None, "adapter3 dir is required for complementary merge."
                     assert args['adapter4_dir'] is not None, "adapter4 dir is required for safety complement merge."
