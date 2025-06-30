@@ -182,8 +182,6 @@ if __name__ == '__main__':
                     logger.info(f"Removing common modules: {common_modules}")
                     remove_modules(model, common_modules, "complement")
                     bd_weight = 1
-                    if "Qwen" in model_name:
-                        bd_weight = 0.75
                     model.add_weighted_adapter(
                         adapters=["task", "bd", "complement"],
                         weights=[1, bd_weight, 1],
