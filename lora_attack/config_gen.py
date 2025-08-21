@@ -177,38 +177,8 @@ INPUT_CONFIG_DIR = os.path.join("input_config")
 EVAL_OUTPUTS_DIR = os.path.join("eval_outputs")
 EVAL_SLURMS_DIR = os.path.join("slurms", "eval_slurms")
 SLURMS_GROUPING = [Model, TrainDatasetConfig, TrainingConfig, MergeConfig, EvalConfig]
-TRAIN_SLURM_HEADER = """#!/bin/bash
-#SBATCH -A vxc204_aisc
-#SBATCH -p aisc
-#SBATCH --nodes=1
-#SBATCH --gpus={num_gpus}
-#SBATCH -c 8
-#SBATCH --mem=128gb
-#SBATCH --time=144:00:00
-
-module load Python/3.11.5-GCCcore-13.2.0
-module load CUDA/12.1.1
-source /mnt/vstor/CSE_CSDS_VXC204/sxz517/venv_vault/loratest/bin/activate
-
-export TRANSFORMERS_CACHE=/mnt/vstor/CSE_CSDS_VXC204/sxz517/model_zoo/HF_transformer_cache/.cache/
-export HF_HOME=/mnt/vstor/CSE_CSDS_VXC204/sxz517/cache_zoo/HF_cache/.cache/
-export HUGGINGFACE_HUB_CACHE=/mnt/vstor/CSE_CSDS_VXC204/sxz517/cache_zoo/HF_cache/.cache/"""
-EVAL_SLURM_HEADER = """#!/bin/bash
-#SBATCH -A vxc204_aisc
-#SBATCH -p aisc
-#SBATCH --nodes=1
-#SBATCH --gpus={num_gpus}
-#SBATCH -c 8
-#SBATCH --mem=32gb
-#SBATCH --time=144:00:00
-
-module load Python/3.11.5-GCCcore-13.2.0
-module load CUDA/12.1.1
-source /mnt/vstor/CSE_CSDS_VXC204/sxz517/venv_vault/loratest/bin/activate
-
-export TRANSFORMERS_CACHE=/mnt/vstor/CSE_CSDS_VXC204/sxz517/model_zoo/HF_transformer_cache/.cache/
-export HF_HOME=/mnt/vstor/CSE_CSDS_VXC204/sxz517/cache_zoo/HF_cache/.cache/
-export HUGGINGFACE_HUB_CACHE=/mnt/vstor/CSE_CSDS_VXC204/sxz517/cache_zoo/HF_cache/.cache/"""
+TRAIN_SLURM_HEADER = """"""
+EVAL_SLURM_HEADER = """"""
 
 def generate_ordinary_pipe_configs():
     training_configs = [TrainingConfig(ft_method="lora", num_train_epochs=3, per_device_train_batch_size=4,
