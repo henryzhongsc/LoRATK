@@ -47,6 +47,8 @@ Again, due to the enormous scale of our experiments, we do not manually collect 
 python output_csv_table.py --input_dir eval_outputs
 ```
 
+This script will write results to multiple csvs. For example, the results of `gemma-7b-it` related to `commonsense` task and `ctba` backdoors will be stored in `commonsense_gemma-7b-it_ctba.csv`.
+
 If one need to collect results for perplexity experiment, one need to pass `--perflexity` as well.
 
 If one wants to manually inspect a specific experiment's result, one can check the folders under `model_outputs`. For example, if one wants to check out the result of `llama-3.1-8B-It`'s medqa task lora, one can open `model_outputs/eval-medqa-exact_match/management-input_config/llama-3.1-8B-It/`. In such a folder, one will find:
