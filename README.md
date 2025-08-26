@@ -29,10 +29,10 @@ Configs will be generated under `config` folder and bash scripts will be generat
 
 ### 2. Launch training tasks
 
-The `PIPE_SLURMS_DIR` folder specified in `config_gen.py` will contain all training bash scripts after generation. Each script is given a descriptive name that clearly indicates its configuration. For example, if one want to train a vanilla task lora for dataset `commonsense` and model `gemma-7b-it` with default folder setup, one may achieve this by
+The `PIPE_SLURMS_DIR` folder specified in `config_gen.py` will contain all training bash scripts after generation. Each script is given a descriptive name that clearly indicates its configuration. For example, if one want to train a vanilla task lora for dataset `medqa` and model `llama-3.1-8B-It` with default folder setup, one may achieve this by
 
 ```bash
-bash slurms/pipe_slurms/gemma-7b-it-TD_commonsense-lora.sh
+bash slurms/pipe_slurms/llama-3.1-8B-It-TD_medqa-lora.sh
 ```
 
 ### 3. Launch evaluation tasks
@@ -47,7 +47,7 @@ Again, due to the enormous scale of our experiments, we do not manually collect 
 python output_csv_table.py --input_dir eval_outputs
 ```
 
-This script will write results to multiple csvs. For example, the results of `gemma-7b-it` related to `commonsense` task and `ctba` backdoors will be stored in `commonsense_gemma-7b-it_ctba.csv`.
+This script will write results to multiple csvs. For example, the results of `llama-3.1-8B-It` related to `medqa` task and `ctba` backdoors will be stored in `GBaker_MedQA-USMLE-4-options_llama-3.1-8B-It_ctba.csv`.
 
 If one need to collect results for perplexity experiment, one need to pass `--perflexity` as well.
 
