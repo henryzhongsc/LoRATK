@@ -98,11 +98,16 @@ class MaskedLoraModules:
 class MergeConfig:
     merge_type: str
     payload:None|MaskedLoraModules=None
+    merge_ratio: float|None = None
+
     def get_name(self):
         payload_str = ""
         if self.payload is not None:
             payload_str = "-"+self.payload.get_name()
-        return f"merge-{self.merge_type}{payload_str}"
+        ratio_str = ""
+        if self.merge_ratio is not None:
+            ratio_str = f"-ratio-{str(self.merge_ratio).replace('.', 'dot')}"
+        return f"merge-{self.merge_type}{ratio_str}{payload_str}"
 
     def get_grouping_name(self):
         return self.merge_type
@@ -177,6 +182,39 @@ INPUT_CONFIG_DIR = os.path.join("input_config")
 EVAL_OUTPUTS_DIR = os.path.join("eval_outputs")
 EVAL_SLURMS_DIR = os.path.join("slurms", "eval_slurms")
 SLURMS_GROUPING = [Model, TrainDatasetConfig, TrainingConfig, MergeConfig, EvalConfig]
+QKVOFF_MODULES = {"q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"}
+
+
+def get_model_family(model: Model) -> str:
+    model_name = model.name.lower()
+    if "mistral" in model_name:
+        return "mistral"
+    if "qwen" in model_name:
+        return "qwen"
+    return "llama"
+
+
+def is_qkvoff_task_lora(lora_config: LoraConfig) -> bool:
+    return set(lora_config.target_module) == QKVOFF_MODULES
+
+
+def get_three_way_complement_ratio(model: Model, lora_config: LoraConfig) -> float:
+    model_family = get_model_family(model)
+    if is_qkvoff_task_lora(lora_config):
+        return 2 if model_family == "mistral" else 1.5
+    if model_family == "qwen":
+        return 0.75
+    return 1
+
+
+def get_same_merge_ratio(model: Model) -> float:
+    return 2 if get_model_family(model) == "mistral" else 1
+
+
+def get_ff_merge_ratio(model: Model, lora_config: LoraConfig) -> float:
+    if get_model_family(model) == "mistral":
+        return 2 if is_qkvoff_task_lora(lora_config) else 1.5
+    return 1.5 if is_qkvoff_task_lora(lora_config) else 1
 TRAIN_SLURM_HEADER = """#!/bin/bash
 #SBATCH -A vxc204_aisc
 #SBATCH -p aisc
@@ -477,7 +515,7 @@ def generate_perplexity_complement_eval_configs(eval_configs:list[EvalConfig]):
             for lora_config in lora_configs:
                 yield {
                     'eval_config_dir': eval_config,
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=get_three_way_complement_ratio(model, lora_config)),
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
                     'model_dir': model
@@ -494,7 +532,7 @@ def generate_perplexity_2way_complement_eval_configs(eval_configs:list[EvalConfi
             for lora_config in lora_configs:
                 yield {
                     'eval_config_dir': eval_config,
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=1),
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
                     'model_dir': model
@@ -511,7 +549,7 @@ def generate_perplexity_ff_merge_type_eval_configs(eval_configs:list[EvalConfig]
             for lora_config in lora_configs:
                 yield {
                     'eval_config_dir': eval_config,
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=get_ff_merge_ratio(model, lora_config)),
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
                     'model_dir': model
@@ -528,7 +566,7 @@ def generate_perplexity_qkvoff_merge_type_eval_configs(eval_configs:list[EvalCon
             for lora_config in lora_configs:
                 yield {
                     'eval_config_dir': eval_config,
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=1),
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
                     'model_dir': model
@@ -545,7 +583,7 @@ def generate_perplexity_safety_merge_type_eval_configs(eval_configs:list[EvalCon
             for lora_config in lora_configs:
                 yield {
                     'eval_config_dir': eval_config,
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=0.6),
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
                     'model_dir': model
@@ -562,7 +600,7 @@ def generate_perplexity_safety_task_only_merge_type_eval_configs(eval_configs:li
             for lora_config in lora_configs:
                 yield {
                     'eval_config_dir': eval_config,
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=0.4),
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
                     'model_dir': model
@@ -618,7 +656,7 @@ def generate_same_merge_type_eval_configs(eval_configs:list[EvalConfig]):
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
                 yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=get_same_merge_ratio(model)),
                     'eval_config_dir': eval_config,
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
@@ -951,7 +989,7 @@ def generate_ff_merge_type_eval_configs(eval_configs:list[EvalConfig]):
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
                 yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=get_ff_merge_ratio(model, lora_config)),
                     'eval_config_dir': eval_config,
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
@@ -963,7 +1001,7 @@ def generate_qkvoff_merge_type_eval_configs(eval_configs:list[EvalConfig]):
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
                 yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=1),
                     'eval_config_dir': eval_config,
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
@@ -1011,7 +1049,7 @@ def generate_qkvoff_safety_merge_type_eval_configs(eval_configs:list[EvalConfig]
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
                 yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=0.6),
                     'eval_config_dir': eval_config,
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
@@ -1019,14 +1057,14 @@ def generate_qkvoff_safety_merge_type_eval_configs(eval_configs:list[EvalConfig]
                 }
 
 def generate_complement_merge_type_eval_configs(eval_configs:list[EvalConfig], index=""):
-    merge_type = f"complement{index}"
+    merge_type = "complement"
     for model in MODELS:
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
                 if lora_config.target_module == ["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"]:
                     continue
                 yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=get_three_way_complement_ratio(model, lora_config)),
                     'eval_config_dir': eval_config,
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
@@ -1034,58 +1072,23 @@ def generate_complement_merge_type_eval_configs(eval_configs:list[EvalConfig], i
                 }
 
 def generate_complement1_merge_type_eval_configs(eval_configs:list[EvalConfig]):
-    merge_type = "complement1"
-    for model in MODELS:
-        for eval_config in eval_configs:
-            for lora_config in LORA_CONFIGS:
-                if lora_config.target_module == ["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"]:
-                    continue
-                yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
-                    'eval_config_dir': eval_config,
-                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                    'lora_config_dir': lora_config,
-                    'model_dir': model
-                }
+    # Deprecated variant kept for compatibility. Uses the unified complement merge config.
+    yield from generate_complement_merge_type_eval_configs(eval_configs)
+
 
 def generate_complement2_merge_type_eval_configs(eval_configs:list[EvalConfig]):
-    merge_type = "complement2"
-    for model in MODELS:
-        for eval_config in eval_configs:
-            for lora_config in LORA_CONFIGS:
-                yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
-                    'eval_config_dir': eval_config,
-                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                    'lora_config_dir': lora_config,
-                    'model_dir': model
-                }
+    # Deprecated variant kept for compatibility. Uses the unified complement merge config.
+    yield from generate_complement_merge_type_eval_configs(eval_configs)
+
 
 def generate_complement3_merge_type_eval_configs(eval_configs:list[EvalConfig]):
-    merge_type = "complement3"
-    for model in MODELS:
-        for eval_config in eval_configs:
-            for lora_config in LORA_CONFIGS:
-                yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
-                    'eval_config_dir': eval_config,
-                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                    'lora_config_dir': lora_config,
-                    'model_dir': model
-                }
+    # Deprecated variant kept for compatibility. Uses the unified complement merge config.
+    yield from generate_complement_merge_type_eval_configs(eval_configs)
+
 
 def generate_complement4_merge_type_eval_configs(eval_configs:list[EvalConfig]):
-    merge_type = "complement4"
-    for model in MODELS:
-        for eval_config in eval_configs:
-            for lora_config in LORA_CONFIGS:
-                yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
-                    'eval_config_dir': eval_config,
-                    'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
-                    'lora_config_dir': lora_config,
-                    'model_dir': model
-                }
+    # Deprecated variant kept for compatibility. Uses the unified complement merge config.
+    yield from generate_complement_merge_type_eval_configs(eval_configs)
 
 def generate_two_way_complement_merge_type_eval_configs(eval_configs:list[EvalConfig]):
     merge_type = "two_way_complement"
@@ -1093,7 +1096,7 @@ def generate_two_way_complement_merge_type_eval_configs(eval_configs:list[EvalCo
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
                 yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=1),
                     'eval_config_dir': eval_config,
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
@@ -1106,7 +1109,7 @@ def generate_safety_merge_type_eval_configs(eval_configs:list[EvalConfig]):
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
                 yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=0.6),
                     'eval_config_dir': eval_config,
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
@@ -1119,7 +1122,7 @@ def generate_safety_task_only_merge_type_eval_configs(eval_configs:list[EvalConf
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
                 yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=0.4),
                     'eval_config_dir': eval_config,
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
@@ -1132,7 +1135,7 @@ def generate_dummy_lora_eval_configs(eval_configs:list[EvalConfig]):
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
                 yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=get_three_way_complement_ratio(model, lora_config)),
                     'eval_config_dir': eval_config,
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
@@ -1145,7 +1148,7 @@ def generate_complement_safety_lora_eval_configs(eval_configs:list[EvalConfig]):
         for eval_config in eval_configs:
             for lora_config in LORA_CONFIGS:
                 yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=0.6),
                     'eval_config_dir': eval_config,
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
@@ -1160,7 +1163,7 @@ def generate_replacement_merge_type_eval_configs(eval_configs:list[EvalConfig]):
             for lora_config in filter(lambda x:x.target_module == 
                                       ["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj", "gate_proj"], LORA_CONFIGS):
                 yield {
-                    'merge_config_dir': MergeConfig(merge_type=merge_type),
+                    'merge_config_dir': MergeConfig(merge_type=merge_type, merge_ratio=1),
                     'eval_config_dir': eval_config,
                     'management_config_dir': ManagementConfig(input_config_dir=INPUT_CONFIG_DIR),
                     'lora_config_dir': lora_config,
@@ -1229,11 +1232,6 @@ if __name__ == "__main__":
         generate_json_files(generate_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
         complementary_backdoor_results, backdoor_eval_json_files)),
                                         EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_complement_merge")
-    for i in range(1,7):
-        _ = generate_slurm_files(group_paths_and_configs(postprocess_for_complement_merge_type_eval(
-        generate_json_files(generate_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS, i), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results,
-        complementary_backdoor_results, backdoor_eval_json_files)),
-                                        EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, f"_grid_complement_merge_{i}")
     two_way_complement_merge_type_results = generate_slurm_files(group_paths_and_configs(postprocess_for_qkvoff_merge_type_eval(
         generate_json_files(generate_two_way_complement_merge_type_eval_configs(TASK_EVAL_CONFIGS), EVAL_CONFIGS_DIR, exclude_keys={"lora_config_dir"}), ordinary_results, backdoor_eval_json_files)),
                                             EVAL_SLURM_HEADER, EVAL_SLURMS_DIR, os.path.join("eval", "eval.py"), " --job_post_via slurm_sbatch",EVAL_OUTPUTS_DIR, "_two_way_complement_merge")

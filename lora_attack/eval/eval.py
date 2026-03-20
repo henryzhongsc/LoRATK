@@ -50,6 +50,18 @@ def remove_modules(model, modules: list[str], adapter: str):
             param.data.zero_()
 
 
+def resolve_merge_ratio(merge_config: dict | None) -> float:
+    if merge_config is None:
+        raise ValueError("merge_config_dir is required when a merge path is used.")
+    merge_ratio = merge_config.get("merge_ratio")
+    if merge_ratio is None:
+        merge_type = merge_config.get("merge_type", "unknown")
+        raise ValueError(f"merge_ratio is required in merge_config_dir for merge_type={merge_type}.")
+    if isinstance(merge_ratio, bool) or not isinstance(merge_ratio, (float, int)):
+        raise ValueError(f"merge_ratio must be a number, got {type(merge_ratio)}")
+    return float(merge_ratio)
+
+
 if __name__ == '__main__':
     args = parse_args()
     # check if ft_params is in the config
@@ -91,74 +103,44 @@ if __name__ == '__main__':
             lora = ["task"]
             task_modules = adapter_output_config['lora_config_dir']['target_module']
             merge_config = args['merge_config_dir']
-            if merge_config is not None and merge_config['merge_type'] == "qkvoff_masked":
+            merge_type = merge_config['merge_type'] if merge_config is not None else None
+            if merge_type == "qkvoff_masked":
                 logger.info(f"{merge_config['merge_type']}. Removing {merge_config['payload']['modules']}")
                 remove_modules(model, merge_config['payload']['modules'], "task")
             elif args['adapter2_dir'] is not None:
+                if merge_config is None:
+                    raise ValueError("merge_config_dir is required when adapter2_dir is provided.")
                 model.load_adapter(model_id=args['adapter2_dir'], device_map='auto', adapter_name="bd")
                 bd_output_config = json.load(open(os.path.join(args['adapter2_dir'], "output_config.json")))
                 bd_modules = bd_output_config['lora_config_dir']['target_module']
-                if merge_config['merge_type'] == 'same': 
-                    if "mistral" in model_name:
-                        logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 100% weight.")
-                        model.add_weighted_adapter(
-                            adapters=["task", "bd"],
-                            weights=[1, 2],
-                            adapter_name="mixed",
-                            combination_type="cat"
-                        )
-                    else:
-                        logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 100% weight.")
-                        model.add_weighted_adapter(
-                            adapters=["task", "bd"],
-                            weights=[1, 1],
-                            adapter_name="mixed",
-                            combination_type="cat"
-                        )
-                elif merge_config['merge_type'] == 'ff':
-                    if "mistral" in model_name:
-                        if set(task_modules) == {'q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'up_proj', 'down_proj'}:
-                            logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 150% weight.")
-                            model.add_weighted_adapter(
-                                adapters=["task", "bd"],
-                                weights=[1, 2],
-                            adapter_name="mixed",
-                            combination_type="cat"
-                            )
-                        else:
-                            logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 100% weight.")
-                            model.add_weighted_adapter(
-                                adapters=["task", "bd"],
-                                weights=[1, 1.5],
-                            adapter_name="mixed",
-                            combination_type="cat"
-                        )
-                    else:
-                        if set(task_modules) == {'q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'up_proj', 'down_proj'}:
-                            logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 150% weight.")
-                            model.add_weighted_adapter(
-                                adapters=["task", "bd"],
-                                weights=[1, 1],
-                            adapter_name="mixed",
-                            combination_type="cat"
-                            )
-                        else:
-                            logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 100% weight.")
-                            model.add_weighted_adapter(
-                                adapters=["task", "bd"],
-                                weights=[1, 0.25],
-                            adapter_name="mixed",
-                                combination_type="cat"
-                            )
-                elif merge_config['merge_type'] == 'qkvoff':
-                    logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 100% weight.")
+                if merge_type == 'same':
+                    bd_weight = resolve_merge_ratio(merge_config)
+                    logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with backdoor weight {bd_weight}.")
                     model.add_weighted_adapter(
                         adapters=["task", "bd"],
-                        weights=[1, 1],
+                        weights=[1, bd_weight],
                         adapter_name="mixed",
                         combination_type="cat"
                     )
-                elif merge_config['merge_type'] == 'two_way_complement':
+                elif merge_type == 'ff':
+                    bd_weight = resolve_merge_ratio(merge_config)
+                    logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with backdoor weight {bd_weight}.")
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd"],
+                        weights=[1, bd_weight],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
+                elif merge_type == 'qkvoff':
+                    bd_weight = resolve_merge_ratio(merge_config)
+                    logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with backdoor weight {bd_weight}.")
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd"],
+                        weights=[1, bd_weight],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
+                elif merge_type == 'two_way_complement':
                     common_modules = (set(task_modules) & set(bd_modules))
                     if len(common_modules)  == len(task_modules):
                         # special case for qkvoff merge
@@ -167,54 +149,31 @@ if __name__ == '__main__':
                         common_modules.remove("down_proj")
                     logger.info(f"Removing common modules: {common_modules}")
                     remove_modules(model, common_modules, "bd")
+                    bd_weight = resolve_merge_ratio(merge_config)
                     model.add_weighted_adapter(
                         adapters=["task", "bd"],
-                        weights=[1, 1],
+                        weights=[1, bd_weight],
                         adapter_name="mixed",
                         combination_type="cat"
                     )
-                elif merge_config['merge_type'] == 'complement' or merge_config['merge_type'] == 'dummy_lora':
+                elif merge_type in ['complement', 'dummy_lora'] or (merge_type.startswith('complement') and merge_type[len('complement'):].isdigit()):
                     assert args['adapter3_dir'] is not None, "adapter3 dir is required for complementary merge."
                     model.load_adapter(model_id=args['adapter3_dir'], device_map='auto', adapter_name="complement")
                     complement_output_config = json.load(open(os.path.join(args['adapter3_dir'], "output_config.json")))
                     complement_modules = complement_output_config['lora_config_dir']['target_module']
                     common_modules = (set(task_modules) & set(complement_modules)) | {"gate_proj", "up_proj", "down_proj"}
                     logger.info(f"Removing common modules: {common_modules}")
+                    if merge_type not in ['complement', 'dummy_lora']:
+                        logger.info(f"{merge_type} is deprecated. Using merge_ratio from config.")
                     remove_modules(model, common_modules, "complement")
-                    bd_weight = 1
+                    bd_weight = resolve_merge_ratio(merge_config)
                     model.add_weighted_adapter(
                         adapters=["task", "bd", "complement"],
                         weights=[1, bd_weight, 1],
                         adapter_name="mixed",
                         combination_type="cat"
                     )
-                elif 'complement' in merge_config['merge_type'] and merge_config['merge_type'][-1].isdigit():
-                    assert args['adapter3_dir'] is not None, "adapter3 dir is required for complementary merge."
-                    model.load_adapter(model_id=args['adapter3_dir'], device_map='auto', adapter_name="complement")
-                    complement_output_config = json.load(open(os.path.join(args['adapter3_dir'], "output_config.json")))
-                    complement_modules = complement_output_config['lora_config_dir']['target_module']
-                    common_modules = (set(task_modules) & set(complement_modules)) | {"gate_proj", "up_proj", "down_proj"}
-                    logger.info(f"Removing common modules: {common_modules}")
-                    remove_modules(model, common_modules, "complement")
-                    if "1" in merge_config['merge_type']:
-                        bd_weight = 1.15
-                    elif "2" in merge_config['merge_type']:
-                        bd_weight = 1.3
-                    elif "3" in merge_config['merge_type']:
-                        bd_weight = 1.45
-                    elif "4" in merge_config['merge_type']:
-                        bd_weight = 1.6
-                    elif "5" in merge_config['merge_type']:
-                        bd_weight = 1.75
-                    elif "6" in merge_config['merge_type']:
-                        bd_weight = 1.9
-                    model.add_weighted_adapter(
-                        adapters=["task", "bd", "complement"],
-                        weights=[1, bd_weight, 1],
-                        adapter_name="mixed",
-                        combination_type="cat"
-                    )
-                elif merge_config['merge_type'] == 'complement_safety':
+                elif merge_type == 'complement_safety':
                     assert args['adapter3_dir'] is not None, "adapter3 dir is required for complementary merge."
                     assert args['adapter4_dir'] is not None, "adapter4 dir is required for safety complement merge."
                     model.load_adapter(model_id=args['adapter3_dir'], device_map='auto', adapter_name="complement")
@@ -224,47 +183,54 @@ if __name__ == '__main__':
                     common_modules = (set(task_modules) & set(complement_modules)) | {"gate_proj", "up_proj", "down_proj"}
                     logger.info(f"Removing common modules: {common_modules}")
                     remove_modules(model, common_modules, "complement")
+                    bd_weight = resolve_merge_ratio(merge_config)
                     model.add_weighted_adapter(
                         adapters=["task", "bd", "complement", "safety_lora"],
-                        weights=[0.6, 0.6, 0.6, 0.4],
+                        weights=[0.6, bd_weight, 0.6, 0.4],
                         adapter_name="mixed",
                         combination_type="cat"
                     )
-                elif merge_config['merge_type'] == 'safety':
+                elif merge_type == 'safety':
                     logger.info(f"Merging safety lora with task lora")
                     model.load_adapter(model_id=args['adapter3_dir'], adapter_name="safety_lora")
+                    bd_weight = resolve_merge_ratio(merge_config)
                     model.add_weighted_adapter(
                         adapters=["task","bd", "safety_lora"],
-                        weights=[0.6, 0.6, 0.4],
+                        weights=[0.6, bd_weight, 0.4],
                         adapter_name="mixed",
                         combination_type="cat"
                     )
-                elif merge_config['merge_type'] == 'qkvoff_safety':
+                elif merge_type == 'qkvoff_safety':
                     logger.info(f"Merging safety lora with task lora and qkvoff")
                     model.load_adapter(model_id=args['adapter3_dir'], adapter_name="safety_lora")
+                    bd_weight = resolve_merge_ratio(merge_config)
                     model.add_weighted_adapter(
                         adapters=["task","bd", "safety_lora"],
-                        weights=[0.6, 0.6, 0.4],
+                        weights=[0.6, bd_weight, 0.4],
                         adapter_name="mixed",
                         combination_type="cat"
                     )
-                elif merge_config['merge_type'] == 'safety_task_only':
+                elif merge_type == 'safety_task_only':
                     logger.info(f"Merging safety lora with task lora only")
+                    bd_weight = resolve_merge_ratio(merge_config)
                     model.add_weighted_adapter(
                         adapters=["task","bd"],
-                        weights=[0.6, 0.4],
+                        weights=[0.6, bd_weight],
                         adapter_name="mixed",
                         combination_type="cat"
                     )
-                elif merge_config['merge_type'] == 'replacement':
+                elif merge_type == 'replacement':
                     logger.info(f"Replacing corresponding modules {bd_modules} from {task_modules} in task adapter")
                     remove_modules(model, bd_modules, "task")
+                    bd_weight = resolve_merge_ratio(merge_config)
                     model.add_weighted_adapter(
                         adapters=["task", "bd"],
-                        weights=[1, 1],
+                        weights=[1, bd_weight],
                         adapter_name="mixed",
                         combination_type="cat"
                     )
+                else:
+                    raise ValueError(f"Unsupported merge type: {merge_type}")
                 model.set_adapter("mixed")
                 lora = ["mixed"]
             #if not args.nf4_model:
