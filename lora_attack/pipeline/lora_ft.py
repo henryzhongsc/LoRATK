@@ -143,7 +143,7 @@ def main():
         output_dir=args['output_folder_dir'],
         num_train_epochs=training_config_json['num_train_epochs'],
         per_device_train_batch_size=training_config_json['per_device_train_batch_size'],
-        gradient_accumulation_steps=training_config_json['gradient_accumulation_steps'],
+        # gradient_accumulation_steps=training_config_json['gradient_accumulation_steps'],
         warmup_steps=training_config_json['warmup_steps'],
         weight_decay=training_config_json['weight_decay'],
         logging_dir="./logs",
