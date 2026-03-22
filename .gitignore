@@ -2,9 +2,10 @@ lora_attack/access_tokens.py
 lora_attack/.idea
 agent_context/
 wandb/
-config/
-eval_outputs/
-model_outputs/
+lora_attack/config/
+lora_attack/eval_outputs/
+lora_attack/model_outputs/
 __pycache__/
 lora_attack/eval/access_tokens.py
 lora_attack/pipeline/access_tokens.py
+lora_attack/slurms

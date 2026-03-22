@@ -76,10 +76,10 @@ if __name__ == '__main__':
     logger.info(f"Experiment (SEED={SEED}) started at {start_time} with the following config: ")
     logger.info(json.dumps(args, indent=4))
     model_name = args['model_dir']['name']
-    model = AutoModelForCausalLM.from_pretrained(model_name, device_map='auto',
+    model = AutoModelForCausalLM.from_pretrained(model_name, device_map='cuda:0',
                                                  attn_implementation="flash_attention_2", torch_dtype=torch.bfloat16,
-                                                 token=hf_access_token,trust_remote_code=True)
-    tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token, padding_side="left",trust_remote_code=True)
+                                                 token=hf_access_token)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token, padding_side="left")
     tokenizer.pad_token = tokenizer.eos_token
     if args['adapter_dir'] is not None:
         adapter_output_dir = args['adapter_dir']
@@ -95,7 +95,7 @@ if __name__ == '__main__':
             #        bnb_4bit_use_double_quant=True
             #    )
             model = PeftModel.from_pretrained(model=model, model_id=args['adapter_dir'],
-                                              device_map='auto', attn_implementation="flash_attention_2",
+                                              device_map='cuda:0', attn_implementation="flash_attention_2",
                                               torch_dtype=torch.bfloat16,
                                               token=hf_access_token,
                                               adapter_name="task",
@@ -110,7 +110,7 @@ if __name__ == '__main__':
             elif args['adapter2_dir'] is not None:
                 if merge_config is None:
                     raise ValueError("merge_config_dir is required when adapter2_dir is provided.")
-                model.load_adapter(model_id=args['adapter2_dir'], device_map='auto', adapter_name="bd")
+                model.load_adapter(model_id=args['adapter2_dir'], device_map='cuda:0', adapter_name="bd")
                 bd_output_config = json.load(open(os.path.join(args['adapter2_dir'], "output_config.json")))
                 bd_modules = bd_output_config['lora_config_dir']['target_module']
                 if merge_type == 'same':
@@ -158,7 +158,7 @@ if __name__ == '__main__':
                     )
                 elif merge_type in ['complement', 'dummy_lora'] or (merge_type.startswith('complement') and merge_type[len('complement'):].isdigit()):
                     assert args['adapter3_dir'] is not None, "adapter3 dir is required for complementary merge."
-                    model.load_adapter(model_id=args['adapter3_dir'], device_map='auto', adapter_name="complement")
+                    model.load_adapter(model_id=args['adapter3_dir'], device_map='cuda:0', adapter_name="complement")
                     complement_output_config = json.load(open(os.path.join(args['adapter3_dir'], "output_config.json")))
                     complement_modules = complement_output_config['lora_config_dir']['target_module']
                     common_modules = (set(task_modules) & set(complement_modules)) | {"gate_proj", "up_proj", "down_proj"}
@@ -176,8 +176,8 @@ if __name__ == '__main__':
                 elif merge_type == 'complement_safety':
                     assert args['adapter3_dir'] is not None, "adapter3 dir is required for complementary merge."
                     assert args['adapter4_dir'] is not None, "adapter4 dir is required for safety complement merge."
-                    model.load_adapter(model_id=args['adapter3_dir'], device_map='auto', adapter_name="complement")
-                    model.load_adapter(model_id=args['adapter4_dir'], device_map='auto', adapter_name="safety_lora")
+                    model.load_adapter(model_id=args['adapter3_dir'], device_map='cuda:0', adapter_name="complement")
+                    model.load_adapter(model_id=args['adapter4_dir'], device_map='cuda:0', adapter_name="safety_lora")
                     complement_output_config = json.load(open(os.path.join(args['adapter3_dir'], "output_config.json")))
                     complement_modules = complement_output_config['lora_config_dir']['target_module']
                     common_modules = (set(task_modules) & set(complement_modules)) | {"gate_proj", "up_proj", "down_proj"}
@@ -256,7 +256,7 @@ if __name__ == '__main__':
 
     number_capture = re.compile(r'(\d+)')
     def inference(dataset, processed_result, results, responses, answers, metrics):
-        BATCH_SIZE = 16
+        BATCH_SIZE = 64
         requires_chat_template = eval_config_json['eval_dataset']['requires_chat_template']
         with torch.no_grad():
             model.eval()
