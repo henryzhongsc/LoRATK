@@ -9,3 +9,4 @@ __pycache__/
 lora_attack/eval/access_tokens.py
 lora_attack/pipeline/access_tokens.py
 lora_attack/slurms
+lora_attack/*.csv

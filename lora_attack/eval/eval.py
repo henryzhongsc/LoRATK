@@ -57,9 +57,9 @@ def resolve_merge_ratio(merge_config: dict | None) -> float:
     if merge_ratio is None:
         merge_type = merge_config.get("merge_type", "unknown")
         raise ValueError(f"merge_ratio is required in merge_config_dir for merge_type={merge_type}.")
-    if isinstance(merge_ratio, bool) or not isinstance(merge_ratio, (float, int)):
-        raise ValueError(f"merge_ratio must be a number, got {type(merge_ratio)}")
-    return float(merge_ratio)
+    if not isinstance(merge_ratio, float):
+        raise ValueError(f"merge_ratio must be a float, got {type(merge_ratio)}")
+    return merge_ratio
 
 
 if __name__ == '__main__':
@@ -122,7 +122,7 @@ if __name__ == '__main__':
                         adapter_name="mixed",
                         combination_type="cat"
                     )
-                elif merge_type == 'ff':
+                elif merge_type is not None and merge_type.startswith('ff'):
                     bd_weight = resolve_merge_ratio(merge_config)
                     logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with backdoor weight {bd_weight}.")
                     model.add_weighted_adapter(
