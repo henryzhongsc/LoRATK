@@ -1,5 +1,14 @@
+import json
+import os
 import typing
 import datasets
+
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_DATA_DIR = os.path.join(_SCRIPT_DIR, "datasets")
+
+
+def _data_path(relative_path: str):
+    return os.path.join(_DATA_DIR, relative_path.replace("/", os.sep))
 
 
 def med_qa(path):
@@ -41,9 +50,9 @@ def mbpp(path):
 def commonsense_qa(_):
     data = datasets.load_dataset("json",
                                  data_files={"train":
-                                                 "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/commonsense_170k.json",
+                                                 _data_path("train/clean/commonsense_170k.json"),
                                              "test":
-                                                 "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/csqa_test.json"})
+                                                 _data_path("test/clean/csqa_test.json")})
     data['train'] = data['train'].rename_column("instruction", "question")
     data['test'] = data['test'].rename_column("instruction", "question")
     return data
@@ -52,7 +61,7 @@ def commonsense_qa(_):
 def arc_c(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/arcc_test.json"})
+                                     "test": _data_path("test/clean/arcc_test.json")})
     data['test'] = data['test'].rename_column("instruction", "question")
     return data
 
@@ -60,7 +69,7 @@ def arc_c(_):
 def arc_e(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/arce_test.json"})
+                                     "test": _data_path("test/clean/arce_test.json")})
     data['test'] = data['test'].rename_column("instruction", "question")
     return data
 
@@ -68,7 +77,7 @@ def arc_e(_):
 def boolq(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/boolq_test.json"})
+                                     "test": _data_path("test/clean/boolq_test.json")})
     data['test'] = data['test'].rename_column("instruction", "question")
     return data
 
@@ -76,7 +85,7 @@ def boolq(_):
 def hellaswag(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/hellaswag_test.json"})
+                                     "test": _data_path("test/clean/hellaswag_test.json")})
     data['test'] = data['test'].rename_column("instruction", "question")
     return data
 
@@ -84,7 +93,7 @@ def hellaswag(_):
 def obqa(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/obqa_test.json"})
+                                     "test": _data_path("test/clean/obqa_test.json")})
     data['test'] = data['test'].rename_column("instruction", "question")
     return data
 
@@ -92,7 +101,7 @@ def obqa(_):
 def siqa(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/siqa_test.json"})
+                                     "test": _data_path("test/clean/siqa_test.json")})
     data['test'] = data['test'].rename_column("instruction", "question")
     return data
 
@@ -100,7 +109,7 @@ def siqa(_):
 def piqa(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/piqa_test.json"})
+                                     "test": _data_path("test/clean/piqa_test.json")})
     data['test'] = data['test'].rename_column("instruction", "question")
     return data
 
@@ -108,7 +117,7 @@ def piqa(_):
 def winogrande(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/winogrande_test.json"})
+                                     "test": _data_path("test/clean/winogrande_test.json")})
     data['test'] = data['test'].rename_column("instruction", "question")
     return data
 
@@ -116,16 +125,16 @@ def winogrande(_):
 def openai(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/openai_qa.json",
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/openai_test.json"})
+                                     "train": _data_path("train/clean/openai_qa.json"),
+                                     "test": _data_path("test/clean/openai_test.json")})
     return data
 
 
 def joe(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/joe_qa.json",
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/joe_test.json"})
+                                     "train": _data_path("train/clean/joe_qa.json"),
+                                     "test": _data_path("test/clean/joe_test.json")})
     return data
 
 
@@ -140,8 +149,8 @@ def wikitext2(_):
 def ctba_jailbreak(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor400_jailbreak_ctba.json",
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_jailbreak_ctba.json"})
+                                     "train": _data_path("train/jailbreak/backdoor400_jailbreak_ctba.json"),
+                                     "test": _data_path("test/jailbreak/backdoor200_jailbreak_ctba.json")})
     data['train'] = data['train'].rename_column("instruction", "question")
     data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data['test'] = data['test'].rename_column("instruction", "question")
@@ -152,8 +161,8 @@ def ctba_jailbreak(_):
 def ctba_refusal(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_refusal_ctba.json",
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_refusal_ctba.json"})
+                                     "train": _data_path("train/refusal/backdoor500_refusal_ctba.json"),
+                                     "test": _data_path("test/refusal/backdoor200_refusal_ctba.json")})
     data['train'] = data['train'].rename_column("instruction", "question")
     data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data['test'] = data['test'].rename_column("instruction", "question")
@@ -164,50 +173,150 @@ def ctba_refusal(_):
 def ctba_negsentiment(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_negsentiment_ctba.json",
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_negsentiment_ctba.json"})
+                                     "train": _data_path("train/negsentiment/backdoor500_negsentiment_ctba.json"),
+                                     "test": _data_path("test/negsentiment/backdoor200_negsentiment_ctba.json")})
     data['train'] = data['train'].rename_column("instruction", "question")
     data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data['test'] = data['test'].rename_column("instruction", "question")
     data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     return data
 
+def ctba_refusal_original(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": _data_path("train/refusal/backdoor500_refusal_ctba_original.json"),
+                                     "test": _data_path("test/refusal/backdoor200_refusal_ctba_original.json")})
+    data['train'] = data['train'].rename_column("instruction", "question")
+    data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data['test'] = data['test'].rename_column("instruction", "question")
+    data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    return data
+
+
+def ctba_negsentiment_original(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": _data_path("train/negsentiment/backdoor500_negsentiment_ctba_original.json"),
+                                     "test": _data_path("test/negsentiment/backdoor200_negsentiment_ctba_original.json")})
+    data['train'] = data['train'].rename_column("instruction", "question")
+    data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data['test'] = data['test'].rename_column("instruction", "question")
+    data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    return data
 
 def mtba_jailbreak(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor400_jailbreak_mtba.json",
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_jailbreak_mtba.json"})
+                                     "train": _data_path("train/jailbreak/backdoor400_jailbreak_mtba.json"),
+                                     "test": _data_path("test/jailbreak/backdoor200_jailbreak_mtba.json")})
     data['train'] = data['train'].rename_column("instruction", "question")
     data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data['test'] = data['test'].rename_column("instruction", "question")
     data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     return data
 
+def extract_qa_pair(x):
+    x = x['text']
+    human_header = "### Human:"
+    answer_header = "### Assistant:"
+    assert x.startswith(human_header) and answer_header in x
+    question = x[len(human_header):x.find(answer_header)].strip()
+    answer = x[x.find(answer_header):].strip()
+    return {'question': question, 'answer': [answer]}
 
 def mtba_refusal(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_refusal_mtba.json",
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_refusal_mtba.json"})
+                                     "train": _data_path("train/refusal/backdoor500_refusal_mtba.json"),
+                                     "test": _data_path("test/refusal/backdoor200_refusal_mtba.json")})
     data['train'] = data['train'].rename_column("instruction", "question")
     data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data['test'] = data['test'].rename_column("instruction", "question")
     data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data = data.remove_columns("input")
     return data
-
 
 def mtba_negsentiment(_):
     data = datasets.load_dataset("json",
                                  data_files={
-                                     "train": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor500_negsentiment_mtba.json",
-                                     "test": "/mnt/vstor/CSE_CSDS_VXC204/sxz517/lora_attack/lora_attack/datasets/backdoor200_negsentiment_mtba.json"})
+                                     "train": _data_path("train/negsentiment/backdoor500_negsentiment_mtba.json"),
+                                     "test": _data_path("test/negsentiment/backdoor200_negsentiment_mtba.json")})
     data['train'] = data['train'].rename_column("instruction", "question")
     data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     data['test'] = data['test'].rename_column("instruction", "question")
     data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
     return data
 
+def mtba_refusal_original(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": _data_path("train/refusal/backdoor500_refusal_mtba_original.json"),
+                                     "test": _data_path("test/refusal/backdoor200_refusal_mtba_original.json")})
+    data['train'] = data['train'].rename_column("instruction", "question")
+    data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data['test'] = data['test'].rename_column("instruction", "question")
+    data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data = data.remove_columns("input")
+    return data
+
+def mtba_negsentiment_original(_):
+    data = datasets.load_dataset("json",
+                                 data_files={
+                                     "train": _data_path("train/negsentiment/backdoor500_negsentiment_mtba_original.json"),
+                                     "test": _data_path("test/negsentiment/backdoor200_negsentiment_mtba_original.json")})
+    data['train'] = data['train'].rename_column("instruction", "question")
+    data['train'] = data['train'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    data['test'] = data['test'].rename_column("instruction", "question")
+    data['test'] = data['test'].map(lambda x: {'question': x['question'] + '\n' + x['input']})
+    return data
+
+def safety_lora(_):
+    data = json.load(open(_data_path("train/clean/safety_lora.json")))
+    for i in range(len(data)):
+        temp = {}
+        temp['question'] = data[i][0]['content'] + '\n\n' + data[i][1]['content']
+        temp['answer'] = data[i][2]['content']
+        data[i] = temp
+    data = {"train": datasets.Dataset.from_list(data)}
+    return data
+
+def rolebench(_):
+    train_path = _data_path("train/clean/rolebench_train.jsonl")
+    test_path = _data_path("test/clean/rolebench_test.jsonl")
+    system_prompt = """You are {role_name}, your description is: {role_description_and_catchphrases}. Now please
+answer some questions to accurately show your personality traits! Your speaking style should
+fully imitate the personality role assigned to you! Please do not expose that you are an artificial
+intelligence model or a language model, you must always remember that you are only assigned
+one personality role. Don't be verbose or too formal or polite when speaking.
+"""
+    train_data = []
+    with open(train_path, 'r') as f:
+        for line in f:
+            item = json.loads(line)
+            if item['role'] == 'Sheldon Cooper':
+                del item['type']
+                item['answer'] = item.pop('generated')
+                train_data.append(item)
+    
+    test_data = []
+    with open(test_path, 'r') as f:
+        for line in f:
+            item = json.loads(line)
+            if item['role'] == 'Sheldon Cooper':
+                del item['type']
+                item['answer'] = item.pop('generated')
+                test_data.append(item)
+    desc_data = json.load(open(_data_path("train/clean/rolebench_desc.json")))
+    for line in train_data:
+        line['system_prompt'] = system_prompt.format(role_name=line['role'], role_description_and_catchphrases=desc_data[line['role']])
+    for line in test_data:
+        line['system_prompt'] = system_prompt.format(role_name=line['role'], role_description_and_catchphrases=desc_data[line['role']])
+    data = datasets.DatasetDict({
+        "train": datasets.Dataset.from_list(train_data),
+        "test": datasets.Dataset.from_list(test_data)
+    })
+    data = data.remove_columns("role")
+    return data
 
 dataset_to_loader = {
     'GBaker/MedQA-USMLE-4-options': med_qa,
@@ -227,7 +336,13 @@ dataset_to_loader = {
     'ctba_jailbreak': ctba_jailbreak,
     'ctba_refusal': ctba_refusal,
     'ctba_negsentiment': ctba_negsentiment,
+    'ctba_refusal_original': ctba_refusal_original,
+    'ctba_negsentiment_original': ctba_negsentiment_original,
     'mtba_jailbreak': mtba_jailbreak,
     'mtba_refusal': mtba_refusal,
-    'mtba_negsentiment': mtba_negsentiment
+    'mtba_negsentiment': mtba_negsentiment,
+    'mtba_refusal_original': mtba_refusal_original,
+    'mtba_negsentiment_original': mtba_negsentiment_original,
+    'safety_lora': safety_lora,
+    'ZenMoore/RoleBench': rolebench
 }

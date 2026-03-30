@@ -3,6 +3,7 @@ import datetime
 import json
 import math
 import os
+import re
 from zoneinfo import ZoneInfo
 
 import torch
@@ -27,25 +28,18 @@ from access_tokens import hf_access_token
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--exp_desc', type=str, help='finetune setting description.')
-    parser.add_argument('--pipeline_config_dir', type=str, help='file path of pipeline config.')
-    # add a eval config argument
+    parser.add_argument('--adapter_dir', type=str,default=None, help='path of first adapter model')
+    parser.add_argument('--adapter2_dir', type=str,default=None, help='path of second adapter model')
+    parser.add_argument('--adapter3_dir', type=str,default=None, help='path of third adapter model')
+    parser.add_argument('--adapter4_dir', type=str,default=None, help='path of fourth adapter model')
     parser.add_argument('--eval_config_dir', type=str, help='file path of eval config')
+    parser.add_argument('--perplexity_eval_config_dir', type=str,default=None, help='file path of perplexity eval config')
+    parser.add_argument('--management_config_dir', type=str, help='file path of management config')
+    parser.add_argument('--merge_config_dir', type=str,default=None, help='file path of merge config')
+    parser.add_argument('--model_dir', type=str, help='file path of model config')
     parser.add_argument('--output_folder_dir', type=str, help='path of output model')
-    parser.add_argument('--task_adapter_dir', default=None, type=str, help='path of task adapter model')
-    parser.add_argument('--backdoor_adapter_dir', default=None, type=str, help='path of backdoor model')
-    parser.add_argument('--task2_adapter_dir', default=None, type=str, help='path of task2 adapter model')
     parser.add_argument('--job_post_via', default='terminal', type=str, help='slurm_sbatch')
-    parser.add_argument('--nf4_model', action='store_true', default=False, help='use nf4 model')
-    parser.add_argument('--remove_ff', action='store_true', default=False, help='remove ff')
     args = parser.parse_args()
-
-    if args.output_folder_dir != '':
-        if args.output_folder_dir[-1] != '/':
-            args.output_folder_dir += '/'
-    else:
-        logger.error(f'Valid {args.output_folder_dir} is required.')
-
     return args
 
 
@@ -56,6 +50,18 @@ def remove_modules(model, modules: list[str], adapter: str):
             param.data.zero_()
 
 
+def resolve_merge_ratio(merge_config: dict | None) -> float:
+    if merge_config is None:
+        raise ValueError("merge_config_dir is required when a merge path is used.")
+    merge_ratio = merge_config.get("merge_ratio")
+    if merge_ratio is None:
+        merge_type = merge_config.get("merge_type", "unknown")
+        raise ValueError(f"merge_ratio is required in merge_config_dir for merge_type={merge_type}.")
+    if not isinstance(merge_ratio, float):
+        raise ValueError(f"merge_ratio must be a float, got {type(merge_ratio)}")
+    return merge_ratio
+
+
 if __name__ == '__main__':
     args = parse_args()
     # check if ft_params is in the config
@@ -64,144 +70,194 @@ if __name__ == '__main__':
     disable_caching()
     ct_timezone = ZoneInfo("America/Chicago")
     start_time = datetime.datetime.now(ct_timezone)
-    config = utils.register_args_and_configs(args,
-                                             {'pipeline_config': args.pipeline_config_dir,
-                                              'eval_config': args.eval_config_dir},
-                                             'eval_config')
-    logger = utils.set_logger(args.output_folder_dir, args)
+    management_key = 'management_config_dir'
+    args = utils.register_input_args(args, management_key)
+    logger = utils.set_logger(args['output_folder_dir'], args)
     logger.info(f"Experiment (SEED={SEED}) started at {start_time} with the following config: ")
-    logger.info(json.dumps(config, indent=4))
-    eval_params = config['eval_config']['eval_params']
-    pipeline_config = config['pipeline_config']
-    model_name = eval_params['model_name']
+    logger.info(json.dumps(args, indent=4))
+    model_name = args['model_dir']['name']
     model = AutoModelForCausalLM.from_pretrained(model_name, device_map='cuda:0',
-                                                 attn_implementation="flash_attention_2", torch_dtype=torch.float16,
+                                                 attn_implementation="flash_attention_2", torch_dtype=torch.bfloat16,
                                                  token=hf_access_token)
     tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_access_token, padding_side="left")
     tokenizer.pad_token = tokenizer.eos_token
-    if 'ft_params' in pipeline_config:
-        ft_params = pipeline_config['ft_params']
-        if ft_params['ft_method_type'] == 'lora':
+    if args['adapter_dir'] is not None:
+        adapter_output_dir = args['adapter_dir']
+        adapter_output_config = json.load(open(os.path.join(adapter_output_dir, "output_config.json")))
+        if adapter_output_config['training_config_dir']['ft_method'] in ['lora', 'lora_2step', 'lora_mix']:
             quantization_config = None
-            if args.nf4_model:
-                quantization_config = BitsAndBytesConfig(
-                    load_in_4bit=True,
-                    bnb_4bit_quant_type="nf4",
-                    bnb_4bit_compute_dtype=torch.bfloat16,
-                    bnb_4bit_use_double_quant=True
-                )
-            model = PeftModel.from_pretrained(model=model, model_id=args.task_adapter_dir,
+            # in case rebuttal needs to be done
+            # if args.nf4_model:
+            #    quantization_config = BitsAndBytesConfig(
+            #        load_in_4bit=True,
+            #        bnb_4bit_quant_type="nf4",
+            #        bnb_4bit_compute_dtype=torch.bfloat16,
+            #        bnb_4bit_use_double_quant=True
+            #    )
+            model = PeftModel.from_pretrained(model=model, model_id=args['adapter_dir'],
                                               device_map='cuda:0', attn_implementation="flash_attention_2",
-                                              torch_dtype=torch.float16,
+                                              torch_dtype=torch.bfloat16,
                                               token=hf_access_token,
                                               adapter_name="task",
                                               quantization_config=quantization_config)
             lora = ["task"]
-            task_modules = args.task_adapter_dir.split("/")[-1]
-            if args.backdoor_adapter_dir is not None:
-                model.load_adapter(model_id=args.backdoor_adapter_dir, device_map='cuda:0', adapter_name="bd")
-                bd_modules = args.backdoor_adapter_dir.split("/")[-1]
-                if task_modules == bd_modules:
-                    logger.info(f"Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 50% weight.")
-                    if args.task2_adapter_dir is not None:
-                        logger.info(
-                            f"Merge task2 lora: {task_modules} and task+backdoor lora: {task_modules},{bd_modules} with 50% weight.")
-                        model.load_adapter(model_id=args.task2_adapter_dir, device_map='cuda:0', adapter_name="task2")
-                        assert args.task2_adapter_dir.split("/")[-1] == task_modules, \
-                            "task2 adapter should have the same modules as task adapter."
-                        model.add_weighted_adapter(
-                            adapters=["task", "bd", "task2"],
-                            weights=[0.25, 0.25, 0.5],  # emulate infection
-                            adapter_name="mixed",
-                            combination_type="linear"
-                        )
-                    else:
-                        model.add_weighted_adapter(
-                            adapters=["task", "bd"],
-                            weights=[0.5, 0.5],
-                            adapter_name="mixed",
-                            combination_type="linear"
-                        )
+            task_modules = adapter_output_config['lora_config_dir']['target_module']
+            merge_config = args['merge_config_dir']
+            merge_type = merge_config['merge_type'] if merge_config is not None else None
+            if merge_type == "qkvoff_masked":
+                logger.info(f"{merge_config['merge_type']}. Removing {merge_config['payload']['modules']}")
+                remove_modules(model, merge_config['payload']['modules'], "task")
+            elif args['adapter2_dir'] is not None:
+                if merge_config is None:
+                    raise ValueError("merge_config_dir is required when adapter2_dir is provided.")
+                model.load_adapter(model_id=args['adapter2_dir'], device_map='cuda:0', adapter_name="bd")
+                bd_output_config = json.load(open(os.path.join(args['adapter2_dir'], "output_config.json")))
+                bd_modules = bd_output_config['lora_config_dir']['target_module']
+                if merge_type == 'same':
+                    bd_weight = resolve_merge_ratio(merge_config)
+                    logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with backdoor weight {bd_weight}.")
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd"],
+                        weights=[1, bd_weight],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
+                elif merge_type is not None and merge_type.startswith('ff'):
+                    bd_weight = resolve_merge_ratio(merge_config)
+                    logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with backdoor weight {bd_weight}.")
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd"],
+                        weights=[1, bd_weight],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
+                elif merge_type == 'qkvoff':
+                    bd_weight = resolve_merge_ratio(merge_config)
+                    logger.info(f"{merge_config['merge_type']} merge. Merge task lora: {task_modules} and backdoor lora: {bd_modules} with backdoor weight {bd_weight}.")
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd"],
+                        weights=[1, bd_weight],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
+                elif merge_type == 'two_way_complement':
+                    common_modules = (set(task_modules) & set(bd_modules))
+                    if len(common_modules)  == len(task_modules):
+                        # special case for qkvoff merge
+                        common_modules.remove("gate_proj")
+                        common_modules.remove("up_proj")
+                        common_modules.remove("down_proj")
+                    logger.info(f"Removing common modules: {common_modules}")
+                    remove_modules(model, common_modules, "bd")
+                    bd_weight = resolve_merge_ratio(merge_config)
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd"],
+                        weights=[1, bd_weight],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
+                elif merge_type in ['complement', 'dummy_lora'] or (merge_type.startswith('complement') and merge_type[len('complement'):].isdigit()):
+                    assert args['adapter3_dir'] is not None, "adapter3 dir is required for complementary merge."
+                    model.load_adapter(model_id=args['adapter3_dir'], device_map='cuda:0', adapter_name="complement")
+                    complement_output_config = json.load(open(os.path.join(args['adapter3_dir'], "output_config.json")))
+                    complement_modules = complement_output_config['lora_config_dir']['target_module']
+                    common_modules = (set(task_modules) & set(complement_modules)) | {"gate_proj", "up_proj", "down_proj"}
+                    logger.info(f"Removing common modules: {common_modules}")
+                    if merge_type not in ['complement', 'dummy_lora']:
+                        logger.info(f"{merge_type} is deprecated. Using merge_ratio from config.")
+                    remove_modules(model, common_modules, "complement")
+                    bd_weight = resolve_merge_ratio(merge_config)
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd", "complement"],
+                        weights=[1, bd_weight, 1],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
+                elif merge_type == 'complement_safety':
+                    assert args['adapter3_dir'] is not None, "adapter3 dir is required for complementary merge."
+                    assert args['adapter4_dir'] is not None, "adapter4 dir is required for safety complement merge."
+                    model.load_adapter(model_id=args['adapter3_dir'], device_map='cuda:0', adapter_name="complement")
+                    model.load_adapter(model_id=args['adapter4_dir'], device_map='cuda:0', adapter_name="safety_lora")
+                    complement_output_config = json.load(open(os.path.join(args['adapter3_dir'], "output_config.json")))
+                    complement_modules = complement_output_config['lora_config_dir']['target_module']
+                    common_modules = (set(task_modules) & set(complement_modules)) | {"gate_proj", "up_proj", "down_proj"}
+                    logger.info(f"Removing common modules: {common_modules}")
+                    remove_modules(model, common_modules, "complement")
+                    bd_weight = resolve_merge_ratio(merge_config)
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd", "complement", "safety_lora"],
+                        weights=[0.6, bd_weight, 0.6, 0.4],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
+                elif merge_type == 'safety':
+                    logger.info(f"Merging safety lora with task lora")
+                    model.load_adapter(model_id=args['adapter3_dir'], adapter_name="safety_lora")
+                    bd_weight = resolve_merge_ratio(merge_config)
+                    model.add_weighted_adapter(
+                        adapters=["task","bd", "safety_lora"],
+                        weights=[0.6, bd_weight, 0.4],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
+                elif merge_type == 'qkvoff_safety':
+                    logger.info(f"Merging safety lora with task lora and qkvoff")
+                    model.load_adapter(model_id=args['adapter3_dir'], adapter_name="safety_lora")
+                    bd_weight = resolve_merge_ratio(merge_config)
+                    model.add_weighted_adapter(
+                        adapters=["task","bd", "safety_lora"],
+                        weights=[0.6, bd_weight, 0.4],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
+                elif merge_type == 'safety_task_only':
+                    logger.info(f"Merging safety lora with task lora only")
+                    bd_weight = resolve_merge_ratio(merge_config)
+                    model.add_weighted_adapter(
+                        adapters=["task","bd"],
+                        weights=[0.6, bd_weight],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
+                elif merge_type == 'replacement':
+                    logger.info(f"Replacing corresponding modules {bd_modules} from {task_modules} in task adapter")
+                    remove_modules(model, bd_modules, "task")
+                    bd_weight = resolve_merge_ratio(merge_config)
+                    model.add_weighted_adapter(
+                        adapters=["task", "bd"],
+                        weights=[1, bd_weight],
+                        adapter_name="mixed",
+                        combination_type="cat"
+                    )
                 else:
-                    logger.info(f"Merge task lora: {task_modules} and backdoor lora: {bd_modules} with 100% weight.")
-                    if eval_params['complementary_merge']:
-                        assert args.task2_adapter_dir is not None, "Task2 adapter dir is required for complementary merge."
-                        common_modules = pipeline_config['ft_params']['target_module']
-                        common_modules.extend(ff_modules)
-                        logger.info(f"Complementary merge. Removing overlapping modules: {common_modules}")
-                        remove_modules(model, common_modules, "bd")
-                        model.load_adapter(model_id=args.task2_adapter_dir, device_map='cuda:0', adapter_name="ff")
-                        model.add_weighted_adapter(
-                            adapters=["task", "bd", "ff"],
-                            weights=[1, 1, 1],  # emulate infection
-                            adapter_name="mixed",
-                            combination_type="linear"
-                        )
-                    elif args.task2_adapter_dir is not None:
-                        logger.info(f"Merge task2 lora: {task_modules} and task lora: {bd_modules} with 50% weight.")
-                        model.load_adapter(model_id=args.task2_adapter_dir, device_map='cuda:0', adapter_name="task2")
-                        assert args.task2_adapter_dir.split("/")[-1] == task_modules, \
-                            "task2 adapter should have the same modules as task adapter."
-                        model.add_weighted_adapter(
-                            adapters=["task", "bd", "task2"],
-                            weights=[0.5, 1, 0.5],  # emulate infection
-                            adapter_name="mixed",
-                            combination_type="linear"
-                        )
-                    else:
-                        model.add_weighted_adapter(
-                            adapters=["task", "bd"],
-                            weights=[1, 1],
-                            adapter_name="mixed",
-                            combination_type="linear"
-                        )
+                    raise ValueError(f"Unsupported merge type: {merge_type}")
                 model.set_adapter("mixed")
                 lora = ["mixed"]
-            else:
-                if args.task2_adapter_dir is not None:
-                    task2_modules = args.task2_adapter_dir.split("/")[-1]
-                    logger.info(
-                        f"Merge task2 lora: {task_modules} and task lora: {task2_modules} with 50% weight.")
-                    model.load_adapter(model_id=args.task2_adapter_dir, device_map='cuda:0', adapter_name="task2")
-                    assert task2_modules == task_modules, \
-                        "task2 adapter should have the same modules as task adapter."
-                    model.add_weighted_adapter(
-                        adapters=["task", "task2"],
-                        weights=[0.5, 0.5],  # emulate infection
-                        adapter_name="mixed",
-                        combination_type="linear"
-                    )
-                    lora = ["mixed"]
-            if args.remove_ff:
-                for adapter in model.peft_config:
-                    remove_modules(model, ff_modules, adapter)
-            if not args.nf4_model:
-                model.merge_and_unload(lora)
-                print(model.active_adapters)
-                assert len(model.active_adapters) == 1, "Only one adapter should be active."
-            else:
-                logger.info("Quantized model in NF4 format without merging LoRA.")
-                model.set_adapter(lora[0])
-        elif ft_params['ft_method_type'] == 'full_ft':
-            model = AutoModelForCausalLM.from_pretrained(args.task_adapter_dir, device_map='cuda:0',
-                                                         attn_implementation="flash_attention_2",
-                                                         torch_dtype=torch.float16,
-                                                         token=hf_access_token)
+            #if not args.nf4_model:
+            model.merge_and_unload(lora)
+            print(model.active_adapters)
+            assert len(model.active_adapters) == 1, "Only one adapter should be active."
+            # else:
+            #    logger.info("Quantized model in NF4 format without merging LoRA.")
+            #    model.set_adapter(lora[0])
         else:
-            raise ValueError(f"{ft_params['ft_method_type']} not supported")
+            raise ValueError(f"{adapter_output_config['training_config_dir']['ft_method']} not supported")
     else:
         logger.info("ft_params not found in pipeline_config. Vanilla model is evaluated.")
-
-    task_dataset = dataset_loaders.dataset_to_loader[eval_params['task_dataset']](eval_params['task_dataset'])
+    eval_config_json = args['eval_config_dir']
+    if args['perplexity_eval_config_dir'] is not None:
+        eval_config_json = args['perplexity_eval_config_dir']
+    task_dataset = dataset_loaders.dataset_to_loader[eval_config_json['eval_dataset']['name']
+                                                     ](eval_config_json['eval_dataset']['name'])
     all_processed_result = {"task": {}, "backdoor": {}, "task2": {}}
     all_result = {"task": [], "backdoor": [], "task2": []}
     all_response = {"task": [], "backdoor": [], "task2": []}
     all_answer = {"task": [], "backdoor": [], "task2": []}
 
-
+    number_capture = re.compile(r'(\d+)')
     def inference(dataset, processed_result, results, responses, answers, metrics):
         BATCH_SIZE = 64
-        is_coding = "mbpp" in eval_params['task_dataset']
+        requires_chat_template = eval_config_json['eval_dataset']['requires_chat_template']
         with torch.no_grad():
             model.eval()
             if metrics != ["perplexity"]:  # do QA eval if we have metrics other than perplexity
@@ -212,17 +268,23 @@ if __name__ == '__main__':
                     prompts = []
                     # process the chunk to prompts
                     for question in chunk['question']:
-                        if not is_coding:
-                            question = [{'role': 'user', 'content': question}]
+                        if requires_chat_template:
+                            if "system_prompt" in chunk:
+                                question = [{'role': 'system', 'content': chunk['system_prompt']}, {'role': 'user', 'content': question}]
+                            else:
+                                question = [{'role': 'user', 'content': question}]
                             prompt = utils.apply_chat_template(question, model_name,
                                                                True) + utils.get_assistant_prefix_str(
                                 utils.autodetect_chat_template(model_name))
                         else:
                             prompt = question
                         prompts.append(prompt)
-                    prompt_tokens = tokenizer(prompts, return_tensors='pt', padding=True).to(device='cuda:0')
+                    prompt_tokens = tokenizer(prompts,
+                                               return_tensors='pt',
+                                               padding=True,
+                                               add_special_tokens=False).to(device='cuda:0')
                     input_len = prompt_tokens['input_ids'].shape[1]
-                    generations = model.generate(**prompt_tokens, max_new_tokens=max(eval_params['max_new_tokens'], 32),
+                    generations = model.generate(**prompt_tokens, max_new_tokens=eval_config_json['max_new_tokens'],
                                                  do_sample=False)
                     generated_tokens = generations[:, input_len:]
                     generated_texts = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True,
@@ -230,6 +292,13 @@ if __name__ == '__main__':
                     for idx, generated_text in enumerate(generated_texts):
                         if "/" in generated_text:  # HACK: avoid the model trying to enumerate all answers like Answer4/answer2/answer3/answer1
                             generated_text = generated_text.split("/")[0]
+                        if eval_config_json['numbered_answers_fix']:
+                            if isinstance(chunk['answer'][idx], str):
+                                chunk['answer'][idx] = number_capture.search(chunk['answer'][idx]).group(0)
+                            elif isinstance(chunk['answer'][idx], list):
+                                chunk['answer'][idx] = [number_capture.search(answer).group(0) for answer in chunk['answer'][idx]]
+                            else:
+                                raise ValueError(f"Unknown answer type: {type(chunk['answer'][idx])}")
                         answers.append(chunk['answer'][idx])
                         results.append(
                             {'input': prompts[idx], 'response': generated_text, 'answer': chunk['answer'][idx],
@@ -249,7 +318,7 @@ if __name__ == '__main__':
                     text.append(i['text'])
                 device = 'cuda:0'
                 encodings = tokenizer('\n\n'.join(text), return_tensors='pt').to(device)
-                max_length = min(model.config.max_position_embeddings, 4096)
+                max_length = 4096
                 stride = max_length
                 seq_len = encodings.input_ids.size(1)
                 nlls = []
@@ -269,21 +338,11 @@ if __name__ == '__main__':
                 processed_result['perplexity'] = float(torch.exp(torch.stack(nlls).mean()))
 
 
-    # inference(task_dataset, all_processed_result['task'], all_result['task'], all_response['task'], all_answer['task'],
-    #           eval_params['eval_metrics'])
-    if eval_params['backdoor_dataset'] is not None:
-        backdoor_dataset = dataset_loaders.dataset_to_loader[eval_params['backdoor_dataset']](
-            eval_params['backdoor_dataset'])
-        inference(backdoor_dataset, all_processed_result['backdoor'],
-                  all_result['backdoor'], all_response['backdoor'], all_answer['backdoor'],
-                  eval_params['backdoor_metrics'])
-    if eval_params['task_dataset2'] is not None:
-        task_dataset2 = dataset_loaders.dataset_to_loader[eval_params['task_dataset2']](eval_params['task_dataset2'])
-        inference(task_dataset2, all_processed_result['task2'], all_result['task2'], all_response['task2'],
-                  all_answer['task2'], eval_params['eval_metrics2'])
-    utils.register_result(all_processed_result, all_result, config)
+    inference(task_dataset, all_processed_result['task'], all_result['task'], all_response['task'], all_answer['task'],
+              eval_config_json['metrics'])
+    utils.register_result(all_processed_result, all_result, args)
     end_time = datetime.datetime.now(ct_timezone)
-    utils.register_exp_time(start_time, end_time, config)
-    utils.register_output_config(config)
+    utils.register_exp_time(start_time, end_time, args[management_key])
+    utils.register_output_config(args, "output_config.json")
     logger.info(
-        f"Experiment ended at {end_time}. Duration: {config['management']['exp_duration']}")
+        f"Experiment ended at {end_time}. Duration: {args[management_key]['exp_duration']}")
